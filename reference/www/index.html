@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a1c">
+  <meta name="description" content="NEON KULE — gökte yükselen 10 dünya, 150 bölüm, kalıntılar ve sürprizlerle dolu neon kule macerası. Android ve iOS.">
+  <title>NEON KULE — Yükseliş</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect y='60' width='100' height='24' rx='6' fill='%234facfe'/%3E%3Crect x='12' y='34' width='76' height='24' rx='6' fill='%23a86bff'/%3E%3Crect x='26' y='8' width='48' height='24' rx='6' fill='%23ff6bd6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game" aria-label="NEON KULE oyun alanı"></canvas>
+
+  <div id="topbar">
+    <div class="badge coins">🪙 <b id="coinCount">0</b></div>
+    <div class="badge stars">★ <b id="starCount">0</b></div>
+    <button id="btnMute" type="button" aria-label="Ses aç/kapat">🔊</button>
+  </div>
+
+  <!-- ======================= ANA MENÜ ======================= -->
+  <div id="screen-menu" class="screen">
+    <div class="panel menu-panel">
+      <div class="menu-kicker">BİR YÜKSELİŞ HİKÂYESİ</div>
+      <h1>NEON<span>KULE</span></h1>
+      <p class="story">Her blok bir an. Her kule bir hikâye.</p>
+      <p class="tagline">10 dünya · 150 bölüm · kalıntılar · gizemler</p>
+      <div class="skyProgress">🌌 Gökyüzü: <b id="skyCount">0</b>/450 yıldız aydınlık</div>
+      <div class="bestBox">SERBEST REKOR <b id="menuBest">0</b></div>
+      <div class="menu-buttons">
+        <button id="btnPlay" class="btn big primary">🗺️ YÜKSELİŞE BAŞLA</button>
+        <button id="btnEndless" class="btn">∞ SERBEST MOD</button>
+        <div class="row2">
+          <button id="btnMissions" class="btn small">📋 GÖREVLER</button>
+          <button id="btnShop" class="btn small">🎁 ÖDÜLLER</button>
+        </div>
+      </div>
+      <p class="cta"><span class="key">BOŞLUK</span> veya <b>dokun</b> — bloğu bırak</p>
+    </div>
+  </div>
+
+  <!-- ======================= 3B DÜNYA HARİTASI ======================= -->
+  <div id="screen-map" class="screen hidden">
+    <div class="map-head">
+      <button id="mapBack" class="btn back" aria-label="Menüye dön">‹</button>
+      <div class="map-brand">YÜKSELİŞ<span>HARİTASI</span></div>
+    </div>
+
+    <canvas id="mapCanvas" aria-label="Gökte yüzen dünyalar haritası"></canvas>
+
+    <div class="map-world" id="mapWorldCard">
+      <div class="map-world-kicker" id="mapWorldKicker">DÜNYA 1</div>
+      <div class="map-world-name" id="mapWorldName">NEON ŞEHİR</div>
+      <div class="map-world-sub" id="mapWorldSub">0/15 · ★ 0/45</div>
+    </div>
+
+    <div class="map-nav">
+      <button id="mapPrevWorld" class="map-arrow" aria-label="Önceki dünya">‹</button>
+      <div id="mapDots" class="map-dots"></div>
+      <button id="mapNextWorld" class="map-arrow" aria-label="Sonraki dünya">›</button>
+    </div>
+    <div class="map-hint">SÜRÜKLE · DÜNYALAR ARASINDA GEZ · KRİSTALE DOKUN</div>
+  </div>
+
+  <!-- ======================= OYUN HUD ======================= -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <button id="hudBack" class="btn back mini">‹ ÇIK</button>
+      <div id="hudScore">0/8</div>
+      <div id="combo"></div>
+    </div>
+    <div id="progressWrap"><div id="progressFill"></div></div>
+    <div id="shieldBadge">🛡 ×1</div>
+  </div>
+
+  <!-- ======================= BÖLÜM GİRİŞİ (SİNEMATİK) ======================= -->
+  <div id="ovIntro" class="overlay intro-overlay hidden">
+    <canvas id="previewCanvas" aria-hidden="true"></canvas>
+    <div class="intro-scrim"></div>
+    <div class="intro-panel">
+      <div class="intro-head">
+        <div class="intro-world" id="introWorld">NEON ŞEHİR</div>
+        <div class="intro-world-prog" id="introWorldProg">0/15</div>
+      </div>
+      <h2 id="introTitle">BÖLÜM 1</h2>
+      <p class="intro-teaser" id="introTeaser"></p>
+      <div class="intro-chips">
+        <div class="mod-chip"><span id="introModIcon">▦</span> <b id="introModName">KLASİK</b></div>
+        <div class="intro-stars" id="introStars"><i>★</i><i>★</i><i>★</i></div>
+      </div>
+      <div class="intro-grid">
+        <div class="stat"><b id="introTarget">8 blok</b><span>HEDEF</span></div>
+        <div class="stat"><b id="introReward">10 🪙</b><span>ÖDÜL</span></div>
+      </div>
+      <p class="hint" id="introHint">Blok tam üstüne düşsün.</p>
+      <div class="mystery" id="introMystery">
+        <span class="mystery-q">?</span>
+        <span id="introMysteryText">Bu bölümde bir şey saklı.</span>
+      </div>
+      <div class="intro-lock hidden" id="introLock">
+        <span class="intro-lock-icon">🔒</span>
+        <span id="introLockText">Bu bölüm henüz kilitli.</span>
+      </div>
+      <div id="introSurprise" class="surprise-chip hidden"><span id="introSurpriseText"></span></div>
+      <div class="btn-row">
+        <button id="introClose" class="btn small">KAPAT</button>
+        <button id="btnStart" class="btn primary">BAŞLA ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= SONUÇ ======================= -->
+  <div id="ovResult" class="overlay hidden">
+    <div class="panel glass">
+      <h2 id="resTitle">BÖLÜM TAMAM!</h2>
+      <div id="resStars" class="big-stars"></div>
+      <div id="resCoins" class="coin-award">+10 🪙</div>
+      <p class="hint" id="resDetail"></p>
+      <p class="tiny" id="resBest"></p>
+      <div class="btn-col">
+        <button id="btnNext" class="btn primary">SONRAKİ BÖLÜM →</button>
+        <button id="btnResOnline" class="btn small hidden">🌍 ÇEVRİMİÇİ SIRALAMA</button>
+        <div class="row2">
+          <button id="btnRetry" class="btn small">↻ TEKRAR</button>
+          <button id="btnMap" class="btn small">🗺️ HARİTA</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= SÜRPRİZ KUTU ======================= -->
+  <div id="ovBox" class="overlay hidden">
+    <div class="panel glass box-panel">
+      <div class="box-art">🎁</div>
+      <h2 id="boxTitle">SÜRPRİZ KUTU KAZANDIN!</h2>
+      <p class="prize" id="boxPrize"></p>
+      <div class="btn-col">
+        <button id="btnOpenBox" class="btn primary big">KUTUYU AÇ</button>
+        <button id="boxContinue" class="btn primary hidden">DEVAM ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= DÜNYA AYDINLANDI ======================= -->
+  <div id="ovWorld" class="overlay hidden">
+    <div class="panel glass world-panel">
+      <div class="world-art">🌌</div>
+      <h2 id="worldTitle">DÜNYA AYDINLANDI</h2>
+      <p class="lore" id="worldLore"></p>
+      <div id="worldRelic" class="world-relic hidden">
+        <div class="relic-icon" id="worldRelicIcon">💠</div>
+        <div class="relic-info">
+          <div class="relic-kicker">KALINTI KAZANILDI</div>
+          <div class="relic-name" id="worldRelicName"></div>
+          <div class="relic-lore" id="worldRelicLore"></div>
+        </div>
+      </div>
+      <div id="worldCoins" class="coin-award">+50 🪙</div>
+      <button id="btnWorldContinue" class="btn primary big">GÖĞE BAK ▶</button>
+    </div>
+  </div>
+
+  <!-- ======================= SKOR TAHTASI ======================= -->
+  <div id="ovBoard" class="overlay hidden">
+    <div class="panel glass wide">
+      <h2>🏆 GÜNÜN SKOR TAHTASI</h2>
+      <p class="tiny" id="boardDay"></p>
+      <div id="boardList"></div>
+      <button id="btnOnlineBoard" class="btn small center hidden">🌍 ÇEVRİMİÇİ SIRALAMA</button>
+      <button id="btnBoardContinue" class="btn primary center">DEVAM ▶</button>
+    </div>
+  </div>
+
+  <!-- ======================= MAĞAZA / ÖDÜLLER ======================= -->
+  <div id="ovShop" class="overlay hidden">
+    <div class="panel glass wide">
+      <h2>🎁 ÖDÜL ODASI</h2>
+      <div class="shop-coins" id="shopCoins">0 🪙</div>
+      <div class="shop-tabs" id="shopTabs">
+        <button type="button" class="shop-tab active" id="shopTabSkins">KULE GÖRÜNÜMLERİ</button>
+        <button type="button" class="shop-tab" id="shopTabRelics">KALINTILAR <span class="tab-count" id="relicCountTab">0/10</span></button>
+      </div>
+      <div id="shopSkinsPane">
+        <div id="shopGrid"></div>
+      </div>
+      <div id="shopRelicsPane" class="hidden">
+        <div class="relic-progress" id="relicProgress">
+          <div class="relic-progress-bar"><i id="relicProgressFill" style="width:0%"></i></div>
+        </div>
+        <div id="relicGrid"></div>
+      </div>
+      <button id="shopClose" class="btn small center">KAPAT</button>
+    </div>
+  </div>
+
+  <!-- ======================= GÖREVLER ======================= -->
+  <div id="ovMissions" class="overlay hidden">
+    <div class="panel glass wide">
+      <h2>📋 GÜNLÜK GÖREVLER</h2>
+      <p class="tiny">Her gün yenilenir · ödülleri topla</p>
+      <div id="missionList"></div>
+      <button id="missionsClose" class="btn small center">KAPAT</button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="lb-config.js"></script>
+  <script src="leaderboard.js"></script>
+  <script src="levels.js"></script>
+  <script src="progress.js"></script>
+  <script src="game.js"></script>
+  <script src="map.js"></script>
+  <script src="preview.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>
