@@ -16,3 +16,5 @@ Only rules that change decisions. One line each, with source.
 - C-012: Arayüz/UX dili Türkçe kalır (orijinaldeki gibi) (source: reference/www)
 - C-013: Kayıt her önemli olayda anında yazılır; şema SPEC §5 ile aynı (source: SPEC §5)
 - C-014: Kimlik = sağlayıcı `sub` değeri; e-posta hiçbir yerde saklanmaz/gösterilmez (source: SPEC §7.2/§7.5)
+- C-015: Flutter oyun motoru/ses/efekt PAKETLERİ kullanılabilir (kullanıcı izni, 2026-10-25); karar kriteri KALİTEDİR — paket kaliteyi yükseltiyorsa kullanılır, düşük kaliteli kolaylık asla tercih edilmez (source: user, mesaj)
+- C-016: "Düşük kalitede yapma" — her bileşen premium/üretim kalitesinde olacak; hız uğruna kalite kısayolu yok (source: user, mesaj)
