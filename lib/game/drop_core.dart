@@ -79,7 +79,9 @@ double speedMultiplier(int placed) {
 /// Bir karede süzülen bloğun ilerlemesi (sınırlarda sepgör).
 Moving stepMoving(Moving moving, Block top, int placed, double dt, [double speedScale = 1]) {
   final b = movingBounds(top);
-  final speed = travelRange(top.w) * 0.5 * speedMultiplier(placed) * speedScale;
+  // JS: (speedScale || 1) — 0/NaN falsey kabul edilir, 1'e düşer (game.js satır 53).
+  final ss = (speedScale == 0 || speedScale.isNaN) ? 1.0 : speedScale;
+  final speed = travelRange(top.w) * 0.5 * speedMultiplier(placed) * ss;
   moving.x += moving.dir * speed * dt;
   if (moving.x >= b.maxX) {
     moving.x = b.maxX;

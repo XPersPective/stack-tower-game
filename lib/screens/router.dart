@@ -1,0 +1,70 @@
+/// Stack Tower Game — ekran yönlendirme tablosu.
+library;
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../game/audio.dart';
+import '../game/game_session.dart';
+import '../game/levels.dart';
+import 'map_screen.dart';
+import 'menu_screen.dart';
+import 'play_screen.dart';
+import 'preview_screen.dart';
+import 'shop_screens.dart';
+
+/// Adlandırılmış rota sabitleri.
+class Routes {
+  static const menu = '/';
+  static const map = '/map';
+  static const preview = '/preview';
+  static const play = '/play';
+  static const playEndless = '/play-endless';
+  static const shop = '/shop';
+  static const missions = '/missions';
+  static const settings = '/settings';
+}
+
+Widget routeFor(RouteSettings settings) {
+  switch (settings.name) {
+    case Routes.map:
+      return const MapScreen();
+    case Routes.shop:
+      return const ShopScreen();
+    case Routes.missions:
+      return const MissionsScreen();
+    case Routes.settings:
+      return const SettingsScreen();
+    case Routes.preview:
+      return PreviewScreen(def: settings.arguments as LevelDef);
+    case Routes.play:
+      return PlayRoute(def: settings.arguments as LevelDef);
+    case Routes.playEndless:
+      return PlayRoute(def: endlessDef());
+    case Routes.menu:
+    default:
+      return const MenuScreen();
+  }
+}
+
+/// play ekranı argümanıyla: haritaya dönüş akışını router'da yönetir.
+class PlayRoute extends StatelessWidget {
+  const PlayRoute({super.key, required this.def});
+  final LevelDef def;
+
+  @override
+  Widget build(BuildContext context) {
+    return PlayScreen(
+      session: context.read<GameSession>(),
+      audio: context.read<AudioController>(),
+      def: def,
+      onExit: () {
+        Navigator.of(context).popUntil((r) => r.settings.name == Routes.map || r.isFirst);
+      },
+      onFlowDone: () {
+        // zincir bitti → haritaya dön (ui.js setTimeout(showMap) karşılığı)
+        Navigator.of(context).popUntil((r) => r.settings.name == Routes.map || r.isFirst);
+      },
+    );
+  }
+}

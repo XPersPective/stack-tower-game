@@ -280,7 +280,7 @@ CompleteResult completeLevel(SaveState state, LevelDef def,
     return out;
   }
 
-  final st = (stars == null || stars == 0) ? 1 : stars!;
+  final st = (stars == null || stars == 0) ? 1 : stars;
   out.stars = st;
   final first = state.completed[def.i] == null;
   out.firstClear = first;
