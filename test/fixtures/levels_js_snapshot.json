@@ -1,0 +1,5055 @@
+{
+ "levels": [
+  {
+   "i": 0,
+   "stage": 0,
+   "idx": 0,
+   "num": 1,
+   "target": 8,
+   "speed": 0.9,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 10,
+   "box": false,
+   "name": "NEON ŞEHİR 1",
+   "themeId": "sehir"
+  },
+  {
+   "i": 1,
+   "stage": 0,
+   "idx": 1,
+   "num": 2,
+   "target": 8,
+   "speed": 0.928,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 11,
+   "box": false,
+   "name": "NEON ŞEHİR 2",
+   "themeId": "sehir"
+  },
+  {
+   "i": 2,
+   "stage": 0,
+   "idx": 2,
+   "num": 3,
+   "target": 8,
+   "speed": 0.9560000000000001,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 11,
+   "box": false,
+   "name": "NEON ŞEHİR 3",
+   "themeId": "sehir"
+  },
+  {
+   "i": 3,
+   "stage": 0,
+   "idx": 3,
+   "num": 4,
+   "target": 8,
+   "speed": 0.984,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 12,
+   "box": false,
+   "name": "NEON ŞEHİR 4",
+   "themeId": "sehir"
+  },
+  {
+   "i": 4,
+   "stage": 0,
+   "idx": 4,
+   "num": 5,
+   "target": 9,
+   "speed": 1.012,
+   "tol": 6,
+   "modifier": "altin",
+   "coins": 37,
+   "box": false,
+   "name": "NEON ŞEHİR 5",
+   "themeId": "sehir"
+  },
+  {
+   "i": 5,
+   "stage": 0,
+   "idx": 5,
+   "num": 6,
+   "target": 9,
+   "speed": 1.04,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 13,
+   "box": false,
+   "name": "NEON ŞEHİR 6",
+   "themeId": "sehir"
+  },
+  {
+   "i": 6,
+   "stage": 0,
+   "idx": 6,
+   "num": 7,
+   "target": 9,
+   "speed": 1.068,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 23,
+   "box": true,
+   "name": "NEON ŞEHİR 7",
+   "themeId": "sehir"
+  },
+  {
+   "i": 7,
+   "stage": 0,
+   "idx": 7,
+   "num": 8,
+   "target": 9,
+   "speed": 1.096,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 14,
+   "box": false,
+   "name": "NEON ŞEHİR 8",
+   "themeId": "sehir"
+  },
+  {
+   "i": 8,
+   "stage": 0,
+   "idx": 8,
+   "num": 9,
+   "target": 9,
+   "speed": 1.124,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 14,
+   "box": false,
+   "name": "NEON ŞEHİR 9",
+   "themeId": "sehir"
+  },
+  {
+   "i": 9,
+   "stage": 0,
+   "idx": 9,
+   "num": 10,
+   "target": 9,
+   "speed": 1.1520000000000001,
+   "tol": 6,
+   "modifier": "altin",
+   "coins": 40,
+   "box": false,
+   "name": "NEON ŞEHİR 10",
+   "themeId": "sehir"
+  },
+  {
+   "i": 10,
+   "stage": 0,
+   "idx": 10,
+   "num": 11,
+   "target": 10,
+   "speed": 1.1800000000000002,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 15,
+   "box": false,
+   "name": "NEON ŞEHİR 11",
+   "themeId": "sehir"
+  },
+  {
+   "i": 11,
+   "stage": 0,
+   "idx": 11,
+   "num": 12,
+   "target": 10,
+   "speed": 1.208,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 16,
+   "box": false,
+   "name": "NEON ŞEHİR 12",
+   "themeId": "sehir"
+  },
+  {
+   "i": 12,
+   "stage": 0,
+   "idx": 12,
+   "num": 13,
+   "target": 10,
+   "speed": 1.236,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 16,
+   "box": false,
+   "name": "NEON ŞEHİR 13",
+   "themeId": "sehir"
+  },
+  {
+   "i": 13,
+   "stage": 0,
+   "idx": 13,
+   "num": 14,
+   "target": 10,
+   "speed": 1.264,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 27,
+   "box": true,
+   "name": "NEON ŞEHİR 14",
+   "themeId": "sehir"
+  },
+  {
+   "i": 14,
+   "stage": 0,
+   "idx": 14,
+   "num": 15,
+   "target": 16,
+   "speed": 1.6796000000000002,
+   "tol": 6,
+   "modifier": "patron",
+   "coins": 47,
+   "box": false,
+   "name": "NEON ŞEHİR 15",
+   "themeId": "sehir"
+  },
+  {
+   "i": 15,
+   "stage": 1,
+   "idx": 0,
+   "num": 16,
+   "target": 10,
+   "speed": 1.32,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 18,
+   "box": false,
+   "name": "BİYO ORMAN 1",
+   "themeId": "orman"
+  },
+  {
+   "i": 16,
+   "stage": 1,
+   "idx": 1,
+   "num": 17,
+   "target": 11,
+   "speed": 1.348,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 18,
+   "box": false,
+   "name": "BİYO ORMAN 2",
+   "themeId": "orman"
+  },
+  {
+   "i": 17,
+   "stage": 1,
+   "idx": 2,
+   "num": 18,
+   "target": 11,
+   "speed": 1.3760000000000001,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 19,
+   "box": false,
+   "name": "BİYO ORMAN 3",
+   "themeId": "orman"
+  },
+  {
+   "i": 18,
+   "stage": 1,
+   "idx": 3,
+   "num": 19,
+   "target": 11,
+   "speed": 1.5444,
+   "tol": 6,
+   "modifier": "ruzgar",
+   "coins": 19,
+   "box": false,
+   "name": "BİYO ORMAN 4",
+   "themeId": "orman"
+  },
+  {
+   "i": 19,
+   "stage": 1,
+   "idx": 4,
+   "num": 20,
+   "target": 11,
+   "speed": 1.432,
+   "tol": 6,
+   "modifier": "altin",
+   "coins": 45,
+   "box": false,
+   "name": "BİYO ORMAN 5",
+   "themeId": "orman"
+  },
+  {
+   "i": 20,
+   "stage": 1,
+   "idx": 5,
+   "num": 21,
+   "target": 11,
+   "speed": 1.46,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 30,
+   "box": true,
+   "name": "BİYO ORMAN 6",
+   "themeId": "orman"
+  },
+  {
+   "i": 21,
+   "stage": 1,
+   "idx": 6,
+   "num": 22,
+   "target": 11,
+   "speed": 1.488,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 21,
+   "box": false,
+   "name": "BİYO ORMAN 7",
+   "themeId": "orman"
+  },
+  {
+   "i": 22,
+   "stage": 1,
+   "idx": 7,
+   "num": 23,
+   "target": 12,
+   "speed": 1.516,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 21,
+   "box": false,
+   "name": "BİYO ORMAN 8",
+   "themeId": "orman"
+  },
+  {
+   "i": 23,
+   "stage": 1,
+   "idx": 8,
+   "num": 24,
+   "target": 12,
+   "speed": 1.544,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 22,
+   "box": false,
+   "name": "BİYO ORMAN 9",
+   "themeId": "orman"
+  },
+  {
+   "i": 24,
+   "stage": 1,
+   "idx": 9,
+   "num": 25,
+   "target": 12,
+   "speed": 1.572,
+   "tol": 6,
+   "modifier": "altin",
+   "coins": 47,
+   "box": false,
+   "name": "BİYO ORMAN 10",
+   "themeId": "orman"
+  },
+  {
+   "i": 25,
+   "stage": 1,
+   "idx": 10,
+   "num": 26,
+   "target": 12,
+   "speed": 1.7600000000000002,
+   "tol": 6,
+   "modifier": "ruzgar",
+   "coins": 23,
+   "box": false,
+   "name": "BİYO ORMAN 11",
+   "themeId": "orman"
+  },
+  {
+   "i": 26,
+   "stage": 1,
+   "idx": 11,
+   "num": 27,
+   "target": 12,
+   "speed": 1.6280000000000001,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 23,
+   "box": false,
+   "name": "BİYO ORMAN 12",
+   "themeId": "orman"
+  },
+  {
+   "i": 27,
+   "stage": 1,
+   "idx": 12,
+   "num": 28,
+   "target": 12,
+   "speed": 1.6560000000000001,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 34,
+   "box": true,
+   "name": "BİYO ORMAN 13",
+   "themeId": "orman"
+  },
+  {
+   "i": 28,
+   "stage": 1,
+   "idx": 13,
+   "num": 29,
+   "target": 12,
+   "speed": 1.6840000000000002,
+   "tol": 6,
+   "modifier": "normal",
+   "coins": 24,
+   "box": false,
+   "name": "BİYO ORMAN 14",
+   "themeId": "orman"
+  },
+  {
+   "i": 29,
+   "stage": 1,
+   "idx": 14,
+   "num": 30,
+   "target": 19,
+   "speed": 2.2256000000000005,
+   "tol": 6,
+   "modifier": "patron",
+   "coins": 55,
+   "box": false,
+   "name": "BİYO ORMAN 15",
+   "themeId": "orman"
+  },
+  {
+   "i": 30,
+   "stage": 2,
+   "idx": 0,
+   "num": 31,
+   "target": 13,
+   "speed": 1.74,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 25,
+   "box": false,
+   "name": "ALTIN ÇÖL 1",
+   "themeId": "col"
+  },
+  {
+   "i": 31,
+   "stage": 2,
+   "idx": 1,
+   "num": 32,
+   "target": 13,
+   "speed": 1.768,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 26,
+   "box": false,
+   "name": "ALTIN ÇÖL 2",
+   "themeId": "col"
+  },
+  {
+   "i": 32,
+   "stage": 2,
+   "idx": 2,
+   "num": 33,
+   "target": 13,
+   "speed": 1.796,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 26,
+   "box": false,
+   "name": "ALTIN ÇÖL 3",
+   "themeId": "col"
+  },
+  {
+   "i": 33,
+   "stage": 2,
+   "idx": 3,
+   "num": 34,
+   "target": 13,
+   "speed": 2.0064,
+   "tol": 5,
+   "modifier": "ruzgar",
+   "coins": 27,
+   "box": false,
+   "name": "ALTIN ÇÖL 4",
+   "themeId": "col"
+  },
+  {
+   "i": 34,
+   "stage": 2,
+   "idx": 4,
+   "num": 35,
+   "target": 13,
+   "speed": 1.852,
+   "tol": 5,
+   "modifier": "altin",
+   "coins": 62,
+   "box": true,
+   "name": "ALTIN ÇÖL 5",
+   "themeId": "col"
+  },
+  {
+   "i": 35,
+   "stage": 2,
+   "idx": 5,
+   "num": 36,
+   "target": 14,
+   "speed": 2.726,
+   "tol": 5,
+   "modifier": "hizli",
+   "coins": 28,
+   "box": false,
+   "name": "ALTIN ÇÖL 6",
+   "themeId": "col"
+  },
+  {
+   "i": 36,
+   "stage": 2,
+   "idx": 6,
+   "num": 37,
+   "target": 14,
+   "speed": 1.908,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 28,
+   "box": false,
+   "name": "ALTIN ÇÖL 7",
+   "themeId": "col"
+  },
+  {
+   "i": 37,
+   "stage": 2,
+   "idx": 7,
+   "num": 38,
+   "target": 14,
+   "speed": 1.936,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 29,
+   "box": false,
+   "name": "ALTIN ÇÖL 8",
+   "themeId": "col"
+  },
+  {
+   "i": 38,
+   "stage": 2,
+   "idx": 8,
+   "num": 39,
+   "target": 14,
+   "speed": 1.964,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 29,
+   "box": false,
+   "name": "ALTIN ÇÖL 9",
+   "themeId": "col"
+  },
+  {
+   "i": 39,
+   "stage": 2,
+   "idx": 9,
+   "num": 40,
+   "target": 14,
+   "speed": 1.992,
+   "tol": 5,
+   "modifier": "altin",
+   "coins": 55,
+   "box": false,
+   "name": "ALTIN ÇÖL 10",
+   "themeId": "col"
+  },
+  {
+   "i": 40,
+   "stage": 2,
+   "idx": 10,
+   "num": 41,
+   "target": 14,
+   "speed": 2.2220000000000004,
+   "tol": 5,
+   "modifier": "ruzgar",
+   "coins": 30,
+   "box": false,
+   "name": "ALTIN ÇÖL 11",
+   "themeId": "col"
+  },
+  {
+   "i": 41,
+   "stage": 2,
+   "idx": 11,
+   "num": 42,
+   "target": 15,
+   "speed": 2.048,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 41,
+   "box": true,
+   "name": "ALTIN ÇÖL 12",
+   "themeId": "col"
+  },
+  {
+   "i": 42,
+   "stage": 2,
+   "idx": 12,
+   "num": 43,
+   "target": 15,
+   "speed": 3.0102,
+   "tol": 5,
+   "modifier": "hizli",
+   "coins": 31,
+   "box": false,
+   "name": "ALTIN ÇÖL 13",
+   "themeId": "col"
+  },
+  {
+   "i": 43,
+   "stage": 2,
+   "idx": 13,
+   "num": 44,
+   "target": 15,
+   "speed": 2.104,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 32,
+   "box": false,
+   "name": "ALTIN ÇÖL 14",
+   "themeId": "col"
+  },
+  {
+   "i": 44,
+   "stage": 2,
+   "idx": 14,
+   "num": 45,
+   "target": 21,
+   "speed": 2.7716000000000003,
+   "tol": 5,
+   "modifier": "patron",
+   "coins": 62,
+   "box": false,
+   "name": "ALTIN ÇÖL 15",
+   "themeId": "col"
+  },
+  {
+   "i": 45,
+   "stage": 3,
+   "idx": 0,
+   "num": 46,
+   "target": 15,
+   "speed": 2.16,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 33,
+   "box": false,
+   "name": "BUZ DÜNYA 1",
+   "themeId": "buz"
+  },
+  {
+   "i": 46,
+   "stage": 3,
+   "idx": 1,
+   "num": 47,
+   "target": 15,
+   "speed": 2.188,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 33,
+   "box": false,
+   "name": "BUZ DÜNYA 2",
+   "themeId": "buz"
+  },
+  {
+   "i": 47,
+   "stage": 3,
+   "idx": 2,
+   "num": 48,
+   "target": 16,
+   "speed": 2.216,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 34,
+   "box": false,
+   "name": "BUZ DÜNYA 3",
+   "themeId": "buz"
+  },
+  {
+   "i": 48,
+   "stage": 3,
+   "idx": 3,
+   "num": 49,
+   "target": 16,
+   "speed": 2.4684000000000004,
+   "tol": 5,
+   "modifier": "ruzgar",
+   "coins": 44,
+   "box": true,
+   "name": "BUZ DÜNYA 4",
+   "themeId": "buz"
+  },
+  {
+   "i": 49,
+   "stage": 3,
+   "idx": 4,
+   "num": 50,
+   "target": 16,
+   "speed": 2.2720000000000002,
+   "tol": 5,
+   "modifier": "altin",
+   "coins": 60,
+   "box": false,
+   "name": "BUZ DÜNYA 5",
+   "themeId": "buz"
+  },
+  {
+   "i": 50,
+   "stage": 3,
+   "idx": 5,
+   "num": 51,
+   "target": 16,
+   "speed": 3.2,
+   "tol": 5,
+   "modifier": "hizli",
+   "coins": 35,
+   "box": false,
+   "name": "BUZ DÜNYA 6",
+   "themeId": "buz"
+  },
+  {
+   "i": 51,
+   "stage": 3,
+   "idx": 6,
+   "num": 52,
+   "target": 16,
+   "speed": 2.328,
+   "tol": 5,
+   "modifier": "karanlik",
+   "coins": 36,
+   "box": false,
+   "name": "BUZ DÜNYA 7",
+   "themeId": "buz"
+  },
+  {
+   "i": 52,
+   "stage": 3,
+   "idx": 7,
+   "num": 53,
+   "target": 16,
+   "speed": 2.356,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 36,
+   "box": false,
+   "name": "BUZ DÜNYA 8",
+   "themeId": "buz"
+  },
+  {
+   "i": 53,
+   "stage": 3,
+   "idx": 8,
+   "num": 54,
+   "target": 16,
+   "speed": 2.384,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 37,
+   "box": false,
+   "name": "BUZ DÜNYA 9",
+   "themeId": "buz"
+  },
+  {
+   "i": 54,
+   "stage": 3,
+   "idx": 9,
+   "num": 55,
+   "target": 17,
+   "speed": 2.412,
+   "tol": 5,
+   "modifier": "altin",
+   "coins": 62,
+   "box": false,
+   "name": "BUZ DÜNYA 10",
+   "themeId": "buz"
+  },
+  {
+   "i": 55,
+   "stage": 3,
+   "idx": 10,
+   "num": 56,
+   "target": 17,
+   "speed": 2.684,
+   "tol": 5,
+   "modifier": "ruzgar",
+   "coins": 48,
+   "box": true,
+   "name": "BUZ DÜNYA 11",
+   "themeId": "buz"
+  },
+  {
+   "i": 56,
+   "stage": 3,
+   "idx": 11,
+   "num": 57,
+   "target": 17,
+   "speed": 2.468,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 38,
+   "box": false,
+   "name": "BUZ DÜNYA 12",
+   "themeId": "buz"
+  },
+  {
+   "i": 57,
+   "stage": 3,
+   "idx": 12,
+   "num": 58,
+   "target": 17,
+   "speed": 3.2,
+   "tol": 5,
+   "modifier": "hizli",
+   "coins": 39,
+   "box": false,
+   "name": "BUZ DÜNYA 13",
+   "themeId": "buz"
+  },
+  {
+   "i": 58,
+   "stage": 3,
+   "idx": 13,
+   "num": 59,
+   "target": 17,
+   "speed": 2.524,
+   "tol": 5,
+   "modifier": "karanlik",
+   "coins": 39,
+   "box": false,
+   "name": "BUZ DÜNYA 14",
+   "themeId": "buz"
+  },
+  {
+   "i": 59,
+   "stage": 3,
+   "idx": 14,
+   "num": 60,
+   "target": 23,
+   "speed": 3.3176,
+   "tol": 5,
+   "modifier": "patron",
+   "coins": 70,
+   "box": false,
+   "name": "BUZ DÜNYA 15",
+   "themeId": "buz"
+  },
+  {
+   "i": 60,
+   "stage": 4,
+   "idx": 0,
+   "num": 61,
+   "target": 18,
+   "speed": 2.58,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 40,
+   "box": false,
+   "name": "UZAY 1",
+   "themeId": "uzay"
+  },
+  {
+   "i": 61,
+   "stage": 4,
+   "idx": 1,
+   "num": 62,
+   "target": 18,
+   "speed": 2.608,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 41,
+   "box": false,
+   "name": "UZAY 2",
+   "themeId": "uzay"
+  },
+  {
+   "i": 62,
+   "stage": 4,
+   "idx": 2,
+   "num": 63,
+   "target": 18,
+   "speed": 1.5816000000000001,
+   "tol": 7,
+   "modifier": "yavas",
+   "coins": 66,
+   "box": true,
+   "name": "UZAY 3",
+   "themeId": "uzay"
+  },
+  {
+   "i": 63,
+   "stage": 4,
+   "idx": 3,
+   "num": 64,
+   "target": 18,
+   "speed": 2.9304000000000006,
+   "tol": 4,
+   "modifier": "ruzgar",
+   "coins": 42,
+   "box": false,
+   "name": "UZAY 4",
+   "themeId": "uzay"
+  },
+  {
+   "i": 64,
+   "stage": 4,
+   "idx": 4,
+   "num": 65,
+   "target": 18,
+   "speed": 2.692,
+   "tol": 4,
+   "modifier": "altin",
+   "coins": 67,
+   "box": false,
+   "name": "UZAY 5",
+   "themeId": "uzay"
+  },
+  {
+   "i": 65,
+   "stage": 4,
+   "idx": 5,
+   "num": 66,
+   "target": 18,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "hizli",
+   "coins": 43,
+   "box": false,
+   "name": "UZAY 6",
+   "themeId": "uzay"
+  },
+  {
+   "i": 66,
+   "stage": 4,
+   "idx": 6,
+   "num": 67,
+   "target": 19,
+   "speed": 2.748,
+   "tol": 4,
+   "modifier": "karanlik",
+   "coins": 43,
+   "box": false,
+   "name": "UZAY 7",
+   "themeId": "uzay"
+  },
+  {
+   "i": 67,
+   "stage": 4,
+   "idx": 7,
+   "num": 68,
+   "target": 19,
+   "speed": 2.7760000000000002,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 44,
+   "box": false,
+   "name": "UZAY 8",
+   "themeId": "uzay"
+  },
+  {
+   "i": 68,
+   "stage": 4,
+   "idx": 8,
+   "num": 69,
+   "target": 19,
+   "speed": 2.8040000000000003,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 44,
+   "box": false,
+   "name": "UZAY 9",
+   "themeId": "uzay"
+  },
+  {
+   "i": 69,
+   "stage": 4,
+   "idx": 9,
+   "num": 70,
+   "target": 19,
+   "speed": 2.832,
+   "tol": 4,
+   "modifier": "altin",
+   "coins": 80,
+   "box": true,
+   "name": "UZAY 10",
+   "themeId": "uzay"
+  },
+  {
+   "i": 70,
+   "stage": 4,
+   "idx": 10,
+   "num": 71,
+   "target": 19,
+   "speed": 3.146,
+   "tol": 4,
+   "modifier": "ruzgar",
+   "coins": 45,
+   "box": false,
+   "name": "UZAY 11",
+   "themeId": "uzay"
+  },
+  {
+   "i": 71,
+   "stage": 4,
+   "idx": 11,
+   "num": 72,
+   "target": 19,
+   "speed": 2.888,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 46,
+   "box": false,
+   "name": "UZAY 12",
+   "themeId": "uzay"
+  },
+  {
+   "i": 72,
+   "stage": 4,
+   "idx": 12,
+   "num": 73,
+   "target": 20,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "hizli",
+   "coins": 46,
+   "box": false,
+   "name": "UZAY 13",
+   "themeId": "uzay"
+  },
+  {
+   "i": 73,
+   "stage": 4,
+   "idx": 13,
+   "num": 74,
+   "target": 20,
+   "speed": 2.944,
+   "tol": 4,
+   "modifier": "karanlik",
+   "coins": 47,
+   "box": false,
+   "name": "UZAY 14",
+   "themeId": "uzay"
+  },
+  {
+   "i": 74,
+   "stage": 4,
+   "idx": 14,
+   "num": 75,
+   "target": 26,
+   "speed": 3.4,
+   "tol": 4,
+   "modifier": "patron",
+   "coins": 77,
+   "box": false,
+   "name": "UZAY 15",
+   "themeId": "uzay"
+  },
+  {
+   "i": 75,
+   "stage": 5,
+   "idx": 0,
+   "num": 76,
+   "target": 20,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 48,
+   "box": false,
+   "name": "VOLKAN 1",
+   "themeId": "volkan"
+  },
+  {
+   "i": 76,
+   "stage": 5,
+   "idx": 1,
+   "num": 77,
+   "target": 20,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 58,
+   "box": true,
+   "name": "VOLKAN 2",
+   "themeId": "volkan"
+  },
+  {
+   "i": 77,
+   "stage": 5,
+   "idx": 2,
+   "num": 78,
+   "target": 20,
+   "speed": 1.7999999999999998,
+   "tol": 7,
+   "modifier": "yavas",
+   "coins": 64,
+   "box": false,
+   "name": "VOLKAN 3",
+   "themeId": "volkan"
+  },
+  {
+   "i": 78,
+   "stage": 5,
+   "idx": 3,
+   "num": 79,
+   "target": 20,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "ruzgar",
+   "coins": 49,
+   "box": false,
+   "name": "VOLKAN 4",
+   "themeId": "volkan"
+  },
+  {
+   "i": 79,
+   "stage": 5,
+   "idx": 4,
+   "num": 80,
+   "target": 21,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "altin",
+   "coins": 75,
+   "box": false,
+   "name": "VOLKAN 5",
+   "themeId": "volkan"
+  },
+  {
+   "i": 80,
+   "stage": 5,
+   "idx": 5,
+   "num": 81,
+   "target": 21,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "hizli",
+   "coins": 50,
+   "box": false,
+   "name": "VOLKAN 6",
+   "themeId": "volkan"
+  },
+  {
+   "i": 81,
+   "stage": 5,
+   "idx": 6,
+   "num": 82,
+   "target": 21,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "karanlik",
+   "coins": 51,
+   "box": false,
+   "name": "VOLKAN 7",
+   "themeId": "volkan"
+  },
+  {
+   "i": 82,
+   "stage": 5,
+   "idx": 7,
+   "num": 83,
+   "target": 21,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 51,
+   "box": false,
+   "name": "VOLKAN 8",
+   "themeId": "volkan"
+  },
+  {
+   "i": 83,
+   "stage": 5,
+   "idx": 8,
+   "num": 84,
+   "target": 21,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 62,
+   "box": true,
+   "name": "VOLKAN 9",
+   "themeId": "volkan"
+  },
+  {
+   "i": 84,
+   "stage": 5,
+   "idx": 9,
+   "num": 85,
+   "target": 21,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "altin",
+   "coins": 77,
+   "box": false,
+   "name": "VOLKAN 10",
+   "themeId": "volkan"
+  },
+  {
+   "i": 85,
+   "stage": 5,
+   "idx": 10,
+   "num": 86,
+   "target": 22,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "ruzgar",
+   "coins": 53,
+   "box": false,
+   "name": "VOLKAN 11",
+   "themeId": "volkan"
+  },
+  {
+   "i": 86,
+   "stage": 5,
+   "idx": 11,
+   "num": 87,
+   "target": 22,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 53,
+   "box": false,
+   "name": "VOLKAN 12",
+   "themeId": "volkan"
+  },
+  {
+   "i": 87,
+   "stage": 5,
+   "idx": 12,
+   "num": 88,
+   "target": 22,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "hizli",
+   "coins": 54,
+   "box": false,
+   "name": "VOLKAN 13",
+   "themeId": "volkan"
+  },
+  {
+   "i": 88,
+   "stage": 5,
+   "idx": 13,
+   "num": 89,
+   "target": 22,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "karanlik",
+   "coins": 54,
+   "box": false,
+   "name": "VOLKAN 14",
+   "themeId": "volkan"
+  },
+  {
+   "i": 89,
+   "stage": 5,
+   "idx": 14,
+   "num": 90,
+   "target": 28,
+   "speed": 3.4,
+   "tol": 4,
+   "modifier": "patron",
+   "coins": 85,
+   "box": false,
+   "name": "VOLKAN 15",
+   "themeId": "volkan"
+  },
+  {
+   "i": 90,
+   "stage": 6,
+   "idx": 0,
+   "num": 91,
+   "target": 22,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 65,
+   "box": true,
+   "name": "BULUT ŞEHİR 1",
+   "themeId": "bulut"
+  },
+  {
+   "i": 91,
+   "stage": 6,
+   "idx": 1,
+   "num": 92,
+   "target": 23,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 56,
+   "box": false,
+   "name": "BULUT ŞEHİR 2",
+   "themeId": "bulut"
+  },
+  {
+   "i": 92,
+   "stage": 6,
+   "idx": 2,
+   "num": 93,
+   "target": 23,
+   "speed": 1.7999999999999998,
+   "tol": 7,
+   "modifier": "yavas",
+   "coins": 71,
+   "box": false,
+   "name": "BULUT ŞEHİR 3",
+   "themeId": "bulut"
+  },
+  {
+   "i": 93,
+   "stage": 6,
+   "idx": 3,
+   "num": 94,
+   "target": 23,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "ruzgar",
+   "coins": 57,
+   "box": false,
+   "name": "BULUT ŞEHİR 4",
+   "themeId": "bulut"
+  },
+  {
+   "i": 94,
+   "stage": 6,
+   "idx": 4,
+   "num": 95,
+   "target": 23,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "altin",
+   "coins": 82,
+   "box": false,
+   "name": "BULUT ŞEHİR 5",
+   "themeId": "bulut"
+  },
+  {
+   "i": 95,
+   "stage": 6,
+   "idx": 5,
+   "num": 96,
+   "target": 23,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "hizli",
+   "coins": 58,
+   "box": false,
+   "name": "BULUT ŞEHİR 6",
+   "themeId": "bulut"
+  },
+  {
+   "i": 96,
+   "stage": 6,
+   "idx": 6,
+   "num": 97,
+   "target": 23,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "karanlik",
+   "coins": 58,
+   "box": false,
+   "name": "BULUT ŞEHİR 7",
+   "themeId": "bulut"
+  },
+  {
+   "i": 97,
+   "stage": 6,
+   "idx": 7,
+   "num": 98,
+   "target": 24,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 69,
+   "box": true,
+   "name": "BULUT ŞEHİR 8",
+   "themeId": "bulut"
+  },
+  {
+   "i": 98,
+   "stage": 6,
+   "idx": 8,
+   "num": 99,
+   "target": 24,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 59,
+   "box": false,
+   "name": "BULUT ŞEHİR 9",
+   "themeId": "bulut"
+  },
+  {
+   "i": 99,
+   "stage": 6,
+   "idx": 9,
+   "num": 100,
+   "target": 24,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "altin",
+   "coins": 85,
+   "box": false,
+   "name": "BULUT ŞEHİR 10",
+   "themeId": "bulut"
+  },
+  {
+   "i": 100,
+   "stage": 6,
+   "idx": 10,
+   "num": 101,
+   "target": 24,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "ruzgar",
+   "coins": 60,
+   "box": false,
+   "name": "BULUT ŞEHİR 11",
+   "themeId": "bulut"
+  },
+  {
+   "i": 101,
+   "stage": 6,
+   "idx": 11,
+   "num": 102,
+   "target": 24,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "deprem",
+   "coins": 81,
+   "box": false,
+   "name": "BULUT ŞEHİR 12",
+   "themeId": "bulut"
+  },
+  {
+   "i": 102,
+   "stage": 6,
+   "idx": 12,
+   "num": 103,
+   "target": 24,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "hizli",
+   "coins": 61,
+   "box": false,
+   "name": "BULUT ŞEHİR 13",
+   "themeId": "bulut"
+  },
+  {
+   "i": 103,
+   "stage": 6,
+   "idx": 13,
+   "num": 104,
+   "target": 24,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "karanlik",
+   "coins": 62,
+   "box": false,
+   "name": "BULUT ŞEHİR 14",
+   "themeId": "bulut"
+  },
+  {
+   "i": 104,
+   "stage": 6,
+   "idx": 14,
+   "num": 105,
+   "target": 31,
+   "speed": 3.4,
+   "tol": 4,
+   "modifier": "patron",
+   "coins": 102,
+   "box": true,
+   "name": "BULUT ŞEHİR 15",
+   "themeId": "bulut"
+  },
+  {
+   "i": 105,
+   "stage": 7,
+   "idx": 0,
+   "num": 106,
+   "target": 25,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 63,
+   "box": false,
+   "name": "DERİN DENİZ 1",
+   "themeId": "deniz"
+  },
+  {
+   "i": 106,
+   "stage": 7,
+   "idx": 1,
+   "num": 107,
+   "target": 25,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 63,
+   "box": false,
+   "name": "DERİN DENİZ 2",
+   "themeId": "deniz"
+  },
+  {
+   "i": 107,
+   "stage": 7,
+   "idx": 2,
+   "num": 108,
+   "target": 25,
+   "speed": 1.7999999999999998,
+   "tol": 7,
+   "modifier": "yavas",
+   "coins": 79,
+   "box": false,
+   "name": "DERİN DENİZ 3",
+   "themeId": "deniz"
+  },
+  {
+   "i": 108,
+   "stage": 7,
+   "idx": 3,
+   "num": 109,
+   "target": 25,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "ruzgar",
+   "coins": 64,
+   "box": false,
+   "name": "DERİN DENİZ 4",
+   "themeId": "deniz"
+  },
+  {
+   "i": 109,
+   "stage": 7,
+   "idx": 4,
+   "num": 110,
+   "target": 25,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "altin",
+   "coins": 90,
+   "box": false,
+   "name": "DERİN DENİZ 5",
+   "themeId": "deniz"
+  },
+  {
+   "i": 110,
+   "stage": 7,
+   "idx": 5,
+   "num": 111,
+   "target": 26,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "hizli",
+   "coins": 65,
+   "box": false,
+   "name": "DERİN DENİZ 6",
+   "themeId": "deniz"
+  },
+  {
+   "i": 111,
+   "stage": 7,
+   "idx": 6,
+   "num": 112,
+   "target": 26,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "karanlik",
+   "coins": 76,
+   "box": true,
+   "name": "DERİN DENİZ 7",
+   "themeId": "deniz"
+  },
+  {
+   "i": 112,
+   "stage": 7,
+   "idx": 7,
+   "num": 113,
+   "target": 26,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 66,
+   "box": false,
+   "name": "DERİN DENİZ 8",
+   "themeId": "deniz"
+  },
+  {
+   "i": 113,
+   "stage": 7,
+   "idx": 8,
+   "num": 114,
+   "target": 26,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 67,
+   "box": false,
+   "name": "DERİN DENİZ 9",
+   "themeId": "deniz"
+  },
+  {
+   "i": 114,
+   "stage": 7,
+   "idx": 9,
+   "num": 115,
+   "target": 26,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "altin",
+   "coins": 92,
+   "box": false,
+   "name": "DERİN DENİZ 10",
+   "themeId": "deniz"
+  },
+  {
+   "i": 115,
+   "stage": 7,
+   "idx": 10,
+   "num": 116,
+   "target": 26,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "ruzgar",
+   "coins": 68,
+   "box": false,
+   "name": "DERİN DENİZ 11",
+   "themeId": "deniz"
+  },
+  {
+   "i": 116,
+   "stage": 7,
+   "idx": 11,
+   "num": 117,
+   "target": 27,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "deprem",
+   "coins": 88,
+   "box": false,
+   "name": "DERİN DENİZ 12",
+   "themeId": "deniz"
+  },
+  {
+   "i": 117,
+   "stage": 7,
+   "idx": 12,
+   "num": 118,
+   "target": 27,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "hizli",
+   "coins": 69,
+   "box": false,
+   "name": "DERİN DENİZ 13",
+   "themeId": "deniz"
+  },
+  {
+   "i": 118,
+   "stage": 7,
+   "idx": 13,
+   "num": 119,
+   "target": 27,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "karanlik",
+   "coins": 79,
+   "box": true,
+   "name": "DERİN DENİZ 14",
+   "themeId": "deniz"
+  },
+  {
+   "i": 119,
+   "stage": 7,
+   "idx": 14,
+   "num": 120,
+   "target": 33,
+   "speed": 3.4,
+   "tol": 4,
+   "modifier": "patron",
+   "coins": 100,
+   "box": false,
+   "name": "DERİN DENİZ 15",
+   "themeId": "deniz"
+  },
+  {
+   "i": 120,
+   "stage": 8,
+   "idx": 0,
+   "num": 121,
+   "target": 27,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 70,
+   "box": false,
+   "name": "KRİSTAL MAĞARA 1",
+   "themeId": "kristal"
+  },
+  {
+   "i": 121,
+   "stage": 8,
+   "idx": 1,
+   "num": 122,
+   "target": 27,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "akan",
+   "coins": 91,
+   "box": false,
+   "name": "KRİSTAL MAĞARA 2",
+   "themeId": "kristal"
+  },
+  {
+   "i": 122,
+   "stage": 8,
+   "idx": 2,
+   "num": 123,
+   "target": 28,
+   "speed": 1.7999999999999998,
+   "tol": 7,
+   "modifier": "yavas",
+   "coins": 86,
+   "box": false,
+   "name": "KRİSTAL MAĞARA 3",
+   "themeId": "kristal"
+  },
+  {
+   "i": 123,
+   "stage": 8,
+   "idx": 3,
+   "num": 124,
+   "target": 28,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "ruzgar",
+   "coins": 72,
+   "box": false,
+   "name": "KRİSTAL MAĞARA 4",
+   "themeId": "kristal"
+  },
+  {
+   "i": 124,
+   "stage": 8,
+   "idx": 4,
+   "num": 125,
+   "target": 28,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "altin",
+   "coins": 97,
+   "box": false,
+   "name": "KRİSTAL MAĞARA 5",
+   "themeId": "kristal"
+  },
+  {
+   "i": 125,
+   "stage": 8,
+   "idx": 5,
+   "num": 126,
+   "target": 28,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "hizli",
+   "coins": 83,
+   "box": true,
+   "name": "KRİSTAL MAĞARA 6",
+   "themeId": "kristal"
+  },
+  {
+   "i": 126,
+   "stage": 8,
+   "idx": 6,
+   "num": 127,
+   "target": 28,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "karanlik",
+   "coins": 73,
+   "box": false,
+   "name": "KRİSTAL MAĞARA 7",
+   "themeId": "kristal"
+  },
+  {
+   "i": 127,
+   "stage": 8,
+   "idx": 7,
+   "num": 128,
+   "target": 28,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 74,
+   "box": false,
+   "name": "KRİSTAL MAĞARA 8",
+   "themeId": "kristal"
+  },
+  {
+   "i": 128,
+   "stage": 8,
+   "idx": 8,
+   "num": 129,
+   "target": 28,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "akan",
+   "coins": 94,
+   "box": false,
+   "name": "KRİSTAL MAĞARA 9",
+   "themeId": "kristal"
+  },
+  {
+   "i": 129,
+   "stage": 8,
+   "idx": 9,
+   "num": 130,
+   "target": 29,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "altin",
+   "coins": 100,
+   "box": false,
+   "name": "KRİSTAL MAĞARA 10",
+   "themeId": "kristal"
+  },
+  {
+   "i": 130,
+   "stage": 8,
+   "idx": 10,
+   "num": 131,
+   "target": 29,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "ruzgar",
+   "coins": 75,
+   "box": false,
+   "name": "KRİSTAL MAĞARA 11",
+   "themeId": "kristal"
+  },
+  {
+   "i": 131,
+   "stage": 8,
+   "idx": 11,
+   "num": 132,
+   "target": 29,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "deprem",
+   "coins": 96,
+   "box": false,
+   "name": "KRİSTAL MAĞARA 12",
+   "themeId": "kristal"
+  },
+  {
+   "i": 132,
+   "stage": 8,
+   "idx": 12,
+   "num": 133,
+   "target": 29,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "hizli",
+   "coins": 86,
+   "box": true,
+   "name": "KRİSTAL MAĞARA 13",
+   "themeId": "kristal"
+  },
+  {
+   "i": 133,
+   "stage": 8,
+   "idx": 13,
+   "num": 134,
+   "target": 29,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "karanlik",
+   "coins": 77,
+   "box": false,
+   "name": "KRİSTAL MAĞARA 14",
+   "themeId": "kristal"
+  },
+  {
+   "i": 134,
+   "stage": 8,
+   "idx": 14,
+   "num": 135,
+   "target": 35,
+   "speed": 3.4,
+   "tol": 4,
+   "modifier": "patron",
+   "coins": 107,
+   "box": false,
+   "name": "KRİSTAL MAĞARA 15",
+   "themeId": "kristal"
+  },
+  {
+   "i": 135,
+   "stage": 9,
+   "idx": 0,
+   "num": 136,
+   "target": 30,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 78,
+   "box": false,
+   "name": "SON KULE · ZİRVE 1",
+   "themeId": "zirve"
+  },
+  {
+   "i": 136,
+   "stage": 9,
+   "idx": 1,
+   "num": 137,
+   "target": 30,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "akan",
+   "coins": 98,
+   "box": false,
+   "name": "SON KULE · ZİRVE 2",
+   "themeId": "zirve"
+  },
+  {
+   "i": 137,
+   "stage": 9,
+   "idx": 2,
+   "num": 138,
+   "target": 30,
+   "speed": 1.7999999999999998,
+   "tol": 7,
+   "modifier": "yavas",
+   "coins": 94,
+   "box": false,
+   "name": "SON KULE · ZİRVE 3",
+   "themeId": "zirve"
+  },
+  {
+   "i": 138,
+   "stage": 9,
+   "idx": 3,
+   "num": 139,
+   "target": 30,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "ruzgar",
+   "coins": 79,
+   "box": false,
+   "name": "SON KULE · ZİRVE 4",
+   "themeId": "zirve"
+  },
+  {
+   "i": 139,
+   "stage": 9,
+   "idx": 4,
+   "num": 140,
+   "target": 30,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "altin",
+   "coins": 115,
+   "box": true,
+   "name": "SON KULE · ZİRVE 5",
+   "themeId": "zirve"
+  },
+  {
+   "i": 140,
+   "stage": 9,
+   "idx": 5,
+   "num": 141,
+   "target": 30,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "hizli",
+   "coins": 80,
+   "box": false,
+   "name": "SON KULE · ZİRVE 6",
+   "themeId": "zirve"
+  },
+  {
+   "i": 141,
+   "stage": 9,
+   "idx": 6,
+   "num": 142,
+   "target": 31,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "karanlik",
+   "coins": 81,
+   "box": false,
+   "name": "SON KULE · ZİRVE 7",
+   "themeId": "zirve"
+  },
+  {
+   "i": 142,
+   "stage": 9,
+   "idx": 7,
+   "num": 143,
+   "target": 31,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "normal",
+   "coins": 81,
+   "box": false,
+   "name": "SON KULE · ZİRVE 8",
+   "themeId": "zirve"
+  },
+  {
+   "i": 143,
+   "stage": 9,
+   "idx": 8,
+   "num": 144,
+   "target": 31,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "akan",
+   "coins": 102,
+   "box": false,
+   "name": "SON KULE · ZİRVE 9",
+   "themeId": "zirve"
+  },
+  {
+   "i": 144,
+   "stage": 9,
+   "idx": 9,
+   "num": 145,
+   "target": 31,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "altin",
+   "coins": 107,
+   "box": false,
+   "name": "SON KULE · ZİRVE 10",
+   "themeId": "zirve"
+  },
+  {
+   "i": 145,
+   "stage": 9,
+   "idx": 10,
+   "num": 146,
+   "target": 31,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "ruzgar",
+   "coins": 83,
+   "box": false,
+   "name": "SON KULE · ZİRVE 11",
+   "themeId": "zirve"
+  },
+  {
+   "i": 146,
+   "stage": 9,
+   "idx": 11,
+   "num": 147,
+   "target": 31,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "deprem",
+   "coins": 113,
+   "box": true,
+   "name": "SON KULE · ZİRVE 12",
+   "themeId": "zirve"
+  },
+  {
+   "i": 147,
+   "stage": 9,
+   "idx": 12,
+   "num": 148,
+   "target": 32,
+   "speed": 3.2,
+   "tol": 4,
+   "modifier": "hizli",
+   "coins": 84,
+   "box": false,
+   "name": "SON KULE · ZİRVE 13",
+   "themeId": "zirve"
+  },
+  {
+   "i": 148,
+   "stage": 9,
+   "idx": 13,
+   "num": 149,
+   "target": 32,
+   "speed": 3,
+   "tol": 4,
+   "modifier": "karanlik",
+   "coins": 84,
+   "box": false,
+   "name": "SON KULE · ZİRVE 14",
+   "themeId": "zirve"
+  },
+  {
+   "i": 149,
+   "stage": 9,
+   "idx": 14,
+   "num": 150,
+   "target": 38,
+   "speed": 3.4,
+   "tol": 4,
+   "modifier": "patron",
+   "coins": 115,
+   "box": false,
+   "name": "SON KULE · ZİRVE 15",
+   "themeId": "zirve"
+  }
+ ],
+ "dailies": [
+  {
+   "day": 0,
+   "stage": 0,
+   "target": 12,
+   "speed": 1.2,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 60,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "sehir"
+  },
+  {
+   "day": 1,
+   "stage": 1,
+   "target": 14,
+   "speed": 1.4,
+   "tol": 5,
+   "modifier": "ruzgar",
+   "coins": 70,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "orman"
+  },
+  {
+   "day": 2,
+   "stage": 2,
+   "target": 16,
+   "speed": 1.6,
+   "tol": 5,
+   "modifier": "hizli",
+   "coins": 80,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "col"
+  },
+  {
+   "day": 3,
+   "stage": 3,
+   "target": 18,
+   "speed": 1.8,
+   "tol": 5,
+   "modifier": "karanlik",
+   "coins": 90,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "buz"
+  },
+  {
+   "day": 4,
+   "stage": 4,
+   "target": 20,
+   "speed": 2,
+   "tol": 5,
+   "modifier": "altin",
+   "coins": 100,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "uzay"
+  },
+  {
+   "day": 5,
+   "stage": 5,
+   "target": 12,
+   "speed": 2.2,
+   "tol": 5,
+   "modifier": "deprem",
+   "coins": 60,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "volkan"
+  },
+  {
+   "day": 6,
+   "stage": 6,
+   "target": 14,
+   "speed": 2.4000000000000004,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 70,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "bulut"
+  },
+  {
+   "day": 7,
+   "stage": 7,
+   "target": 16,
+   "speed": 1.2,
+   "tol": 5,
+   "modifier": "ruzgar",
+   "coins": 80,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "deniz"
+  },
+  {
+   "day": 8,
+   "stage": 8,
+   "target": 18,
+   "speed": 1.4,
+   "tol": 5,
+   "modifier": "hizli",
+   "coins": 90,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "kristal"
+  },
+  {
+   "day": 9,
+   "stage": 9,
+   "target": 20,
+   "speed": 1.6,
+   "tol": 5,
+   "modifier": "karanlik",
+   "coins": 100,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "zirve"
+  },
+  {
+   "day": 10,
+   "stage": 0,
+   "target": 12,
+   "speed": 1.8,
+   "tol": 5,
+   "modifier": "altin",
+   "coins": 60,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "sehir"
+  },
+  {
+   "day": 11,
+   "stage": 1,
+   "target": 14,
+   "speed": 2,
+   "tol": 5,
+   "modifier": "deprem",
+   "coins": 70,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "orman"
+  },
+  {
+   "day": 12,
+   "stage": 2,
+   "target": 16,
+   "speed": 2.2,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 80,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "col"
+  },
+  {
+   "day": 13,
+   "stage": 3,
+   "target": 18,
+   "speed": 2.4000000000000004,
+   "tol": 5,
+   "modifier": "ruzgar",
+   "coins": 90,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "buz"
+  },
+  {
+   "day": 14,
+   "stage": 4,
+   "target": 20,
+   "speed": 1.2,
+   "tol": 5,
+   "modifier": "hizli",
+   "coins": 100,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "uzay"
+  },
+  {
+   "day": 15,
+   "stage": 5,
+   "target": 12,
+   "speed": 1.4,
+   "tol": 5,
+   "modifier": "karanlik",
+   "coins": 60,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "volkan"
+  },
+  {
+   "day": 16,
+   "stage": 6,
+   "target": 14,
+   "speed": 1.6,
+   "tol": 5,
+   "modifier": "altin",
+   "coins": 70,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "bulut"
+  },
+  {
+   "day": 17,
+   "stage": 7,
+   "target": 16,
+   "speed": 1.8,
+   "tol": 5,
+   "modifier": "deprem",
+   "coins": 80,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "deniz"
+  },
+  {
+   "day": 18,
+   "stage": 8,
+   "target": 18,
+   "speed": 2,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 90,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "kristal"
+  },
+  {
+   "day": 19,
+   "stage": 9,
+   "target": 20,
+   "speed": 2.2,
+   "tol": 5,
+   "modifier": "ruzgar",
+   "coins": 100,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "zirve"
+  },
+  {
+   "day": 20,
+   "stage": 0,
+   "target": 12,
+   "speed": 2.4000000000000004,
+   "tol": 5,
+   "modifier": "hizli",
+   "coins": 60,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "sehir"
+  },
+  {
+   "day": 21,
+   "stage": 1,
+   "target": 14,
+   "speed": 1.2,
+   "tol": 5,
+   "modifier": "karanlik",
+   "coins": 70,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "orman"
+  },
+  {
+   "day": 22,
+   "stage": 2,
+   "target": 16,
+   "speed": 1.4,
+   "tol": 5,
+   "modifier": "altin",
+   "coins": 80,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "col"
+  },
+  {
+   "day": 23,
+   "stage": 3,
+   "target": 18,
+   "speed": 1.6,
+   "tol": 5,
+   "modifier": "deprem",
+   "coins": 90,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "buz"
+  },
+  {
+   "day": 24,
+   "stage": 4,
+   "target": 20,
+   "speed": 1.8,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 100,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "uzay"
+  },
+  {
+   "day": 25,
+   "stage": 5,
+   "target": 12,
+   "speed": 2,
+   "tol": 5,
+   "modifier": "ruzgar",
+   "coins": 60,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "volkan"
+  },
+  {
+   "day": 26,
+   "stage": 6,
+   "target": 14,
+   "speed": 2.2,
+   "tol": 5,
+   "modifier": "hizli",
+   "coins": 70,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "bulut"
+  },
+  {
+   "day": 27,
+   "stage": 7,
+   "target": 16,
+   "speed": 2.4000000000000004,
+   "tol": 5,
+   "modifier": "karanlik",
+   "coins": 80,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "deniz"
+  },
+  {
+   "day": 28,
+   "stage": 8,
+   "target": 18,
+   "speed": 1.2,
+   "tol": 5,
+   "modifier": "altin",
+   "coins": 90,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "kristal"
+  },
+  {
+   "day": 29,
+   "stage": 9,
+   "target": 20,
+   "speed": 1.4,
+   "tol": 5,
+   "modifier": "deprem",
+   "coins": 100,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "zirve"
+  },
+  {
+   "day": 30,
+   "stage": 0,
+   "target": 12,
+   "speed": 1.6,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 60,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "sehir"
+  },
+  {
+   "day": 31,
+   "stage": 1,
+   "target": 14,
+   "speed": 1.8,
+   "tol": 5,
+   "modifier": "ruzgar",
+   "coins": 70,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "orman"
+  },
+  {
+   "day": 32,
+   "stage": 2,
+   "target": 16,
+   "speed": 2,
+   "tol": 5,
+   "modifier": "hizli",
+   "coins": 80,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "col"
+  },
+  {
+   "day": 33,
+   "stage": 3,
+   "target": 18,
+   "speed": 2.2,
+   "tol": 5,
+   "modifier": "karanlik",
+   "coins": 90,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "buz"
+  },
+  {
+   "day": 34,
+   "stage": 4,
+   "target": 20,
+   "speed": 2.4000000000000004,
+   "tol": 5,
+   "modifier": "altin",
+   "coins": 100,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "uzay"
+  },
+  {
+   "day": 35,
+   "stage": 5,
+   "target": 12,
+   "speed": 1.2,
+   "tol": 5,
+   "modifier": "deprem",
+   "coins": 60,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "volkan"
+  },
+  {
+   "day": 36,
+   "stage": 6,
+   "target": 14,
+   "speed": 1.4,
+   "tol": 5,
+   "modifier": "normal",
+   "coins": 70,
+   "name": "GÜNLÜK MEYDAN OKUMA",
+   "themeId": "bulut"
+  }
+ ],
+ "surprises": [
+  {
+   "i": 0,
+   "day": 0,
+   "id": "coinStart",
+   "effect": "coinStart",
+   "coins": 20
+  },
+  {
+   "i": 0,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 0,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 1,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 1,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 1,
+   "day": 3,
+   "id": "doubleCoins",
+   "effect": "doubleCoins",
+   "coins": 0
+  },
+  {
+   "i": 2,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 2,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 2,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 3,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 3,
+   "day": 1,
+   "id": "doubleCoins",
+   "effect": "doubleCoins",
+   "coins": 0
+  },
+  {
+   "i": 3,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 4,
+   "day": 0,
+   "id": "doubleCoins",
+   "effect": "doubleCoins",
+   "coins": 0
+  },
+  {
+   "i": 4,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 4,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 5,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 5,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 5,
+   "day": 3,
+   "id": "shieldUp",
+   "effect": "shieldUp",
+   "coins": 0
+  },
+  {
+   "i": 6,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 6,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 6,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 7,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 7,
+   "day": 1,
+   "id": "shieldUp",
+   "effect": "shieldUp",
+   "coins": 0
+  },
+  {
+   "i": 7,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 8,
+   "day": 0,
+   "id": "shieldUp",
+   "effect": "shieldUp",
+   "coins": 0
+  },
+  {
+   "i": 8,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 8,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 9,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 9,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 9,
+   "day": 3,
+   "id": "coinStart",
+   "effect": "coinStart",
+   "coins": 20
+  },
+  {
+   "i": 10,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 10,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 10,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 11,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 11,
+   "day": 1,
+   "id": "coinStart",
+   "effect": "coinStart",
+   "coins": 20
+  },
+  {
+   "i": 11,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 12,
+   "day": 0,
+   "id": "coinStart",
+   "effect": "coinStart",
+   "coins": 20
+  },
+  {
+   "i": 12,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 12,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 13,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 13,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 13,
+   "day": 3,
+   "id": "doubleCoins",
+   "effect": "doubleCoins",
+   "coins": 0
+  },
+  {
+   "i": 14,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 14,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 14,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 15,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 15,
+   "day": 1,
+   "id": "doubleCoins",
+   "effect": "doubleCoins",
+   "coins": 0
+  },
+  {
+   "i": 15,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 16,
+   "day": 0,
+   "id": "doubleCoins",
+   "effect": "doubleCoins",
+   "coins": 0
+  },
+  {
+   "i": 16,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 16,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 17,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 17,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 17,
+   "day": 3,
+   "id": "shieldUp",
+   "effect": "shieldUp",
+   "coins": 0
+  },
+  {
+   "i": 18,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 18,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 18,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 19,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 19,
+   "day": 1,
+   "id": "shieldUp",
+   "effect": "shieldUp",
+   "coins": 0
+  },
+  {
+   "i": 19,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 20,
+   "day": 0,
+   "id": "shieldUp",
+   "effect": "shieldUp",
+   "coins": 0
+  },
+  {
+   "i": 20,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 20,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 21,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 21,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 21,
+   "day": 3,
+   "id": "coinStart",
+   "effect": "coinStart",
+   "coins": 20
+  },
+  {
+   "i": 22,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 22,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 22,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 23,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 23,
+   "day": 1,
+   "id": "coinStart",
+   "effect": "coinStart",
+   "coins": 20
+  },
+  {
+   "i": 23,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 24,
+   "day": 0,
+   "id": "coinStart",
+   "effect": "coinStart",
+   "coins": 20
+  },
+  {
+   "i": 24,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 24,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 25,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 25,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 25,
+   "day": 3,
+   "id": "doubleCoins",
+   "effect": "doubleCoins",
+   "coins": 0
+  },
+  {
+   "i": 26,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 26,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 26,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 27,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 27,
+   "day": 1,
+   "id": "doubleCoins",
+   "effect": "doubleCoins",
+   "coins": 0
+  },
+  {
+   "i": 27,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 28,
+   "day": 0,
+   "id": "doubleCoins",
+   "effect": "doubleCoins",
+   "coins": 0
+  },
+  {
+   "i": 28,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 28,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 29,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 29,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 29,
+   "day": 3,
+   "id": "shieldUp",
+   "effect": "shieldUp",
+   "coins": 0
+  },
+  {
+   "i": 30,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 30,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 30,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 31,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 31,
+   "day": 1,
+   "id": "shieldUp",
+   "effect": "shieldUp",
+   "coins": 0
+  },
+  {
+   "i": 31,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 32,
+   "day": 0,
+   "id": "shieldUp",
+   "effect": "shieldUp",
+   "coins": 0
+  },
+  {
+   "i": 32,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 32,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 33,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 33,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 33,
+   "day": 3,
+   "id": "coinStart",
+   "effect": "coinStart",
+   "coins": 20
+  },
+  {
+   "i": 34,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 34,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 34,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 35,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 35,
+   "day": 1,
+   "id": "coinStart",
+   "effect": "coinStart",
+   "coins": 20
+  },
+  {
+   "i": 35,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 36,
+   "day": 0,
+   "id": "coinStart",
+   "effect": "coinStart",
+   "coins": 20
+  },
+  {
+   "i": 36,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 36,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 37,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 37,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 37,
+   "day": 3,
+   "id": "doubleCoins",
+   "effect": "doubleCoins",
+   "coins": 0
+  },
+  {
+   "i": 38,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 38,
+   "day": 1,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 38,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 39,
+   "day": 0,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  },
+  {
+   "i": 39,
+   "day": 1,
+   "id": "doubleCoins",
+   "effect": "doubleCoins",
+   "coins": 0
+  },
+  {
+   "i": 39,
+   "day": 3,
+   "id": null,
+   "effect": null,
+   "coins": 0
+  }
+ ],
+ "mysteries": [
+  {
+   "i": 0,
+   "text": "Kulenin gölgesinde bir sürpriz bekliyor."
+  },
+  {
+   "i": 1,
+   "text": "Bir şey eksik. Belki de bilmen gereken tek şey bu."
+  },
+  {
+   "i": 2,
+   "text": "Bu dünya sırrını kolay vermiyor."
+  },
+  {
+   "i": 3,
+   "text": "Bu bölümde bir şey saklı. Açığa çıkarmak sana kalmış."
+  },
+  {
+   "i": 4,
+   "text": "Fısıltılar doğru söylemiyor. Dikkatli dinle."
+  },
+  {
+   "i": 5,
+   "text": "Yıldızlar bu gece farklı hizalanmış…"
+  },
+  {
+   "i": 6,
+   "text": "Kulenin gölgesinde bir sürpriz bekliyor."
+  },
+  {
+   "i": 7,
+   "text": "Bir şey eksik. Belki de bilmen gereken tek şey bu."
+  },
+  {
+   "i": 8,
+   "text": "Bu dünya sırrını kolay vermiyor."
+  },
+  {
+   "i": 9,
+   "text": "Bu bölümde bir şey saklı. Açığa çıkarmak sana kalmış."
+  },
+  {
+   "i": 10,
+   "text": "Fısıltılar doğru söylemiyor. Dikkatli dinle."
+  },
+  {
+   "i": 11,
+   "text": "Yıldızlar bu gece farklı hizalanmış…"
+  },
+  {
+   "i": 12,
+   "text": "Kulenin gölgesinde bir sürpriz bekliyor."
+  },
+  {
+   "i": 13,
+   "text": "Bir şey eksik. Belki de bilmen gereken tek şey bu."
+  },
+  {
+   "i": 14,
+   "text": "Bu dünya sırrını kolay vermiyor."
+  },
+  {
+   "i": 15,
+   "text": "Bu bölümde bir şey saklı. Açığa çıkarmak sana kalmış."
+  },
+  {
+   "i": 16,
+   "text": "Fısıltılar doğru söylemiyor. Dikkatli dinle."
+  },
+  {
+   "i": 17,
+   "text": "Yıldızlar bu gece farklı hizalanmış…"
+  },
+  {
+   "i": 18,
+   "text": "Kulenin gölgesinde bir sürpriz bekliyor."
+  },
+  {
+   "i": 19,
+   "text": "Bir şey eksik. Belki de bilmen gereken tek şey bu."
+  }
+ ],
+ "stars": [
+  {
+   "target": 1,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 1,
+   "perfects": 1,
+   "stars": 3
+  },
+  {
+   "target": 1,
+   "perfects": 1,
+   "stars": 3
+  },
+  {
+   "target": 1,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 1,
+   "perfects": 1,
+   "stars": 3
+  },
+  {
+   "target": 1,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 1,
+   "perfects": 1,
+   "stars": 3
+  },
+  {
+   "target": 2,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 2,
+   "perfects": 1,
+   "stars": 2
+  },
+  {
+   "target": 2,
+   "perfects": 1,
+   "stars": 2
+  },
+  {
+   "target": 2,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 2,
+   "perfects": 2,
+   "stars": 3
+  },
+  {
+   "target": 2,
+   "perfects": 1,
+   "stars": 2
+  },
+  {
+   "target": 2,
+   "perfects": 2,
+   "stars": 3
+  },
+  {
+   "target": 3,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 3,
+   "perfects": 1,
+   "stars": 2
+  },
+  {
+   "target": 3,
+   "perfects": 1,
+   "stars": 2
+  },
+  {
+   "target": 3,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 3,
+   "perfects": 2,
+   "stars": 3
+  },
+  {
+   "target": 3,
+   "perfects": 1,
+   "stars": 2
+  },
+  {
+   "target": 3,
+   "perfects": 3,
+   "stars": 3
+  },
+  {
+   "target": 4,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 4,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 4,
+   "perfects": 2,
+   "stars": 2
+  },
+  {
+   "target": 4,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 4,
+   "perfects": 3,
+   "stars": 3
+  },
+  {
+   "target": 4,
+   "perfects": 2,
+   "stars": 2
+  },
+  {
+   "target": 4,
+   "perfects": 4,
+   "stars": 3
+  },
+  {
+   "target": 5,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 5,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 5,
+   "perfects": 2,
+   "stars": 2
+  },
+  {
+   "target": 5,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 5,
+   "perfects": 3,
+   "stars": 3
+  },
+  {
+   "target": 5,
+   "perfects": 2,
+   "stars": 2
+  },
+  {
+   "target": 5,
+   "perfects": 5,
+   "stars": 3
+  },
+  {
+   "target": 6,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 6,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 6,
+   "perfects": 2,
+   "stars": 2
+  },
+  {
+   "target": 6,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 6,
+   "perfects": 4,
+   "stars": 3
+  },
+  {
+   "target": 6,
+   "perfects": 3,
+   "stars": 2
+  },
+  {
+   "target": 6,
+   "perfects": 6,
+   "stars": 3
+  },
+  {
+   "target": 7,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 7,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 7,
+   "perfects": 3,
+   "stars": 2
+  },
+  {
+   "target": 7,
+   "perfects": 2,
+   "stars": 1
+  },
+  {
+   "target": 7,
+   "perfects": 5,
+   "stars": 3
+  },
+  {
+   "target": 7,
+   "perfects": 4,
+   "stars": 2
+  },
+  {
+   "target": 7,
+   "perfects": 7,
+   "stars": 3
+  },
+  {
+   "target": 8,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 8,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 8,
+   "perfects": 3,
+   "stars": 2
+  },
+  {
+   "target": 8,
+   "perfects": 2,
+   "stars": 1
+  },
+  {
+   "target": 8,
+   "perfects": 5,
+   "stars": 3
+  },
+  {
+   "target": 8,
+   "perfects": 4,
+   "stars": 2
+  },
+  {
+   "target": 8,
+   "perfects": 8,
+   "stars": 3
+  },
+  {
+   "target": 9,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 9,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 9,
+   "perfects": 3,
+   "stars": 2
+  },
+  {
+   "target": 9,
+   "perfects": 2,
+   "stars": 1
+  },
+  {
+   "target": 9,
+   "perfects": 6,
+   "stars": 3
+  },
+  {
+   "target": 9,
+   "perfects": 5,
+   "stars": 2
+  },
+  {
+   "target": 9,
+   "perfects": 9,
+   "stars": 3
+  },
+  {
+   "target": 10,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 10,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 10,
+   "perfects": 3,
+   "stars": 2
+  },
+  {
+   "target": 10,
+   "perfects": 2,
+   "stars": 1
+  },
+  {
+   "target": 10,
+   "perfects": 6,
+   "stars": 3
+  },
+  {
+   "target": 10,
+   "perfects": 5,
+   "stars": 2
+  },
+  {
+   "target": 10,
+   "perfects": 10,
+   "stars": 3
+  },
+  {
+   "target": 11,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 11,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 11,
+   "perfects": 4,
+   "stars": 2
+  },
+  {
+   "target": 11,
+   "perfects": 3,
+   "stars": 1
+  },
+  {
+   "target": 11,
+   "perfects": 7,
+   "stars": 3
+  },
+  {
+   "target": 11,
+   "perfects": 6,
+   "stars": 2
+  },
+  {
+   "target": 11,
+   "perfects": 11,
+   "stars": 3
+  },
+  {
+   "target": 12,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 12,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 12,
+   "perfects": 4,
+   "stars": 2
+  },
+  {
+   "target": 12,
+   "perfects": 3,
+   "stars": 1
+  },
+  {
+   "target": 12,
+   "perfects": 8,
+   "stars": 3
+  },
+  {
+   "target": 12,
+   "perfects": 7,
+   "stars": 2
+  },
+  {
+   "target": 12,
+   "perfects": 12,
+   "stars": 3
+  },
+  {
+   "target": 13,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 13,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 13,
+   "perfects": 4,
+   "stars": 2
+  },
+  {
+   "target": 13,
+   "perfects": 3,
+   "stars": 1
+  },
+  {
+   "target": 13,
+   "perfects": 8,
+   "stars": 3
+  },
+  {
+   "target": 13,
+   "perfects": 7,
+   "stars": 2
+  },
+  {
+   "target": 13,
+   "perfects": 13,
+   "stars": 3
+  },
+  {
+   "target": 14,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 14,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 14,
+   "perfects": 5,
+   "stars": 2
+  },
+  {
+   "target": 14,
+   "perfects": 4,
+   "stars": 1
+  },
+  {
+   "target": 14,
+   "perfects": 9,
+   "stars": 3
+  },
+  {
+   "target": 14,
+   "perfects": 8,
+   "stars": 2
+  },
+  {
+   "target": 14,
+   "perfects": 14,
+   "stars": 3
+  },
+  {
+   "target": 15,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 15,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 15,
+   "perfects": 5,
+   "stars": 2
+  },
+  {
+   "target": 15,
+   "perfects": 4,
+   "stars": 1
+  },
+  {
+   "target": 15,
+   "perfects": 9,
+   "stars": 3
+  },
+  {
+   "target": 15,
+   "perfects": 8,
+   "stars": 2
+  },
+  {
+   "target": 15,
+   "perfects": 15,
+   "stars": 3
+  },
+  {
+   "target": 16,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 16,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 16,
+   "perfects": 5,
+   "stars": 2
+  },
+  {
+   "target": 16,
+   "perfects": 4,
+   "stars": 1
+  },
+  {
+   "target": 16,
+   "perfects": 10,
+   "stars": 3
+  },
+  {
+   "target": 16,
+   "perfects": 9,
+   "stars": 2
+  },
+  {
+   "target": 16,
+   "perfects": 16,
+   "stars": 3
+  },
+  {
+   "target": 17,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 17,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 17,
+   "perfects": 6,
+   "stars": 2
+  },
+  {
+   "target": 17,
+   "perfects": 5,
+   "stars": 1
+  },
+  {
+   "target": 17,
+   "perfects": 11,
+   "stars": 3
+  },
+  {
+   "target": 17,
+   "perfects": 10,
+   "stars": 2
+  },
+  {
+   "target": 17,
+   "perfects": 17,
+   "stars": 3
+  },
+  {
+   "target": 18,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 18,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 18,
+   "perfects": 6,
+   "stars": 2
+  },
+  {
+   "target": 18,
+   "perfects": 5,
+   "stars": 1
+  },
+  {
+   "target": 18,
+   "perfects": 11,
+   "stars": 3
+  },
+  {
+   "target": 18,
+   "perfects": 10,
+   "stars": 2
+  },
+  {
+   "target": 18,
+   "perfects": 18,
+   "stars": 3
+  },
+  {
+   "target": 19,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 19,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 19,
+   "perfects": 6,
+   "stars": 2
+  },
+  {
+   "target": 19,
+   "perfects": 5,
+   "stars": 1
+  },
+  {
+   "target": 19,
+   "perfects": 12,
+   "stars": 3
+  },
+  {
+   "target": 19,
+   "perfects": 11,
+   "stars": 2
+  },
+  {
+   "target": 19,
+   "perfects": 19,
+   "stars": 3
+  },
+  {
+   "target": 20,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 20,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 20,
+   "perfects": 6,
+   "stars": 2
+  },
+  {
+   "target": 20,
+   "perfects": 5,
+   "stars": 1
+  },
+  {
+   "target": 20,
+   "perfects": 12,
+   "stars": 3
+  },
+  {
+   "target": 20,
+   "perfects": 11,
+   "stars": 2
+  },
+  {
+   "target": 20,
+   "perfects": 20,
+   "stars": 3
+  },
+  {
+   "target": 21,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 21,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 21,
+   "perfects": 7,
+   "stars": 2
+  },
+  {
+   "target": 21,
+   "perfects": 6,
+   "stars": 1
+  },
+  {
+   "target": 21,
+   "perfects": 13,
+   "stars": 3
+  },
+  {
+   "target": 21,
+   "perfects": 12,
+   "stars": 2
+  },
+  {
+   "target": 21,
+   "perfects": 21,
+   "stars": 3
+  },
+  {
+   "target": 22,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 22,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 22,
+   "perfects": 7,
+   "stars": 2
+  },
+  {
+   "target": 22,
+   "perfects": 6,
+   "stars": 1
+  },
+  {
+   "target": 22,
+   "perfects": 14,
+   "stars": 3
+  },
+  {
+   "target": 22,
+   "perfects": 13,
+   "stars": 2
+  },
+  {
+   "target": 22,
+   "perfects": 22,
+   "stars": 3
+  },
+  {
+   "target": 23,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 23,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 23,
+   "perfects": 7,
+   "stars": 2
+  },
+  {
+   "target": 23,
+   "perfects": 6,
+   "stars": 1
+  },
+  {
+   "target": 23,
+   "perfects": 14,
+   "stars": 3
+  },
+  {
+   "target": 23,
+   "perfects": 13,
+   "stars": 2
+  },
+  {
+   "target": 23,
+   "perfects": 23,
+   "stars": 3
+  },
+  {
+   "target": 24,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 24,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 24,
+   "perfects": 8,
+   "stars": 2
+  },
+  {
+   "target": 24,
+   "perfects": 7,
+   "stars": 1
+  },
+  {
+   "target": 24,
+   "perfects": 15,
+   "stars": 3
+  },
+  {
+   "target": 24,
+   "perfects": 14,
+   "stars": 2
+  },
+  {
+   "target": 24,
+   "perfects": 24,
+   "stars": 3
+  },
+  {
+   "target": 25,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 25,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 25,
+   "perfects": 8,
+   "stars": 2
+  },
+  {
+   "target": 25,
+   "perfects": 7,
+   "stars": 1
+  },
+  {
+   "target": 25,
+   "perfects": 15,
+   "stars": 3
+  },
+  {
+   "target": 25,
+   "perfects": 14,
+   "stars": 2
+  },
+  {
+   "target": 25,
+   "perfects": 25,
+   "stars": 3
+  },
+  {
+   "target": 26,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 26,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 26,
+   "perfects": 8,
+   "stars": 2
+  },
+  {
+   "target": 26,
+   "perfects": 7,
+   "stars": 1
+  },
+  {
+   "target": 26,
+   "perfects": 16,
+   "stars": 3
+  },
+  {
+   "target": 26,
+   "perfects": 15,
+   "stars": 2
+  },
+  {
+   "target": 26,
+   "perfects": 26,
+   "stars": 3
+  },
+  {
+   "target": 27,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 27,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 27,
+   "perfects": 9,
+   "stars": 2
+  },
+  {
+   "target": 27,
+   "perfects": 8,
+   "stars": 1
+  },
+  {
+   "target": 27,
+   "perfects": 17,
+   "stars": 3
+  },
+  {
+   "target": 27,
+   "perfects": 16,
+   "stars": 2
+  },
+  {
+   "target": 27,
+   "perfects": 27,
+   "stars": 3
+  },
+  {
+   "target": 28,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 28,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 28,
+   "perfects": 9,
+   "stars": 2
+  },
+  {
+   "target": 28,
+   "perfects": 8,
+   "stars": 1
+  },
+  {
+   "target": 28,
+   "perfects": 17,
+   "stars": 3
+  },
+  {
+   "target": 28,
+   "perfects": 16,
+   "stars": 2
+  },
+  {
+   "target": 28,
+   "perfects": 28,
+   "stars": 3
+  },
+  {
+   "target": 29,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 29,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 29,
+   "perfects": 9,
+   "stars": 2
+  },
+  {
+   "target": 29,
+   "perfects": 8,
+   "stars": 1
+  },
+  {
+   "target": 29,
+   "perfects": 18,
+   "stars": 3
+  },
+  {
+   "target": 29,
+   "perfects": 17,
+   "stars": 2
+  },
+  {
+   "target": 29,
+   "perfects": 29,
+   "stars": 3
+  },
+  {
+   "target": 30,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 30,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 30,
+   "perfects": 9,
+   "stars": 2
+  },
+  {
+   "target": 30,
+   "perfects": 8,
+   "stars": 1
+  },
+  {
+   "target": 30,
+   "perfects": 18,
+   "stars": 3
+  },
+  {
+   "target": 30,
+   "perfects": 17,
+   "stars": 2
+  },
+  {
+   "target": 30,
+   "perfects": 30,
+   "stars": 3
+  },
+  {
+   "target": 31,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 31,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 31,
+   "perfects": 10,
+   "stars": 2
+  },
+  {
+   "target": 31,
+   "perfects": 9,
+   "stars": 1
+  },
+  {
+   "target": 31,
+   "perfects": 19,
+   "stars": 3
+  },
+  {
+   "target": 31,
+   "perfects": 18,
+   "stars": 2
+  },
+  {
+   "target": 31,
+   "perfects": 31,
+   "stars": 3
+  },
+  {
+   "target": 32,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 32,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 32,
+   "perfects": 10,
+   "stars": 2
+  },
+  {
+   "target": 32,
+   "perfects": 9,
+   "stars": 1
+  },
+  {
+   "target": 32,
+   "perfects": 20,
+   "stars": 3
+  },
+  {
+   "target": 32,
+   "perfects": 19,
+   "stars": 2
+  },
+  {
+   "target": 32,
+   "perfects": 32,
+   "stars": 3
+  },
+  {
+   "target": 33,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 33,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 33,
+   "perfects": 10,
+   "stars": 2
+  },
+  {
+   "target": 33,
+   "perfects": 9,
+   "stars": 1
+  },
+  {
+   "target": 33,
+   "perfects": 20,
+   "stars": 3
+  },
+  {
+   "target": 33,
+   "perfects": 19,
+   "stars": 2
+  },
+  {
+   "target": 33,
+   "perfects": 33,
+   "stars": 3
+  },
+  {
+   "target": 34,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 34,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 34,
+   "perfects": 11,
+   "stars": 2
+  },
+  {
+   "target": 34,
+   "perfects": 10,
+   "stars": 1
+  },
+  {
+   "target": 34,
+   "perfects": 21,
+   "stars": 3
+  },
+  {
+   "target": 34,
+   "perfects": 20,
+   "stars": 2
+  },
+  {
+   "target": 34,
+   "perfects": 34,
+   "stars": 3
+  },
+  {
+   "target": 35,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 35,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 35,
+   "perfects": 11,
+   "stars": 2
+  },
+  {
+   "target": 35,
+   "perfects": 10,
+   "stars": 1
+  },
+  {
+   "target": 35,
+   "perfects": 21,
+   "stars": 3
+  },
+  {
+   "target": 35,
+   "perfects": 20,
+   "stars": 2
+  },
+  {
+   "target": 35,
+   "perfects": 35,
+   "stars": 3
+  },
+  {
+   "target": 36,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 36,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 36,
+   "perfects": 11,
+   "stars": 2
+  },
+  {
+   "target": 36,
+   "perfects": 10,
+   "stars": 1
+  },
+  {
+   "target": 36,
+   "perfects": 22,
+   "stars": 3
+  },
+  {
+   "target": 36,
+   "perfects": 21,
+   "stars": 2
+  },
+  {
+   "target": 36,
+   "perfects": 36,
+   "stars": 3
+  },
+  {
+   "target": 37,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 37,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 37,
+   "perfects": 12,
+   "stars": 2
+  },
+  {
+   "target": 37,
+   "perfects": 11,
+   "stars": 1
+  },
+  {
+   "target": 37,
+   "perfects": 23,
+   "stars": 3
+  },
+  {
+   "target": 37,
+   "perfects": 22,
+   "stars": 2
+  },
+  {
+   "target": 37,
+   "perfects": 37,
+   "stars": 3
+  },
+  {
+   "target": 38,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 38,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 38,
+   "perfects": 12,
+   "stars": 2
+  },
+  {
+   "target": 38,
+   "perfects": 11,
+   "stars": 1
+  },
+  {
+   "target": 38,
+   "perfects": 23,
+   "stars": 3
+  },
+  {
+   "target": 38,
+   "perfects": 22,
+   "stars": 2
+  },
+  {
+   "target": 38,
+   "perfects": 38,
+   "stars": 3
+  },
+  {
+   "target": 39,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 39,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 39,
+   "perfects": 12,
+   "stars": 2
+  },
+  {
+   "target": 39,
+   "perfects": 11,
+   "stars": 1
+  },
+  {
+   "target": 39,
+   "perfects": 24,
+   "stars": 3
+  },
+  {
+   "target": 39,
+   "perfects": 23,
+   "stars": 2
+  },
+  {
+   "target": 39,
+   "perfects": 39,
+   "stars": 3
+  },
+  {
+   "target": 40,
+   "perfects": 0,
+   "stars": 1
+  },
+  {
+   "target": 40,
+   "perfects": 1,
+   "stars": 1
+  },
+  {
+   "target": 40,
+   "perfects": 12,
+   "stars": 2
+  },
+  {
+   "target": 40,
+   "perfects": 11,
+   "stars": 1
+  },
+  {
+   "target": 40,
+   "perfects": 24,
+   "stars": 3
+  },
+  {
+   "target": 40,
+   "perfects": 23,
+   "stars": 2
+  },
+  {
+   "target": 40,
+   "perfects": 40,
+   "stars": 3
+  }
+ ],
+ "rivals": [
+  {
+   "day": 0,
+   "playerScore": 25,
+   "names": [
+    "Kaptan",
+    "Mıstık",
+    "NeonRıza",
+    "Zeynep",
+    "BlokUsta",
+    "Ayşe",
+    "Pixel",
+    "Mert",
+    "Luna"
+   ],
+   "scores": [
+    40,
+    21,
+    16,
+    26,
+    30,
+    35,
+    22,
+    23,
+    14
+   ]
+  },
+  {
+   "day": 1,
+   "playerScore": 25,
+   "names": [
+    "Kaptan",
+    "Mıstık",
+    "NeonRıza",
+    "Zeynep",
+    "BlokUsta",
+    "Ayşe",
+    "Pixel",
+    "Mert",
+    "Luna"
+   ],
+   "scores": [
+    21,
+    28,
+    25,
+    33,
+    20,
+    19,
+    19,
+    32,
+    32
+   ]
+  },
+  {
+   "day": 2,
+   "playerScore": 25,
+   "names": [
+    "Kaptan",
+    "Mıstık",
+    "NeonRıza",
+    "Zeynep",
+    "BlokUsta",
+    "Ayşe",
+    "Pixel",
+    "Mert",
+    "Luna"
+   ],
+   "scores": [
+    26,
+    15,
+    32,
+    25,
+    29,
+    21,
+    28,
+    30,
+    29
+   ]
+  },
+  {
+   "day": 7,
+   "playerScore": 25,
+   "names": [
+    "Kaptan",
+    "Mıstık",
+    "NeonRıza",
+    "Zeynep",
+    "BlokUsta",
+    "Ayşe",
+    "Pixel",
+    "Mert",
+    "Luna"
+   ],
+   "scores": [
+    32,
+    30,
+    30,
+    15,
+    27,
+    39,
+    11,
+    31,
+    32
+   ]
+  },
+  {
+   "day": 100,
+   "playerScore": 25,
+   "names": [
+    "Kaptan",
+    "Mıstık",
+    "NeonRıza",
+    "Zeynep",
+    "BlokUsta",
+    "Ayşe",
+    "Pixel",
+    "Mert",
+    "Luna"
+   ],
+   "scores": [
+    29,
+    29,
+    16,
+    13,
+    36,
+    13,
+    30,
+    19,
+    26
+   ]
+  },
+  {
+   "day": 20257,
+   "playerScore": 25,
+   "names": [
+    "Kaptan",
+    "Mıstık",
+    "NeonRıza",
+    "Zeynep",
+    "BlokUsta",
+    "Ayşe",
+    "Pixel",
+    "Mert",
+    "Luna"
+   ],
+   "scores": [
+    28,
+    24,
+    33,
+    15,
+    24,
+    22,
+    12,
+    21,
+    20
+   ]
+  }
+ ],
+ "openBox": {
+  "low": {
+   "type": "skin",
+   "skin": "orman",
+   "amount": null
+  },
+  "high": {
+   "type": "coins",
+   "skin": null,
+   "amount": 80
+  }
+ },
+ "complete": {
+  "normal": {
+   "coins": 28,
+   "stars": 2,
+   "firstClear": true,
+   "boxDropped": false,
+   "stateCoins": 88,
+   "levelsDone": 1
+  },
+  "altin": {
+   "coins": 110,
+   "stars": 2,
+   "firstClear": true,
+   "boxDropped": false,
+   "stateCoins": 170,
+   "levelsDone": 1
+  },
+  "fail": {
+   "coins": 2,
+   "stars": 0,
+   "firstClear": false,
+   "boxDropped": false,
+   "stateCoins": 62,
+   "levelsDone": 0
+  }
+ },
+ "missions": [
+  {
+   "stat": "totalPerfect",
+   "goal": 15,
+   "reward": 30,
+   "base": 5
+  },
+  {
+   "stat": "totalBlocks",
+   "goal": 100,
+   "reward": 25,
+   "base": 30
+  },
+  {
+   "stat": "levelsDone",
+   "goal": 2,
+   "reward": 45,
+   "base": 1
+  }
+ ]
+}
