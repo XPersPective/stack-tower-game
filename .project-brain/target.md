@@ -9,6 +9,15 @@ entegre edilebilecek. Çok daha iyi olabilir ama eksik olamaz; mantık her şey 
 iyi olabilir ama daha kötü olamaz. Projenin ismi Stack Tower Game, Neon Kule olmayacak.
 Bütün yapılacakların hepsini Project Brain'e ekle; tek gerçek kaynak Project Brain olsun." (user, 2026-10-24)
 
+"Oyun çok tekdüze olmuş... Hiçbir sürprizi yok. Her oyun birbirinin aynısı... Daha
+değişik mantıklar, daha değişik içerikler konabilir. Özellikle ilk birkaç bölüm çok
+sürprizli olmalı... Değişik sürprizler konması ve efektler mükemmel olmalı. Sesler de
+öyle... Pazar yeri gibi bir şeyler olması gerekiyor... harita neyle karşılaşacağı ile
+ilgili gizemli bir şekilde birkaç şey göstermeli... Ödüllendirmeleri bol olması
+gerekiyor... bir pazar araştırması yap... sağlam bir rapor oluştur. Bunu proje brain'e
+entegre edeceksin ama yapılacakları ondan sonra uygulayacaksın." (user, 2026-10-25 — yön
+değişikliği: RESEARCH-market.md §4 tasarım kararları + PB-015..021)
+
 ## Target State
 ### game-core (saf mantık — birebir port)
 - `lib/game/levels.dart`, `progress.dart`, `drop_core.dart`: reference/www JS ile
@@ -19,8 +28,14 @@ Bütün yapılacakların hepsini Project Brain'e ekle; tek gerçek kaynak Projec
   (aurora/ay/adalar/silüet/bulut denizi/hava/takımyıldız), 3B blok görünümü, karanlık
   perdesi, 60 fps (SPEC §3).
 ### screens
-- menu, map (perspektif takımada), preview (sinematik), play+HUD, result, box,
+- menu, map (3B takımada — PB-008), preview (sinematik), play+HUD, result, box,
   reward_room, shop, missions, board, settings — akış `reference/www/ui.js` ile aynı.
+### gameplay-variety (YENİ — kullanıcı yönü 2026-10-25)
+- 8 yeni twist türü + garantili ilk-5 şeması; her 3 bölümden biri yeni tür; juice
+  paketi (hit-stop, squash&stretch, flaş, haptic); ses katmanları.
+### economy-market (YENİ)
+- Haritada pazar yeri binası: günlük rotasyon + gizli sandık; cömertlik ilkesi
+  (4-5 bölümde 1 satın alma gücü).
 ### theme
 - Neon token'lar (THEMES paletleri, glow, Inter fontu) `lib/theme/`.
 ### services
