@@ -40,12 +40,27 @@ class StackGame implements MiniGame {
     }
     engine.onHaptic = host.haptic;
     // Motor olayları MiniGameHost olay adlarına çevrilir (aynı yük alanları).
-    engine.onEvent = (e, d) => host.onEvent(e.name, data: <String, dynamic>{
-          'perfect': d.perfect,
-          'combo': d.combo,
-          'score': d.score,
-          'shieldLeft': d.shieldLeft,
-        });
+    engine.onEvent = (e, d) {
+      // ESKİ davranış korunur: motor olayları ses de tetikler (audio regresyonu düzeltmesi)
+      switch (e) {
+        case EngineEvent.place:
+          host.playSound(d.perfect ? 'perfect' : 'place', combo: d.combo);
+        case EngineEvent.shield:
+          host.playSound('shield');
+        case EngineEvent.win:
+          host.playSound('win');
+        case EngineEvent.lose:
+          host.playSound('lose');
+        case EngineEvent.ready:
+          break;
+      }
+      host.onEvent(e.name, data: <String, dynamic>{
+        'perfect': d.perfect,
+        'combo': d.combo,
+        'score': d.score,
+        'left': d.shieldLeft,
+      });
+    };
     engine.startLevel(def, hue: hue, shields: shields);
     host.playSound('start');
   }

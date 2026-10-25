@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import '../game/audio.dart';
 import '../game/game_session.dart';
 import '../game/levels.dart';
+import '../map/construction.dart';
+import '../widgets/construction_art.dart';
 import '../theme/tokens.dart';
 
 class FlowOverlays extends StatefulWidget {
@@ -82,6 +84,8 @@ class _FlowOverlaysState extends State<FlowOverlays> {
   @override
   Widget build(BuildContext context) {
     switch (_step) {
+      case FlowStep.construction:
+        return _buildConstruction(context);
       case FlowStep.box:
         return _sheet(
           child: Column(
@@ -165,6 +169,56 @@ class _FlowOverlaysState extends State<FlowOverlays> {
       default:
         return _buildResult(context);
     }
+  }
+
+  /// ADR-009: bölüm sonunda adada yükselen parça (görünür amaç).
+  Widget _buildConstruction(BuildContext context) {
+    final c = widget.session.lastConstruction;
+    if (c == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _advance());
+      return const SizedBox.shrink();
+    }
+    final spec = c.structure;
+    final total = spec.pieces.length;
+    final built = piecesBuilt(widget.session.state, c.stage, slotOf(c.idx).structure);
+    final completed = c.structureCompleted;
+    return _sheet(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ConstructionArt(spec: spec, built: built, total: total),
+          const SizedBox(height: 12),
+          Text(completed ? '${spec.icon} ${spec.name} TAMAMLANDI!' : '${spec.icon} ${spec.name}',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: completed ? NeonPalette.star : NeonPalette.text,
+                  ),
+              textAlign: TextAlign.center),
+          const SizedBox(height: 6),
+          Text(
+            completed
+                ? (c.monumentCompleted
+                    ? 'Dünya anıtı yükseldi — bu dünya senin eserini taşıyor.'
+                    : 'Dört parça da yerinde! Adada kalıcı olarak duruyor.')
+                : '${c.pieceLabel.toUpperCase()} yükseldi · $built/$total parça',
+            style: Theme.of(context).textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: built / total,
+              minHeight: 8,
+              backgroundColor: Colors.white.withValues(alpha: .12),
+              valueColor: AlwaysStoppedAnimation(
+                  completed ? NeonPalette.star : NeonPalette.cyan),
+            ),
+          ),
+          const SizedBox(height: 18),
+          NeonButton(completed ? 'HARİKA! ✦' : 'DEVAM', _advance),
+        ],
+      ),
+    );
   }
 
   Widget _buildResult(BuildContext context) {

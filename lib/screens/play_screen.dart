@@ -188,6 +188,7 @@ class PlayScreenState extends State<PlayScreen>
   @override
   void dispose() {
     _ticker.dispose();
+    _game.stop();
     super.dispose();
   }
 

@@ -11,6 +11,7 @@ import '../game/game_session.dart';
 import '../game/levels.dart';
 import '../game/progress.dart' as prog;
 import '../game/scene_painter.dart' show hslColor;
+import 'construction.dart';
 import '../theme/tokens.dart';
 
 /* ------------------------------ sahne modeli ------------------------------ */
@@ -572,6 +573,72 @@ class MapScenePainter extends CustomPainter {
           ..lineTo(p.x + h2 * 0.44, p.y)
           ..close();
         canvas.drawPath(path, Paint()..color = hslColor(it.hue, 60, 30));
+      }
+    }
+
+    // GÖRÜNÜR İNŞAAT (ADR-009): tamamlanan bölümler yapı yükseltir
+    _drawStructures(canvas, isl);
+  }
+
+  void _drawStructures(Canvas canvas, MapIsland isl) {
+    final save = scene.session.state;
+    final nextIdx = nextBuildIdx(save, isl.stage);
+    for (var si = 0; si < kWorldStructures.length; si++) {
+      final built = piecesBuilt(save, isl.stage, si);
+      final spec = kWorldStructures[si];
+      final pl = placementFor(si);
+      final wx = isl.x + math.cos(pl.angle) * isl.r * pl.radiusFactor;
+      final wz = isl.z + math.sin(pl.angle) * isl.r * pl.radiusFactor;
+      final wy = surfY(isl, wx, wz);
+      final p = camera.project(Offset3(wx, wy, wz));
+      if (p == null) continue;
+      final s = p.s * pl.heightScale;
+      final baseW = 46 * s;
+      final unitH = 30 * s;
+
+      if (built == 0) {
+        // blueprint: sıradaki yapının silüeti (merak)
+        final isNext = nextIdx != null && slotOf(nextIdx).structure == si;
+        final bp = Paint()
+          ..color = (isNext ? hslColor(isl.theme.glow, 90, 70) : Colors.white)
+              .withValues(alpha: isNext ? 0.42 : 0.14)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = math.max(1.0, 1.6 * s);
+        final h3 = spec.pieces.length * unitH;
+        canvas.drawRect(
+            Rect.fromLTWH(p.x - baseW / 2, p.y - h3, baseW, h3), bp);
+        canvas.drawLine(Offset(p.x - baseW / 2, p.y - h3),
+            Offset(p.x + baseW / 2, p.y), bp);
+        canvas.drawLine(Offset(p.x + baseW / 2, p.y - h3),
+            Offset(p.x - baseW / 2, p.y), bp);
+        continue;
+      }
+
+      // inşa edilen parçalar (alttan üste)
+      for (var k = 0; k < built; k++) {
+        final yTop = p.y - (k + 1) * unitH;
+        final shrink = 1.0 - k * 0.12;
+        final rect = Rect.fromLTWH(
+            p.x - baseW * shrink / 2, yTop, baseW * shrink, unitH * 0.92);
+        canvas.drawRect(rect, Paint()..color = hslColor(isl.theme.glow, 55, 26 + k * 8));
+        canvas.drawRect(
+            rect,
+            Paint()
+              ..color = hslColor(isl.theme.glow, 95, 70).withValues(alpha: .75)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = math.max(0.8, 1.2 * s));
+      }
+      // yapı tamamlandıysa tepe ışığı
+      if (built == spec.pieces.length) {
+        final topY = p.y - built * unitH;
+        canvas.drawCircle(
+            Offset(p.x, topY - 6 * s),
+            9 * s,
+            Paint()
+              ..color = hslColor(isl.theme.glow, 95, 70).withValues(alpha: .22)
+              ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(2.0, 10 * s)));
+        canvas.drawCircle(Offset(p.x, topY - 6 * s), 3.4 * s,
+            Paint()..color = hslColor(isl.theme.glow, 100, 82));
       }
     }
   }

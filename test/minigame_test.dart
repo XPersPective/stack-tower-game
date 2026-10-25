@@ -1,10 +1,17 @@
-import 'package:flutter/material.dart';
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stack_tower_game/game/kinds/catcher_game.dart';
 import 'package:stack_tower_game/game/kinds/ring_game.dart';
 import 'package:stack_tower_game/game/kinds/stack_game.dart';
 import 'package:stack_tower_game/game/levels.dart';
 import 'package:stack_tower_game/game/mini_game.dart';
+
+double _angDist(double a, double b) {
+  var d = (a - b).abs() % (math.pi * 2);
+  if (d > math.pi) d = math.pi * 2 - d;
+  return d;
+}
 
 class _RecordingHost implements MiniGameHost {
   final List<String> sounds = [];
@@ -107,19 +114,26 @@ void main() {
           isTrue);
     });
 
-    test('RING: hedef dilimde dokunma skoru artırır', () {
+    test('RING: hedef dilim merkezinde dokunma isabet + mükemmel verir', () {
       final g = RingGame();
       final host = _RecordingHost();
       g.resize(460, 780);
-      g.start(levelDef(1), host: host); // tür 1 = ring
-      var hits = 0;
-      // 400 denemede en az bir isabet (hedef dilim ≥0.34 rad, dönüş 1.4+ rad/s)
-      for (var i = 0; i < 400 && !g.isOver; i++) {
-        g.tick(1 / 240);
-        g.onTap(Offset.zero);
-        if (g.score > hits) hits = g.score;
+      g.start(levelDef(1), host: host, shields: 3); // tür 1 = ring
+      // işaretçi hedef merkezine girene dek bekle, tam merkezde dokun
+      // (tek dokunuş girdisi; erken dokunma kalkan yakar)
+      var tapped = false;
+      for (var i = 0; i < 2400 && !g.isOver && !tapped; i++) {
+        g.tick(1 / 120); // adım ≤ spin/120 rad → merkez penceresi atlanamaz
+        final center = g.targetStart + g.targetWidth / 2;
+        if (_angDist(g.angle, center) <= 0.05) {
+          g.onTap(Offset.zero);
+          tapped = true;
+        }
       }
-      expect(hits, greaterThan(0), reason: 'hiç isabet olmadı');
+      expect(tapped, isTrue, reason: 'işaretçi hedef merkeze hiç girmedi');
+      expect(g.score, 1);
+      expect(g.result().perfects, 1, reason: 'merkez vuruş mükemmel olmalı');
+      expect(host.sounds, contains('perfect'));
     });
 
     test('STACK adaptörü: mevcut motor davranışı korunur (skor/mükemmel)', () {

@@ -37,7 +37,7 @@ class CatcherGame implements MiniGame {
   final List<FallingItem> items = [];
   final List<CatchBurst> bursts = [];
   double time = 0, spawnTimer = 0;
-  int _score = 0, _perfects = 0, _combo = 0, _shields = 1;
+  int _score = 0, _perfects = 0, _combo = 0, _shields = 1, _golds = 0;
   bool _over = false;
   bool _reached = false;
   double shake = 0, flash = 0, goldFlash = 0;
@@ -72,6 +72,7 @@ class CatcherGame implements MiniGame {
     _score = 0;
     _perfects = 0;
     _combo = 0;
+    _golds = 0;
     _shields = shields;
     _over = false;
     _reached = false;
@@ -143,6 +144,7 @@ class CatcherGame implements MiniGame {
           final centered = (it.x - basketX).abs() <= _def.tol * scale * 1.5;
           if (centered) _perfects++;
           bursts.add(CatchBurst(it.x, basketTop, gold: it.gold));
+          if (it.gold) _golds++;
           _host?.playSound(it.gold ? 'coin' : 'perfect', combo: _combo);
           _host?.haptic(it.gold ? 18 : 10);
           if (it.gold) {
@@ -209,7 +211,7 @@ class CatcherGame implements MiniGame {
         points: _score,
         perfects: _perfects,
         reached: _reached,
-        goldBlocks: bursts.where((b) => b.gold).length,
+        goldBlocks: _golds,
       );
 
   @override

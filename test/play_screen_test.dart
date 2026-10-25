@@ -68,6 +68,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 60));
     }
 
+    // zincir: önce İNŞAAT kartı (ADR-009) → DEVAM → sonuç
+    expect(find.textContaining('yükseldi'), findsOneWidget);
+    await tester.tap(find.text('DEVAM'));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
     // sonuç ekranı: BÖLÜM TAMAM! + yıldızlar + TEKRAR + HARİTA
     expect(find.text('BÖLÜM TAMAM!'), findsOneWidget);
     expect(find.text('TEKRAR'), findsOneWidget);
@@ -121,6 +127,12 @@ void main() {
     for (var i = 0; i < 24; i++) {
       await tester.pump(const Duration(milliseconds: 60));
     }
+    // önce inşaat kartı (ADR-009) → DEVAM → sonuç
+    expect(find.textContaining('yükseldi'), findsOneWidget);
+    await tester.tap(find.text('DEVAM'));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
     expect(find.text('BÖLÜM TAMAM!'), findsOneWidget);
 
     // ui.js paritesi: sonuç butonu doğrudan showMap çağırır — tek dokunuş yeter
@@ -148,6 +160,11 @@ void main() {
       e.drop();
     }
     for (var i = 0; i < 24; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
+    // önce inşaat kartı (ADR-009) → DEVAM
+    await tester.tap(find.text('DEVAM'));
+    for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 60));
     }
     expect(find.text('SONRAKİ BÖLÜM →'), findsOneWidget);

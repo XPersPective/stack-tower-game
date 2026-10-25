@@ -8,10 +8,11 @@ import 'package:flutter/material.dart';
 import 'gameplay.dart';
 import 'levels.dart';
 import 'progress.dart' as prog;
+import '../map/construction.dart';
 import '../services/storage.dart';
 
 /// Sonuç sonrası oynatılacak adımlar (ui.js chain karşılığı).
-enum FlowStep { box, world, board, result, showMap }
+enum FlowStep { construction, box, world, board, result, showMap }
 
 class WorldCeremony {
   final int stage;
@@ -65,6 +66,9 @@ class GameSession extends ChangeNotifier {
   List<BoardRow> boardRows = [];
   int boardDay = 0;
   bool muted = false;
+
+  /// Son bölümün inşaat katkısı (ADR-009: görünür amaç).
+  ConstructionEvent? lastConstruction;
 
   final List<FlowStep> _chain = [];
   FlowStep? get nextStep => _chain.isEmpty ? null : _chain.first;
@@ -125,7 +129,11 @@ class GameSession extends ChangeNotifier {
 
     pendingResult = LevelResult(blocks, perfects, true);
     pendingRewards = rewards;
+    // GÖRÜNÜR İNŞAAT: bu bölüm adada bir parça yükseltti (ADR-009)
+    lastConstruction =
+        (!def.endless && !def.daily) ? constructionFor(state, def.i) : null;
     _chain.clear();
+    if (lastConstruction != null) _chain.add(FlowStep.construction);
     if (rewards.boxDropped) _chain.add(FlowStep.box);
     if (lastCeremony != null) _chain.add(FlowStep.world);
     if (def.daily) _chain.add(FlowStep.board);
