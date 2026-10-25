@@ -105,6 +105,83 @@ void main() {
     }
   });
 
+  testWidgets('HARİTA tek dokunuşla zinciri kapatır (onFlowDone bir kez, overlay kalkar)', (tester) async {
+    final session = await makeSession();
+    var flowDone = 0;
+    await tester.pumpWidget(
+        host(session, levelDef(0), onFlowDone: () => flowDone++));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    final state = tester.state<PlayScreenState>(find.byType(PlayScreen));
+    final e = state.engineForTest;
+    for (var i = 0; i < 8; i++) {
+      e.moving!.x = e.blocks.last.x;
+      e.drop();
+    }
+    for (var i = 0; i < 24; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
+    expect(find.text('BÖLÜM TAMAM!'), findsOneWidget);
+
+    // ui.js paritesi: sonuç butonu doğrudan showMap çağırır — tek dokunuş yeter
+    await tester.tap(find.text('HARİTA'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(flowDone, 1);
+    expect(find.text('BÖLÜM TAMAM!'), findsNothing);
+
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+  });
+
+  testWidgets('SONRAKİ sonrası kayıpta TEKRAR doğru bölümle (i=1) yeniden başlatır', (tester) async {
+    final session = await makeSession();
+    await tester.pumpWidget(host(session, levelDef(0)));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    final state = tester.state<PlayScreenState>(find.byType(PlayScreen));
+    var e = state.engineForTest;
+    // bölüm 0'ı kazan → SONRAKİ BÖLÜM görünür
+    for (var i = 0; i < 8; i++) {
+      e.moving!.x = e.blocks.last.x;
+      e.drop();
+    }
+    for (var i = 0; i < 24; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
+    expect(find.text('SONRAKİ BÖLÜM →'), findsOneWidget);
+
+    // SONRAKİ: aynı ekran, tanım i=1
+    await tester.tap(find.text('SONRAKİ BÖLÜM →'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    e = state.engineForTest;
+    expect(e.def!.i, 1);
+    expect(session.currentDef!.i, 1);
+
+    // i=1'de kaybet
+    e.shieldsLeft = 0;
+    e.moving!.x = e.blocks.last.x - e.moving!.w - 60;
+    e.drop();
+    for (var i = 0; i < 14; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
+    expect(find.text('BİTİYORDU!'), findsOneWidget);
+
+    // TEKRAR: motor ve oturum hâlâ i=1'de olmalı (widget.def i=0 gerilemesi yok)
+    await tester.tap(find.text('TEKRAR'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    e = state.engineForTest;
+    expect(e.def!.i, 1);
+    expect(session.currentDef!.i, 1);
+
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+  });
+
   testWidgets('geri düğmesi çift dokunma onayı: ilk dokunuş çıkmaz, ikincisi çıkarır', (tester) async {
     final session = await makeSession();
     var exits = 0;
