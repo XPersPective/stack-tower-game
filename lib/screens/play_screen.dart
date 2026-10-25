@@ -11,6 +11,7 @@ import '../game/audio.dart';
 import '../game/game_session.dart';
 import '../game/kinds/catcher_game.dart';
 import '../game/kinds/launch_game.dart';
+import '../game/kinds/merge_game.dart';
 import '../game/kinds/ring_game.dart';
 import '../game/kinds/stack_game.dart';
 import '../game/levels.dart';
@@ -29,6 +30,8 @@ MiniGame createMiniGame(GameKind kind) {
       return RingGame();
     case GameKind.launch:
       return LaunchGame();
+    case GameKind.merge:
+      return MergeGame();
     default:
       // Henüz uygulanmamış türler geçici olarak STACK ile oynanır (PB-025..028)
       return StackGame();

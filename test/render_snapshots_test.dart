@@ -8,6 +8,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stack_tower_game/game/kinds/catcher_game.dart';
+import 'package:stack_tower_game/game/kinds/launch_game.dart';
+import 'package:stack_tower_game/game/kinds/merge_game.dart';
 import 'package:stack_tower_game/game/kinds/ring_game.dart';
 import 'package:stack_tower_game/game/kinds/stack_game.dart';
 import 'package:stack_tower_game/game/levels.dart';
@@ -49,6 +51,16 @@ void main() {
   test('RING sahne anlık görüntüsü üretilir', () async {
     await _snapshot(RingGame(), levelDef(1), 'ring');
     expect(File('.project-brain/evidence/PB-022/ring.png').lengthSync(), greaterThan(2000));
+  });
+
+  test('LAUNCH sahne anlık görüntüsü üretilir', () async {
+    await _snapshot(LaunchGame(), levelDef(3), 'launch');
+    expect(File('.project-brain/evidence/PB-022/launch.png').lengthSync(), greaterThan(2000));
+  });
+
+  test('MERGE sahne anlık görüntüsü üretilir', () async {
+    await _snapshot(MergeGame(), levelDef(4), 'merge');
+    expect(File('.project-brain/evidence/PB-022/merge.png').lengthSync(), greaterThan(2000));
   });
 
   test('STACK sahne anlık görüntüsü üretilir', () async {
