@@ -6,12 +6,21 @@ library;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
+import '../services/storage.dart';
+
 enum GameSound { place, perfect, win, lose, coin, box, shield, start }
 
-class AudioController extends ChangeNotifier {
-  AudioController({this.muted = false});
+const String kMuteKey = 'stacktower_muted_v1';
 
-  bool muted;
+class AudioController extends ChangeNotifier {
+  AudioController({bool muted = false, this.storage}) {
+    // kalıcı sessiz ayarı (game.js neonkule_muted_v1 karşılığı)
+    if (storage?.getString(kMuteKey) == '1') _muted = true;
+  }
+
+  final KeyValueStorage? storage;
+  bool _muted = false;
+  bool get muted => _muted;
   bool _ready = false;
 
   final Map<GameSound, AudioPlayer> _players = {};
@@ -43,7 +52,7 @@ class AudioController extends ChangeNotifier {
 
   /// Mükemmel serisi yükselen perde: combo 1..8 → perfectN.wav (tavana düşer).
   Future<void> play(GameSound sound, {int combo = 1}) async {
-    if (muted || !_ready) return;
+    if (_muted || !_ready) return;
     final name = switch (sound) {
       GameSound.perfect => 'perfect${combo.clamp(1, 8)}.wav',
       _ => _fileOf(sound),
@@ -69,7 +78,8 @@ class AudioController extends ChangeNotifier {
       };
 
   void setMuted(bool m) {
-    muted = m;
+    _muted = m;
+    storage?.setString(kMuteKey, m ? '1' : '0');
     notifyListeners();
   }
 

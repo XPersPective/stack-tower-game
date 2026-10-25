@@ -25,8 +25,8 @@ Future<void> main() async {
   ));
 
   final prefs = await SharedPreferences.getInstance();
-  final audio = AudioController();
-  unawaited(audio.preload());
+  final audio = AudioController(storage: SharedPreferencesStorage(prefs));
+  audio.preload(); // ateşle-unut: yükleme arka planda tamamlanır
 
   runApp(StackTowerApp(
     session: GameSession(SharedPreferencesStorage(prefs)),
