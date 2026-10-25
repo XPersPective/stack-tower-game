@@ -33,6 +33,19 @@ class RingGame implements MiniGame {
   final List<RingHitFx> fxs = [];
   final math.Random _rnd = math.Random();
 
+  /// Test kancaları (üretimde kullanılmaz).
+  @visibleForTesting
+  double get spinForTest => spin;
+  @visibleForTesting
+  int get dirSignForTest => dirSign;
+  @visibleForTesting
+  double get angleForTest => angle;
+  @visibleForTesting
+  void setTargetForTest(double start, double width) {
+    targetStart = start;
+    targetWidth = width;
+  }
+
   @override
   int get score => _score;
   @override

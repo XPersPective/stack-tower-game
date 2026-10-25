@@ -147,14 +147,14 @@ void main() {
     }
   });
 
-  testWidgets('SONRAKİ sonrası kayıpta TEKRAR doğru bölümle (i=1) yeniden başlatır', (tester) async {
+  testWidgets('SONRAKİ: antoloji — sıradaki bölüm FARKLI türe geçer (i=3 → LAUNCH)', (tester) async {
     final session = await makeSession();
     await tester.pumpWidget(host(session, levelDef(2)));
     await tester.pump(const Duration(milliseconds: 120));
 
     final state = tester.state<PlayScreenState>(find.byType(PlayScreen));
-    var e = state.engineForTest;
-    // bölüm 0'ı kazan → SONRAKİ BÖLÜM görünür
+    final e = state.engineForTest;
+    expect(state.gameForTest.kind, GameKind.stack);
     for (var i = 0; i < 8; i++) {
       e.moving!.x = e.blocks.last.x;
       e.drop();
@@ -162,22 +162,32 @@ void main() {
     for (var i = 0; i < 24; i++) {
       await tester.pump(const Duration(milliseconds: 60));
     }
-    // önce inşaat kartı (ADR-009) → DEVAM
-    await tester.tap(find.text('DEVAM'));
+    await tester.tap(find.text('DEVAM')); // inşaat kartı (ADR-009)
     for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 60));
     }
     expect(find.text('SONRAKİ BÖLÜM →'), findsOneWidget);
 
-    // SONRAKİ: aynı ekran, tanım i=1
     await tester.tap(find.text('SONRAKİ BÖLÜM →'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 120));
-    e = state.engineForTest;
-    expect(e.def!.i, 3);
-    expect(session.currentDef!.i, 3); // levelDef(2) → SONRAKİ = 3
+    await tester.pump(const Duration(milliseconds: 150));
+    // oturum ve ekran aynı bölümde; tür artık LAUNCH (her bölüm farklı oyun)
+    expect(session.currentDef!.i, 3);
+    expect(state.gameForTest.kind, GameKind.launch);
 
-    // i=1'de kaybet
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+  });
+
+  testWidgets('TEKRAR: kayıptan sonra aynı bölüm ve aynı türle yeniden başlar', (tester) async {
+    final session = await makeSession();
+    await tester.pumpWidget(host(session, levelDef(2)));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    final state = tester.state<PlayScreenState>(find.byType(PlayScreen));
+    final e = state.engineForTest;
+    // kaybet: kalkan yok + tam ıska
     e.shieldsLeft = 0;
     e.moving!.x = e.blocks.last.x - e.moving!.w - 60;
     e.drop();
@@ -186,15 +196,14 @@ void main() {
     }
     expect(find.text('BİTİYORDU!'), findsOneWidget);
 
-    // TEKRAR: motor ve oturum hâlâ i=1'de olmalı (widget.def i=0 gerilemesi yok)
     await tester.tap(find.text('TEKRAR'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 120));
-    e = state.engineForTest;
-    expect(e.def!.i, 3);
-    expect(session.currentDef!.i, 3); // levelDef(2) → SONRAKİ = 3
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(session.currentDef!.i, 2);
+    expect(state.gameForTest.kind, GameKind.stack);
+    expect(state.engineForTest.score, 0, reason: 'motor sıfırlanmış olmalı');
 
-    for (var i = 0; i < 40; i++) {
+    for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
   });

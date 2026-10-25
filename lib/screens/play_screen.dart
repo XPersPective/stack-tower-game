@@ -5,10 +5,12 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 
 import '../game/audio.dart';
 import '../game/game_session.dart';
 import '../game/kinds/catcher_game.dart';
+import '../game/kinds/launch_game.dart';
 import '../game/kinds/ring_game.dart';
 import '../game/kinds/stack_game.dart';
 import '../game/levels.dart';
@@ -25,6 +27,8 @@ MiniGame createMiniGame(GameKind kind) {
       return CatcherGame();
     case GameKind.ring:
       return RingGame();
+    case GameKind.launch:
+      return LaunchGame();
     default:
       // Henüz uygulanmamış türler geçici olarak STACK ile oynanır (PB-025..028)
       return StackGame();
@@ -132,7 +136,16 @@ class PlayScreenState extends State<PlayScreen>
   }
 
   @override
-  void haptic(int ms) {}
+  void haptic(int ms) {
+    // C-023 juice: dokunsal geri bildirim (süreye göre şiddet seçilir)
+    if (ms >= 50) {
+      HapticFeedback.heavyImpact();
+    } else if (ms >= 25) {
+      HapticFeedback.mediumImpact();
+    } else if (ms > 0) {
+      HapticFeedback.lightImpact();
+    }
+  }
 
   @override
   void onEvent(String name, {Map<String, dynamic>? data}) {

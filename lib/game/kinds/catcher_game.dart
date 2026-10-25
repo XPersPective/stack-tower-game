@@ -132,6 +132,7 @@ class CatcherGame implements MiniGame {
     // düşenler
     final basketTop = h - 92 * scale;
     for (var i = items.length - 1; i >= 0; i--) {
+      if (_over) break; // MAJOR düzeltmesi: bitiş sonrası aynı karede ikinci olay yok
       final it = items[i];
       it.y += it.vy * dt;
       it.spin += dt * (it.bomb ? 2.0 : 3.4);
@@ -145,7 +146,9 @@ class CatcherGame implements MiniGame {
           if (centered) _perfects++;
           bursts.add(CatchBurst(it.x, basketTop, gold: it.gold));
           if (it.gold) _golds++;
-          _host?.playSound(it.gold ? 'coin' : 'perfect', combo: _combo);
+          _host?.playSound(
+              it.gold ? 'coin' : (centered ? 'perfect' : 'place'),
+              combo: _combo);
           _host?.haptic(it.gold ? 18 : 10);
           if (it.gold) {
             goldFlash = 0.5;
@@ -176,6 +179,7 @@ class CatcherGame implements MiniGame {
   }
 
   void _hitBomb(FallingItem it) {
+    if (_over) return;
     if (_shields > 0) {
       _shields--;
       _combo = 0;
@@ -196,6 +200,7 @@ class CatcherGame implements MiniGame {
   }
 
   void _win() {
+    if (_over) return;
     _over = true;
     _reached = true;
     _host?.playSound('win');
