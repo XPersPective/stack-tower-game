@@ -17,6 +17,7 @@ Verified present reality only. Markers: VERIFIED | OBSERVED | INFERRED | STALE |
 - `lib/game/scene_painter.dart` — tüm render katmanları (game.js render birebir; inceleme PASS)
 - `lib/game/game_session.dart` — oturum/akış orkestrasyonu (ui.js onEngineEvent karşılığı)
 - `lib/game/mini_game.dart` + `lib/game/kinds/*` — antoloji: MiniGame sözleşmesi + 7 mini-oyun (stack,catcher,ring,launch,merge,path,sort)
+- `lib/preview/preview_painter.dart` — önizleme sahnesi painter'ı (preview.js draw birebir; PB-009 kabul)
 - `lib/game/audio.dart` — ses denetleyicisi (varlıklar PB-010'da üretilir; eksik varlık güvenli)
 - `lib/screens/*` — menu, map(hub), preview, play+HUD, flow_overlays(kutu→tören→tahta→sonuç), shop+relics, missions, settings, router
 - `lib/theme/tokens.dart` — THEMES 10 palet + NeonPalette + Inter (variable font)
@@ -39,9 +40,9 @@ Sources: `lib/game/{gameplay,scene_painter}.dart`, `test/gameplay_test.dart`
 
 ### screens
 Status: OBSERVED (tüm ekranlar emülatörde çalışıyor: menü→harita→önizleme→oyun→sonuç→mağaza/görevler; ekran kanıtları .project-brain/evidence/PB-006/)
-Sources: `lib/screens/**`, `test/{widget,play_screen,screens}_test.dart`
+Sources: `lib/screens/**`, `lib/preview/**`, `test/{widget,play_screen,screens,preview}_test.dart`
 - harita şu an işlevsel hub (grid) — PB-008 3B perspektife yükseltecek
-- önizleme sinematik metin/siluet — PB-009 preview.js sadakat cilası
+- önizleme sinematik ekranı preview.js/ui.js sadakatli (PB-009 DONE: review PASS — günlük slot sırası, saveLayer hale, introLock düzeltildi; emülatör kayıt kanıtı evidence/PB-009/)
 
 ### anthology
 Status: OBSERVED (CATCH PB-023 + RING PB-024 inceleme PASS ile kabul; LAUNCH/MERGE kodlandı+testlendi — görev akışları PB-025/PB-026 hâlâ READY; PATH/SORT kodlandı, PB-027 açık)
