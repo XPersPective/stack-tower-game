@@ -16,6 +16,7 @@ Verified present reality only. Markers: VERIFIED | OBSERVED | INFERRED | STALE |
 - `lib/game/gameplay.dart` — motor durumu/tik/efekt havuzları (game.js birebir; ADR-002)
 - `lib/game/scene_painter.dart` — tüm render katmanları (game.js render birebir; inceleme PASS)
 - `lib/game/game_session.dart` — oturum/akış orkestrasyonu (ui.js onEngineEvent karşılığı)
+- `lib/game/mini_game.dart` + `lib/game/kinds/*` — antoloji: MiniGame sözleşmesi + 7 mini-oyun (stack,catcher,ring,launch,merge,path,sort)
 - `lib/game/audio.dart` — ses denetleyicisi (varlıklar PB-010'da üretilir; eksik varlık güvenli)
 - `lib/screens/*` — menu, map(hub), preview, play+HUD, flow_overlays(kutu→tören→tahta→sonuç), shop+relics, missions, settings, router
 - `lib/theme/tokens.dart` — THEMES 10 palet + NeonPalette + Inter (variable font)
@@ -41,6 +42,15 @@ Status: OBSERVED (tüm ekranlar emülatörde çalışıyor: menü→harita→ön
 Sources: `lib/screens/**`, `test/{widget,play_screen,screens}_test.dart`
 - harita şu an işlevsel hub (grid) — PB-008 3B perspektife yükseltecek
 - önizleme sinematik metin/siluet — PB-009 preview.js sadakat cilası
+
+### anthology
+Status: OBSERVED (CATCH PB-023 + RING PB-024 inceleme PASS ile kabul; LAUNCH/MERGE kodlandı+testlendi — görev akışları PB-025/PB-026 hâlâ READY; PATH/SORT kodlandı, PB-027 açık)
+Sources: `lib/game/mini_game.dart`, `lib/game/kinds/*.dart`, `test/{catch,ring,launch,merge}_test.dart`
+- MiniGame sözleşmesi; antoloji host play_screen içinde; RING tek halka uygulandı (çoklu iç/dış halka kapsam dışı — PB-024 inceleme MINOR)
+
+### construction-meta
+Status: OBSERVED (PB-029 kodlandı: tamamlanan bölüm adada yapı parçası yükseltir; görev akışı açık)
+Sources: `lib/game/game_session.dart`, `lib/screens/flow_overlays.dart`
 
 ### theme
 Status: VERIFIED (kThemes 10/10 alan bağımsız karşılaştırmayla eşleşti; Inter variable woff2→ttf)
