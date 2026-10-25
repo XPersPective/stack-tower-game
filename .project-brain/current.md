@@ -22,7 +22,7 @@ Verified present reality only. Markers: VERIFIED | OBSERVED | INFERRED | STALE |
 - `lib/screens/*` — menu, map(hub), preview, play+HUD, flow_overlays(kutu→tören→tahta→sonuç), shop+relics, missions, settings, router
 - `lib/theme/tokens.dart` — THEMES 10 palet + NeonPalette + Inter (variable font)
 - `lib/services/storage.dart` — KeyValueStorage (SharedPreferences/Memory)
-- `test/` — 69 test: parite snapshot, ekonomi, drop, motor, ekran akışları
+- `test/` — 22 dosya / 189 test öğesi (grep ölçümü 2026-10-25): parite snapshot, ekonomi, drop, motor, ekran akışları, antoloji mini-oyunlar
 - `tools_js/gen_levels_snapshot.js` — JS parite fixture üreteci (node)
 - `worker/` — HENÜZ YOK (SPEC §7 backend; PB-012)
 
