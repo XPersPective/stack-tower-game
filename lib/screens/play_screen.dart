@@ -12,6 +12,8 @@ import '../game/game_session.dart';
 import '../game/kinds/catcher_game.dart';
 import '../game/kinds/launch_game.dart';
 import '../game/kinds/merge_game.dart';
+import '../game/kinds/path_game.dart';
+import '../game/kinds/sort_game.dart';
 import '../game/kinds/ring_game.dart';
 import '../game/kinds/stack_game.dart';
 import '../game/levels.dart';
@@ -32,6 +34,10 @@ MiniGame createMiniGame(GameKind kind) {
       return LaunchGame();
     case GameKind.merge:
       return MergeGame();
+    case GameKind.path:
+      return PathGame();
+    case GameKind.sort:
+      return SortGame();
     default:
       // Henüz uygulanmamış türler geçici olarak STACK ile oynanır (PB-025..028)
       return StackGame();
@@ -67,7 +73,7 @@ class PlayScreenState extends State<PlayScreen>
   Duration _last = Duration.zero;
   Size _size = Size.zero;
 
-  int _hudScore = 0, _hudCombo = 0, _hudShields = 1;
+  int _hudScore = 0, _hudCombo = 0, _hudShields = 1, _hudTarget = 0;
   bool _overlayOpen = false;
   bool _won = false;
 
@@ -89,6 +95,7 @@ class PlayScreenState extends State<PlayScreen>
     _hudShields = start.shields;
     _hudScore = 0;
     _hudCombo = 0;
+    _hudTarget = _game.target;
     final got = widget.session.applyCoinStart();
     final surprise = widget.session.currentSurprise;
     if (surprise != null) {
@@ -109,12 +116,14 @@ class PlayScreenState extends State<PlayScreen>
     _game.tick(dt);
     if (_game.score != _hudScore ||
         _game.combo != _hudCombo ||
-        _game.shieldsLeft != _hudShields) {
+        _game.shieldsLeft != _hudShields ||
+        _game.target != _hudTarget) {
       if (mounted) {
         setState(() {
           _hudScore = _game.score;
           _hudCombo = _game.combo;
           _hudShields = _game.shieldsLeft;
+          _hudTarget = _game.target;
         });
       }
     }
@@ -262,9 +271,7 @@ class PlayScreenState extends State<PlayScreen>
                           ),
                           const Spacer(),
                           Text(
-                            def.target > 0
-                                ? '$_hudScore/${def.target}'
-                                : '$_hudScore',
+                            _hudTarget > 0 ? '$_hudScore/$_hudTarget' : '$_hudScore',
                             style: Theme.of(context).textTheme.headlineMedium,
                           ),
                           const Spacer(),
@@ -278,11 +285,11 @@ class PlayScreenState extends State<PlayScreen>
                         ],
                       ),
                       const SizedBox(height: 4),
-                      if (def.target > 0)
+                      if (_hudTarget > 0)
                         ClipRRect(
                           borderRadius: BorderRadius.circular(6),
                           child: LinearProgressIndicator(
-                            value: (_hudScore / def.target).clamp(0.0, 1.0),
+                            value: (_hudScore / _hudTarget).clamp(0.0, 1.0),
                             minHeight: 6,
                             backgroundColor: Colors.white.withValues(alpha: .12),
                             valueColor:
