@@ -1,9 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'game/audio.dart';
+import 'game/game_session.dart';
+import 'screens/router.dart';
+import 'services/storage.dart';
 import 'theme/tokens.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Dikey mod kilidi (SPEC §3) + immersive edge-to-edge.
   SystemChrome.setPreferredOrientations(const [
@@ -15,70 +23,38 @@ void main() {
     statusBarColor: Colors.transparent,
     systemNavigationBarColor: NeonPalette.ink,
   ));
-  runApp(const StackTowerApp());
+
+  final prefs = await SharedPreferences.getInstance();
+  final audio = AudioController();
+  unawaited(audio.preload());
+
+  runApp(StackTowerApp(
+    session: GameSession(SharedPreferencesStorage(prefs)),
+    audio: audio,
+  ));
 }
 
 class StackTowerApp extends StatelessWidget {
-  const StackTowerApp({super.key});
+  const StackTowerApp({super.key, required this.session, required this.audio});
+
+  final GameSession session;
+  final AudioController audio;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Stack Tower Game',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.build(),
-      home: const PlaceholderMenuScreen(),
-    );
-  }
-}
-
-/// PB-001 geçici menü — PB-007'de tam menü ekranıyla değiştirilecek.
-class PlaceholderMenuScreen extends StatelessWidget {
-  const PlaceholderMenuScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF0c0a20), Color(0xFF1e1046)],
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ShaderMask(
-                  shaderCallback: (b) => const LinearGradient(
-                    colors: [NeonPalette.cyan, NeonPalette.magenta],
-                  ).createShader(b),
-                  child: Text(
-                    'STACK TOWER',
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                          fontVariations: [interVariation(FontWeight.w900)],
-                          shadows: [
-                            Shadow(color: NeonPalette.cyan.withValues(alpha: .6), blurRadius: 28),
-                            Shadow(color: NeonPalette.magenta.withValues(alpha: .4), blurRadius: 36),
-                          ],
-                        ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'G A M E',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: NeonPalette.textDim,
-                        letterSpacing: 12,
-                        fontVariations: [interVariation(FontWeight.w700)],
-                      ),
-                ),
-              ],
-            ),
-          ),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: session),
+        ChangeNotifierProvider.value(value: audio),
+      ],
+      child: MaterialApp(
+        title: 'Stack Tower Game',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.build(),
+        initialRoute: Routes.menu,
+        onGenerateRoute: (settings) => MaterialPageRoute(
+          settings: settings,
+          builder: (_) => routeFor(settings),
         ),
       ),
     );

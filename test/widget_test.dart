@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:stack_tower_game/game/audio.dart';
+import 'package:stack_tower_game/game/game_session.dart';
 import 'package:stack_tower_game/main.dart';
+import 'package:stack_tower_game/services/storage.dart';
 import 'package:stack_tower_game/theme/tokens.dart';
 
 void main() {
-  testWidgets('Placeholder menü STACK TOWER başlığını Inter ile gösterir', (tester) async {
-    await tester.pumpWidget(const StackTowerApp());
+  testWidgets('Menü STACK TOWER başlığını Inter ile gösterir', (tester) async {
+    await tester.pumpWidget(StackTowerApp(
+      session: GameSession(MemoryStorage()),
+      audio: AudioController(),
+    ));
+    await tester.pump();
 
     expect(find.text('STACK TOWER'), findsOneWidget);
     expect(find.text('G A M E'), findsOneWidget);

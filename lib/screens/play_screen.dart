@@ -2,6 +2,8 @@
 /// game.js frame döngüsü + ui.js HUD davranışının Flutter portu (SPEC §2.8).
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -31,10 +33,10 @@ class PlayScreen extends StatefulWidget {
   final VoidCallback onFlowDone;
 
   @override
-  State<PlayScreen> createState() => _PlayScreenState();
+  State<PlayScreen> createState() => PlayScreenState();
 }
 
-class _PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateMixin {
+class PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateMixin {
   late final GamePlay _engine;
   late final GamePlayRepaint _repaint;
   late final Ticker _ticker;
@@ -44,6 +46,9 @@ class _PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateM
   // HUD anlık değerleri (her frame setState yok — değer değişince güncellenir)
   int _hudScore = 0, _hudCombo = 0, _hudShields = 1;
   bool _overlayOpen = false;
+  // Çıkış onayı: ilk dokunuş silahlanır, 2.5 sn içinde tekrar dokunuş çıkarır.
+  bool _exitArmed = false;
+  Timer? _exitResetTimer;
 
   @override
   void initState() {
@@ -65,6 +70,10 @@ class _PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateM
   }
 
   LevelStart? _pendingStart;
+
+  /// Test gözlemcisi için motor erişimi (üretimde kullanılmaz).
+  @visibleForTesting
+  GamePlay get engineForTest => _engine;
 
   void _startEngine() {
     final start = _pendingStart!;
@@ -119,6 +128,18 @@ class _PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateM
   }
 
   void _exit() {
+    if (!_exitArmed) {
+      // Yanlışlıkla çıkışı engelle: ilk dokunuş yalnız silahlanır (ui.js onay diyalogu karşılığı).
+      _exitArmed = true;
+      _exitResetTimer?.cancel();
+      _exitResetTimer = Timer(const Duration(milliseconds: 2500), () {
+        if (mounted) setState(() => _exitArmed = false);
+      });
+      setState(() {});
+      ToastHost.show(context, 'Çıkmak için tekrar dokun');
+      return;
+    }
+    _exitResetTimer?.cancel();
     _ticker.stop();
     _engine.stopLevel();
     widget.onExit();
@@ -126,6 +147,7 @@ class _PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateM
 
   @override
   void dispose() {
+    _exitResetTimer?.cancel();
     _ticker.dispose();
     super.dispose();
   }
@@ -165,7 +187,8 @@ class _PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateM
                     children: [
                       Row(
                         children: [
-                          _hudButton(Icons.arrow_back, 'ÇIK', _exit),
+                          _hudButton(Icons.arrow_back, _exitArmed ? 'Çıkışı onayla' : 'ÇIK', _exit,
+                              armed: _exitArmed),
                           const Spacer(),
                           Text(
                             def.target > 0 ? '$_hudScore/${def.target}' : '$_hudScore',
@@ -233,7 +256,7 @@ class _PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateM
                       _hudScore = 0;
                       _hudCombo = 0;
                     });
-                    _pendingStart = widget.session.prepareLevel(widget.def);
+                    _pendingStart = widget.session.prepareLevel(_def);
                     _hudShields = _pendingStart!.shields;
                     _startEngine();
                     if (!_ticker.isActive) _ticker.start();
@@ -259,7 +282,7 @@ class _PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _hudButton(IconData icon, String label, VoidCallback onTap) {
+  Widget _hudButton(IconData icon, String label, VoidCallback onTap, {bool armed = false}) {
     return Semantics(
       button: true,
       label: label.isEmpty ? null : label,
@@ -269,7 +292,14 @@ class _PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateM
         child: Container(
           constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
           alignment: Alignment.center,
-          child: Icon(icon, color: NeonPalette.text, size: 26),
+          decoration: armed
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: NeonPalette.amber, width: 1.6),
+                )
+              : null,
+          child: Icon(icon,
+              color: armed ? NeonPalette.amber : NeonPalette.text, size: 26),
         ),
       ),
     );

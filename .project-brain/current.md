@@ -3,50 +3,55 @@
 Verified present reality only. Markers: VERIFIED | OBSERVED | INFERRED | STALE | UNKNOWN.
 
 ## Runtime
-- Hedef: Flutter (tek kod tabanı, Android+iOS); geliştirme Windows host, Flutter 3.47.2 stable / Dart 3.13.2 (VERIFIED)
-- Kaynak oyun: HTML/JS + Capacitor; referans olarak `reference/www/` içinde donduruldu (VERIFIED)
+- Flutter (tek kod tabanı, Android+iOS); Flutter 3.47.2 stable / Dart 3.13.2, Windows host (VERIFIED)
+- Paket kimliği (geliştirme): com.stacktower.stack_tower_game; uygulama adı "Stack Tower Game" (VERIFIED)
+- Kaynak oyun: HTML/JS + Capacitor; `reference/www/` içinde donduruldu (VERIFIED)
 
 ## Map
 <!-- path — role. Orientation index: read this instead of exploring. <=40 lines. -->
-- `docs/SPEC.md` — yetkili spec (devir brifingi, Stack Tower Game olarak rebrand edildi)
-- `reference/www/levels.js` — 10 tema + 150 bölüm + denge formülleri (saf; port kaynağı)
-- `reference/www/progress.js` — ekonomi/kayıt katmanı (saf + storage soyutlaması; port kaynağı)
-- `reference/www/game.js` — motor: CORE saf çekirdek + render/ses/akış (port kaynağı)
-- `reference/www/map.js` — 3B perspektif takımada haritası (70KB; port kaynağı)
-- `reference/www/preview.js` — sinematik bölüm önizlemesi (port kaynağı)
-- `reference/www/ui.js` + `index.html` + `style.css` — ekran akışları + neon stil (port kaynağı)
-- `reference/www/leaderboard.js` + `lb-config.js` — ESKİ GC/PGS köprüsü; davranış (kuyruk/en-yüksek-skor) korunur, taşıyıcı Cloudflare olur
-- `reference/test.js`, `reference/smoke.js` — çalışan davranış spesifikasyonu (Dart test kaynağı)
-- `reference/assets/` — simge/mağaza görselleri; `reference/store/` — mağaza metinleri
-- `lib/`, `test/`, `worker/` — hedef yapı (SPEC §4); oluştukça buraya işlenir
+- `docs/SPEC.md` — yetkili spec (devir brifingi, Stack Tower Game rebrand)
+- `lib/game/levels.dart` — 10 tema + 150 bölüm + günlük/serbest (JS birebir; 150×12 alan snapshot paritesi)
+- `lib/game/progress.dart` — ekonomi/kayıt (JS birebir; SaveState SPEC §5 şeması, LCG rakipler)
+- `lib/game/drop_core.dart` — saf bırakma matematiği (game.js CORE birebir)
+- `lib/game/gameplay.dart` — motor durumu/tik/efekt havuzları (game.js birebir; ADR-002)
+- `lib/game/scene_painter.dart` — tüm render katmanları (game.js render birebir; inceleme PASS)
+- `lib/game/game_session.dart` — oturum/akış orkestrasyonu (ui.js onEngineEvent karşılığı)
+- `lib/game/audio.dart` — ses denetleyicisi (varlıklar PB-010'da üretilir; eksik varlık güvenli)
+- `lib/screens/*` — menu, map(hub), preview, play+HUD, flow_overlays(kutu→tören→tahta→sonuç), shop+relics, missions, settings, router
+- `lib/theme/tokens.dart` — THEMES 10 palet + NeonPalette + Inter (variable font)
+- `lib/services/storage.dart` — KeyValueStorage (SharedPreferences/Memory)
+- `test/` — 69 test: parite snapshot, ekonomi, drop, motor, ekran akışları
+- `tools_js/gen_levels_snapshot.js` — JS parite fixture üreteci (node)
+- `worker/` — HENÜZ YOK (SPEC §7 backend; PB-012)
 
 ## Domains
 
 ### game-core
-Status: UNKNOWN (port edilmedi; kaynak referans/www/{levels,progress}.js okundu, anlaşıldı)
-Sources: `reference/www/levels.js`, `reference/www/progress.js`
-- Saf fonksiyonlar + saf veri; Dart karşılığı `lib/game/{levels,progress,drop_core}.dart`
-- Denge formülleri SPEC §2.3'te özetlendi; tek doğruluk kaynağı JS dosyaları
+Status: VERIFIED (levels/progress/drop_core birebir port; JS snapshot + birim testler; bağımsız inceleme PASS)
+Sources: `lib/game/{levels,progress,drop_core}.dart`, `test/{levels,progress,drop_core}_test.dart`
+- Kayıt anahtarı stacktower_save_v2; 60 para başlangıç; şema SPEC §5 (ADR-001)
 
 ### game-engine
-Status: UNKNOWN (port edilmedi; kaynak referans/www/game.js okundu: CORE + tick/render akışı)
-Sources: `reference/www/game.js`
-- resolveDrop/travelRange/movingBounds/speedMultiplier/stepMoving/growthWidth saf çekirdek;
-  motor durumu idle|playing|won|lost; efekt havuzları debris/particles/rings/popups/confetti
+Status: VERIFIED (gameplay+scene_painter JS birebir; 13 motor testi; inceleme PASS — MAJOR karanlık perde durakları düzeltildi)
+Sources: `lib/game/{gameplay,scene_painter}.dart`, `test/gameplay_test.dart`
+- render sırası game.js render() ile aynı; dt clamp 0.05 play_screen'de
 
 ### screens
-Status: UNKNOWN (port edilmedi; ekran envanteri çıkarıldı: menu, map, hud, intro/preview,
-result, box, shop, relics, missions, board, settings)
+Status: OBSERVED (tüm ekranlar emülatörde çalışıyor: menü→harita→önizleme→oyun→sonuç→mağaza/görevler; ekran kanıtları .project-brain/evidence/PB-006/)
+Sources: `lib/screens/**`, `test/{widget,play_screen,screens}_test.dart`
+- harita şu an işlevsel hub (grid) — PB-008 3B perspektife yükseltecek
+- önizleme sinematik metin/siluet — PB-009 preview.js sadakat cilası
 
 ### theme
-Status: UNKNOWN (port edilmedi; kaynak THEMES 10 palet + style.css + Inter fontu reference/www/fonts/)
+Status: VERIFIED (kThemes 10/10 alan bağımsız karşılaştırmayla eşleşti; Inter variable woff2→ttf)
 
-### services (storage/leaderboard/session)
-Status: UNKNOWN (port edilmedi; kaynak leaderboard.js kuyruk mantığı + SPEC §7 hedef mimarisi)
+### services
+Status: OBSERVED (storage soyutlaması VERIFIED; leaderboard/session henüz yok — PB-011)
 
 ### backend
-Status: UNKNOWN (`worker/` henüz yok; şema+uçlar SPEC §7.3-7.4'te tanımlı)
+Status: UNKNOWN (worker/ yok; SPEC §7.3-7.4 tanımlı — PB-012)
 
 ## Known Unknowns
-- map.js/preview.js ayrıntıları henüz satır satır okunmadı (port sırasında okunacak; boyut 70KB+17KB)
-- Ses üretimi: WebAudio ton karşılığı ADR-003 yaklaşımıyla doğrulanacak
+- map.js/preview.js satır satır port detayları (PB-008/009'da okunacak)
+- Ses varlık üretimi WebAudio parametre birebirliği (PB-010)
+- Eşzamanlı oturum riski: bu makinede başka bir ajan (zcode-glm53) Brain görevlerini araya girip sahipleniyor — atomik takeover+accept komutlarıyla yönetiliyor

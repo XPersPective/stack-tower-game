@@ -245,58 +245,77 @@ class _RelicGrid extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: ListView.builder(
+          // 10 sabit kart: tembel kurulum gerektirmez, tüm liste ağaçta kalır.
+          child: ListView(
             padding: const EdgeInsets.all(14),
-            itemCount: prog.kRelics.length,
-            itemBuilder: (context, i) {
-              final r = prog.kRelics[i];
-              final owned = session.state.relics[r.stage.toString()] == true;
-              final worldName = kThemes[r.stage].name;
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  color: owned ? Colors.white.withValues(alpha: .06) : Colors.white.withValues(alpha: .02),
-                  border: Border.all(
-                      color: owned ? NeonPalette.star.withValues(alpha: .5) : Colors.white12),
-                ),
-                child: Row(
-                  children: [
-                    Text(owned ? r.icon : '🔒', style: const TextStyle(fontSize: 30)),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(owned ? r.name : 'KİLİTLİ',
-                              style: Theme.of(context).textTheme.titleLarge),
-                          const SizedBox(height: 2),
-                          Text(owned ? r.lore : '$worldName aydınlanınca kazanılır',
-                              style: Theme.of(context).textTheme.bodyMedium),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+            children: [
+              for (var i = 0; i < prog.kRelics.length; i++) _relicCard(context, session, i),
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _relicCard(BuildContext context, GameSession session, int i) {
+    final r = prog.kRelics[i];
+    final owned = session.state.relics[r.stage.toString()] == true;
+    final worldName = kThemes[r.stage].name;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: owned ? Colors.white.withValues(alpha: .06) : Colors.white.withValues(alpha: .02),
+        border: Border.all(
+            color: owned ? NeonPalette.star.withValues(alpha: .5) : Colors.white12),
+      ),
+      child: Row(
+        children: [
+          Text(owned ? r.icon : '🔒', style: const TextStyle(fontSize: 30)),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(owned ? r.name : 'KİLİTLİ',
+                    style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 2),
+                Text(owned ? r.lore : '$worldName aydınlanınca kazanılır',
+                    style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 /* ------------------------------ GÖREVLER ------------------------------ */
 
-class MissionsScreen extends StatelessWidget {
+class MissionsScreen extends StatefulWidget {
   const MissionsScreen({super.key});
+
+  @override
+  State<MissionsScreen> createState() => _MissionsScreenState();
+}
+
+class _MissionsScreenState extends State<MissionsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Görevler gün değişiminde yenilenir; build fazında notify tetiklememek
+    // için ilk frame çizildikten sonra çalıştır.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<GameSession>().refreshMissions();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final session = context.watch<GameSession>();
-    final items = session.refreshMissions();
+    final items = session.missionItemsSafe();
     return Scaffold(
       appBar: AppBar(title: const Text('GÖREVLER')),
       body: ListView.builder(

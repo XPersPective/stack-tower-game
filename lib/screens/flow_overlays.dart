@@ -43,10 +43,12 @@ class _FlowOverlaysState extends State<FlowOverlays> {
   void _advance() {
     final step = widget.session.popStep();
     if (!mounted) return;
-    if (step == null) {
+    if (step == null || step == FlowStep.showMap) {
+      // zincir bitti / haritaya dönüş adımı (ui.js setTimeout(showMap))
       widget.onFlowDone();
       return;
     }
+    if (step == FlowStep.board) widget.session.buildBoard(); // build içinde mutasyon yok
     if (step == FlowStep.box) {
       setState(() {
         _step = FlowStep.box;
@@ -125,7 +127,6 @@ class _FlowOverlaysState extends State<FlowOverlays> {
           ),
         );
       case FlowStep.board:
-        widget.session.buildBoard();
         final rows = widget.session.boardRows;
         return _sheet(
           child: Column(
@@ -133,7 +134,10 @@ class _FlowOverlaysState extends State<FlowOverlays> {
             children: [
               Text('GÜNÜN TAHTASI', style: Theme.of(context).textTheme.displayMedium),
               const SizedBox(height: 4),
-              Text('herkes aynı bölüm', style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                '${DateTime.fromMillisecondsSinceEpoch(widget.session.boardDay * 86400000).toIso8601String().substring(0, 10)} · herkes aynı bölüm',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               const SizedBox(height: 14),
               for (var i = 0; i < rows.length; i++)
                 Padding(
@@ -388,10 +392,6 @@ class _FlowOverlaysToastState extends State<FlowOverlaysToast> {
 class ToastHost {
   static void show(BuildContext context, String message) {
     final overlay = Overlay.of(context, rootOverlay: true);
-    final entry = OverlayEntry(
-      builder: (_) => const SizedBox.shrink(),
-    );
-    // Basit: SnackBar benzeri inline — OverlayEntry ile zamanlı kaldırma
     late OverlayEntry real;
     real = OverlayEntry(
       builder: (_) => Positioned(
@@ -412,7 +412,6 @@ class ToastHost {
         ),
       ),
     );
-    entry.remove();
     overlay.insert(real);
     Future.delayed(const Duration(milliseconds: 2200), () {
       if (real.mounted) real.remove();

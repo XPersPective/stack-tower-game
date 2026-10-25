@@ -49,6 +49,7 @@ class GameSession extends ChangeNotifier {
       }
     }
     persist();
+    _constructing = false;
   }
 
   final KeyValueStorage storage;
@@ -68,13 +69,15 @@ class GameSession extends ChangeNotifier {
   final List<FlowStep> _chain = [];
   FlowStep? get nextStep => _chain.isEmpty ? null : _chain.first;
 
+  bool _constructing = true;
+
   int get totalStars => prog.totalStars(state);
   String get activeSkinId => state.activeSkin;
   int get activeSkinHue => prog.skinById(state.activeSkin).hue;
 
   void persist() {
     prog.save(state, storage);
-    notifyListeners();
+    if (!_constructing) notifyListeners();
   }
 
   /* ------------------------- Bölüm başlatma ------------------------- */
@@ -199,6 +202,9 @@ class GameSession extends ChangeNotifier {
     persist();
     return prog.missionItems(state);
   }
+
+  /// Build içinde güvenli okuma (mutasyon/notify yok).
+  List<Map<String, dynamic>> missionItemsSafe() => prog.missionItems(state);
 
   int? claimMissionAt(int index) {
     final items = prog.missionItems(state);
