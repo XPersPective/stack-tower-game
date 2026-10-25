@@ -115,8 +115,10 @@ void main() {
     expect(e.state, EngineState.won);
     expect(e.confetti.length, greaterThan(0)); // kutlama
     expect(last, isNot(EngineEvent.win)); // endTimer henüz dolmadı
-    // 0.95sn tikle → win olayı gelir
-    e.tick(1.0);
+    // 0.95sn'i kare tıklarıyla akıt (hit-stop dahil) → win olayı gelir
+    for (var i = 0; i < 70; i++) {
+      e.tick(1 / 60);
+    }
     expect(last, EngineEvent.win);
     expect(e.result().reached, isTrue);
     expect(e.result().blocks, 8);

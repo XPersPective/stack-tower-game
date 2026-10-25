@@ -4,9 +4,11 @@
 library;
 
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 
 import 'drop_core.dart';
 import 'levels.dart';
+import 'twists.dart';
 
 /// Rüzgar/akan/deprem tiklerini ve efekt fiziğini game.js tick() ile birebir yürütür.
 enum EngineState { idle, playing, won, lost }
@@ -131,6 +133,20 @@ class GamePlay {
   int skinHue = 200;
   int progressStars = 0;
 
+  // --- Sürpriz motoru (ADR-006) ---
+  TwistType? twist;
+  bool _zitFlip = false; // zitakis: mükemmelle yön ters çevir
+  int crits = 0; // KRİTİK mükemmel sayısı (×5 para, session uygular)
+  int goldBlocks = 0; // ALTIN YAĞMURU altın blok sayısı
+  bool _goldNow = false; // bu hareketli blok altın mı
+  double Function()? critRoll; // test enjeksiyonu
+  double Function()? goldRoll; // test enjeksiyonu
+  double get hitStopMax => 0.07;
+  @visibleForTesting
+  bool get goldNowForTest => _goldNow;
+  double hitStop = 0; // mükemmelde mikro duraklama (PB-016 juice)
+  double spawnTilt = 0; // ruzgargulu görsel açı
+
   final List<Debris> debris = [];
   final List<Particle> particles = [];
   final List<Ring> rings = [];
@@ -158,6 +174,9 @@ class GamePlay {
 
   int blockHue(int i) {
     if (def != null && def!.modifier == 'altin') return (42 + (i % 3) * 8) % 360;
+    if (_goldNow && moving != null) {
+      return 48; // ALTIN YAĞMURU: hareketli blok altın
+    }
     return (skinHue + i * 12) % 360;
   }
 
@@ -325,15 +344,37 @@ class GamePlay {
   void spawnMoving() {
     final top = blocks[blocks.length - 1];
     final b = movingBounds(top);
-    final fromLeft = blocks.length % 2 == 1;
-    moving = Moving(fromLeft ? b.minX : b.maxX, top.w, fromLeft ? 1 : -1);
+    var fromLeft = blocks.length % 2 == 1;
+    if (twist == TwistType.zitakis && _zitFlip) fromLeft = !fromLeft;
+    // dargecit: duvarlar daraldıkça hareket aralığı da daralır
+    var minX = b.minX, maxX = b.maxX;
+    if (twist == TwistType.dargecit) {
+      final inset = math.min(top.w * 0.3, blocks.length * 6.0 * scale);
+      minX += inset;
+      maxX -= inset;
+      if (maxX < minX) {
+        final mid = (minX + maxX) / 2;
+        minX = mid;
+        maxX = mid;
+      }
+    }
+    moving = Moving(fromLeft ? minX : maxX, top.w, fromLeft ? 1 : -1);
+    _goldNow = twist == TwistType.altinyagmuru &&
+        (goldRoll ?? _rnd.nextDouble)() < 0.25;
   }
 
-  void startLevel(LevelDef d, {int hue = 200, int shields = 1}) {
+  void startLevel(LevelDef d, {int hue = 200, int shields = 1, TwistType? twistType}) {
     def = d;
     skinHue = hue;
     shieldsLeft = shields;
     slowTimer = 0;
+    twist = twistType ?? ((d.daily || d.endless) ? null : twistFor(d.i));
+    _zitFlip = false;
+    crits = 0;
+    goldBlocks = 0;
+    _goldNow = false;
+    hitStop = 0;
+    spawnTilt = 0;
     state = EngineState.playing;
     resetWorld();
     makeWeather();
@@ -396,6 +437,7 @@ class GamePlay {
       return;
     }
 
+    var wasCrit = false;
     if (res.perfect) {
       combo++;
       perfects++;
@@ -403,17 +445,40 @@ class GamePlay {
       final x2 = res.placed!.x - (w2 - res.placed!.w) / 2;
       blocks.add(Block(x2, w2));
       final hue = blockHue(idx);
-      burst(x2 + w2 / 2, y, w2, hue, 22 + math.min(26, combo * 3));
+      var burstCount = 22 + math.min(26, combo * 3).toInt();
+      // KRİTİK: %20 ihtimalle ×5 para + büyük patlama
+      if (twist == TwistType.kritik) {
+        final roll = (critRoll ?? _rnd.nextDouble)();
+        if (roll < 0.20) {
+          wasCrit = true;
+          crits++;
+          burstCount = 40;
+          rings.add(Ring(x2 + w2 / 2, y + bh / 2, w2 * 0.35, 0.6, 48));
+          popupText('KRİTİK ×5!', x2 + w2 / 2, y - 34 * scale, 48);
+        }
+      }
+      burst(x2 + w2 / 2, y, w2, hue, burstCount);
       rings.add(Ring(x2 + w2 / 2, y + bh / 2, w2 * 0.3, 0.5, hue));
       popupText(combo > 1 ? 'MÜKEMMEL ×$combo' : 'MÜKEMMEL', x2 + w2 / 2, y - 12 * scale, hue);
       if (def?.modifier == 'altin') {
         coinBurst(x2 + w2 / 2, y, 4 + math.min(8, combo));
       }
-      shake = math.min(13, 4 + combo * 0.8);
-      onHaptic?.call(12);
+      if (wasCrit) coinBurst(x2 + w2 / 2, y, 10);
+      shake = math.min(13, 4 + combo * 0.8) + (wasCrit ? 6 : 0);
+      // juice: hit-stop (PB-016 kancası — mükemmelle mikro duraklama)
+      hitStop = math.min(hitStopMax, 0.04 + combo * 0.004) + (wasCrit ? 0.03 : 0);
+      onHaptic?.call(wasCrit ? 45 : 12);
+      if (twist == TwistType.zitakis) _zitFlip = !_zitFlip;
     } else {
       combo = 0;
-      blocks.add(res.placed!);
+      // SIÇRAYAN: bırakılan blok bir kez en yakın hizaya toparlanır (affedici)
+      var placed = res.placed!;
+      if (twist == TwistType.sicrayan && top.w > 0) {
+        final gap = (top.x + top.w / 2) - (placed.x + placed.w / 2);
+        final nudge = gap.clamp(-8.0, 8.0);
+        placed = Block(placed.x + nudge, placed.w);
+      }
+      blocks.add(placed);
       for (final c in res.cuts) {
         debris.add(Debris(c.x, y, c.w, bh, -40 * scale,
             (_rnd.nextDouble() < 0.5 ? -1 : 1) * (2.5 + _rnd.nextDouble() * 3.5), blockHue(idx).toDouble()));
@@ -424,6 +489,13 @@ class GamePlay {
 
     score = blocks.length - 1;
     bestRun = math.max(bestRun, score);
+    // ALTIN YAĞMURU: altın blok her yerleştirmede para patlaması
+    if (_goldNow) {
+      goldBlocks++;
+      coinBurst(blocks.last.x + blocks.last.w / 2, y, 8);
+      popupText('+ALTIN', blocks.last.x + blocks.last.w / 2, y - 24 * scale, 48);
+      _goldNow = false;
+    }
     spawnMoving();
     onEvent?.call(EngineEvent.place, EngineEventData(perfect: res.perfect, combo: combo, score: score));
 
@@ -445,6 +517,8 @@ class GamePlay {
   }
 
   LevelResult result() => LevelResult(score, perfects, state == EngineState.won);
+  ({int blocks, int perfects, bool reached, int crits, int goldBlocks}) detailedResult() =>
+      (blocks: score, perfects: perfects, reached: state == EngineState.won, crits: crits, goldBlocks: goldBlocks);
 
   /* --------------------------- Efektler --------------------------- */
 
@@ -499,7 +573,19 @@ class GamePlay {
       slowTimer -= dt;
       dt *= 0.35; // ağır çekim anı
     }
+    // juice: hit-stop — hareketi bu kadar oranda durdur (büyük dt'yi yutmaz)
+    if (hitStop > 0) {
+      final consume = math.min(hitStop, dt0);
+      hitStop -= consume;
+      dt = dt0 - consume;
+    }
     time += dt;
+    // ruzgargulu görsel açı salınımı
+    if (twist == TwistType.ruzgargulu) {
+      spawnTilt = math.sin(time * 3) * 0.12;
+    } else {
+      spawnTilt = 0;
+    }
 
     final camTarget = math.max(0, topLimit - groundY + blocks.length * bh);
     camShift += (camTarget - camShift) * math.min(1, dt * 10);

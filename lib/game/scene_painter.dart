@@ -11,6 +11,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import 'gameplay.dart';
+import 'twists.dart';
 
 /* ---------------- renk yardımcıları (game.js birebir) ---------------- */
 
@@ -677,12 +678,35 @@ class ScenePainter extends CustomPainter {
     final m = e.moving;
     if (m == null) return;
     final y = e.movingY();
-    _drawBlock(canvas, e, m.x, y, m.w, e.bh, e.blockHue(e.blocks.length));
+    // ruzgargulu: blok hafif eğimle süzülür
+    if (e.spawnTilt != 0) {
+      canvas.save();
+      canvas.translate(m.x + m.w / 2, y + e.bh / 2);
+      canvas.rotate(e.spawnTilt);
+      _drawBlock(canvas, e, -m.w / 2, -e.bh / 2, m.w, e.bh, e.blockHue(e.blocks.length));
+      canvas.restore();
+    } else {
+      _drawBlock(canvas, e, m.x, y, m.w, e.bh, e.blockHue(e.blocks.length));
+    }
     final p = Paint()
       ..color = const Color(0x73FFFFFF)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
     _roundRectStroke(canvas, p, m.x, y, m.w, e.bh, math.min(4 * e.scale, e.bh / 3));
+    // dargecit: daralan neon duvarlar
+    if (e.twist == TwistType.dargecit) {
+      final inset = math.min(m.w * 0.3, e.blocks.length * 6.0 * e.scale);
+      final top = e.blocks.last;
+      final wallPaint = Paint()..color = hsla(0, 0, 90, 0.10);
+      canvas.drawRect(
+        Rect.fromLTWH(top.x - inset * 2.2, 0, inset * 2.2, e.h),
+        wallPaint,
+      );
+      canvas.drawRect(
+        Rect.fromLTWH(top.x + top.w + inset * 0.2, 0, inset * 2.2, e.h),
+        wallPaint,
+      );
+    }
   }
 
   void _drawPopup(Canvas canvas, GamePlay e, Popup q) {
