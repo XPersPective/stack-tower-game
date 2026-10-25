@@ -156,6 +156,36 @@ void main() {
       expect(g.shotsForTest.length, shots);
     });
 
+    test('REGRESYON (softlock): son atış isabet edince oyun kilitlenmez — kayıp', () {
+      final host = _Host();
+      final g = gameWith(host, shields: 0);
+      aimStraightUpAtTarget(g);
+      g.setShotsForTest(1); // tek atış kaldı, hedef 8 → isabet kazandırmaz
+      g.fireForTest();
+      for (var i = 0; i < 300 && !g.isOver; i++) {
+        g.tick(1 / 60);
+      }
+      expect(g.score, 1, reason: 'isabet sayıldı');
+      expect(g.isOver, isTrue, reason: 'bütçe bitti → oyun bitmeli (softlock yok)');
+      expect(g.result().reached, isFalse);
+      expect(host.events, contains('lose'));
+    });
+
+    test('REGRESYON (softlock): kalkan varsa son isabet 3 atış daha verir', () {
+      final host = _Host();
+      final g = gameWith(host, shields: 1);
+      aimStraightUpAtTarget(g);
+      g.setShotsForTest(1);
+      g.fireForTest();
+      for (var i = 0; i < 300 && g.shotsLeftForTest == 0; i++) {
+        g.tick(1 / 60);
+      }
+      expect(g.isOver, isFalse);
+      expect(g.shotsLeftForTest, 3, reason: 'kalkan 3 atış verdi');
+      expect(g.shieldsForTest, 0);
+      expect(host.events, contains('shield'));
+    });
+
     test('nişan ve güç otomatik salınır (zamanla değişir)', () {
       final host = _Host();
       final g = gameWith(host);

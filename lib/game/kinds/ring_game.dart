@@ -101,7 +101,8 @@ class RingGame implements MiniGame {
       // merkez yakınlığı → mükemmel
       final center = _norm(ts + targetWidth / 2);
       final dist = _angleDist(a, center);
-      final perfect = dist <= targetWidth * 0.28;
+      // mükemmel bandı: pencerenin merkez %28'i (hassasiyet ödülü)
+      final perfect = dist <= targetWidth * 0.14;
       _score++;
       _combo++;
       if (perfect) _perfects++;

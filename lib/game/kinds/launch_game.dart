@@ -78,6 +78,10 @@ class LaunchGame implements MiniGame {
   @visibleForTesting
   double get wForTest => w;
   @visibleForTesting
+  void setShotsForTest(int n) => shotsLeft = n;
+  @visibleForTesting
+  int get shieldsForTest => _shields;
+  @visibleForTesting
   void setAimForTest(double angle, double p) {
     aim = angle;
     power = p;
@@ -187,7 +191,9 @@ class LaunchGame implements MiniGame {
           }
           booms.add(BoomFx(t.x, t.y));
           shake = math.min(12, 5 + _combo * 0.8);
-          _host?.playSound('perfect', combo: _combo);
+          final wasPerfect =
+              _lineDistance(p.x, p.y, p.vx, p.vy, t.x, t.y) <= t.r * 0.55;
+          _host?.playSound(wasPerfect ? 'perfect' : 'place', combo: _combo);
           _host?.haptic(14);
           if (_combo >= 3) {
             slowMo = 0.22;
@@ -197,6 +203,10 @@ class LaunchGame implements MiniGame {
           shots.removeAt(i);
           if (_def.target > 0 && _score >= _def.target) {
             _win();
+          } else {
+            // MAJOR düzeltmesi: son atış isabet etse de bütçe bittiyse
+            // oyun kilitlenmesin — kalkan ver ya da kaybettir.
+            _maybeOutOfShots();
           }
           break;
         }
