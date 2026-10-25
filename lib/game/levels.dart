@@ -253,3 +253,76 @@ Surprise? surpriseFor(int i, [int day = 0]) {
   if ((i + d) % 4 != 0) return null;
   return _surprisePool[(i + d) % _surprisePool.length];
 }
+
+/* ===================== ANTLOJİ: oyun türleri (ADR-008) ===================== */
+
+/// Bölümün OYUN TÜRÜ — her bölüm farklı bir oyun olabilir (DESIGN-V2 §3.1).
+enum GameKind { stack, catcher, ring, launch, merge, path, sort, balance, defend, rhythm }
+
+class KindSpec {
+  final GameKind kind;
+  final String name;
+  final String icon;
+  final String hint;
+  final int accentHue;
+  const KindSpec(this.kind, this.name, this.icon, this.hint, this.accentHue);
+}
+
+const Map<GameKind, KindSpec> kKindSpecs = {
+  GameKind.stack: KindSpec(GameKind.stack, 'KULE', '▦', 'Süzülen bloğu tam üstüne bırak.', 200),
+  GameKind.catcher: KindSpec(GameKind.catcher, 'YILDIZ AVCISI', '✦', 'Düşen yıldızları yakala, bombalardan kaç!', 48),
+  GameKind.ring: KindSpec(GameKind.ring, 'HALKA', '◎', 'Dönen işaretçi hedef dilimdeyken dokun.', 280),
+  GameKind.launch: KindSpec(GameKind.launch, 'FIRLAT', '➹', 'Nişan dönüyor — doğru anda bırak.', 12),
+  GameKind.merge: KindSpec(GameKind.merge, 'BİRLEŞTİR', '⬢', 'Aynı parçaları birleştir, büyüt.', 150),
+  GameKind.path: KindSpec(GameKind.path, 'TEK ÇİZGİ', '〰', 'Tüm düğümleri tek çizgide gez.', 190),
+  GameKind.sort: KindSpec(GameKind.sort, 'SIRALA', '⬒', 'Renkleri kendi kutusuna taşı.', 320),
+  GameKind.balance: KindSpec(GameKind.balance, 'DENGE', '⚖', 'Düşmeden önce dengeyi koru.', 95),
+  GameKind.defend: KindSpec(GameKind.defend, 'SAVUN', '⛨', 'Dalga geldiğinde kalkanı kaldır.', 220),
+  GameKind.rhythm: KindSpec(GameKind.rhythm, 'RİTİM', '♪', 'Vuruşlarda dokun, komboyu bırakma.', 340),
+};
+
+/// İlk 5 bölüm = 5 FARKLI tür (hook — C-020).
+const List<GameKind> kFirstFiveKinds = [
+  GameKind.catcher, // 1: anında eğlence, toplama coşkusu
+  GameKind.ring, // 2: tam isabet hazzı
+  GameKind.stack, // 3: klasik kimlik
+  GameKind.launch, // 4: fizik şaşırtması
+  GameKind.merge, // 5: büyüme tatmini
+];
+
+/// 10 türün döngü sırası (ilk-5 sonrası).
+const List<GameKind> kKindCycle = [
+  GameKind.stack, GameKind.catcher, GameKind.ring, GameKind.launch, GameKind.merge,
+  GameKind.path, GameKind.sort, GameKind.balance, GameKind.defend, GameKind.rhythm,
+];
+
+/// Dağıtım yasası (ADR-008 / C-020):
+/// - i<0 (günlük/serbest) → stack
+/// - i<5 → kFirstFiveKinds[i]
+/// - dünya patronu (idx==14) → o dünyanın imza türü (stage'e göre)
+/// - aksi: 10 tür döngüsü; ardışık aynı tür ≤1
+GameKind kindFor(int i) {
+  if (i < 0) return GameKind.stack;
+  if (i < kFirstFiveKinds.length) return kFirstFiveKinds[i];
+  final stage = stageOf(i);
+  final idx = indexInStage(i);
+  if (idx == kLevelsPerStage - 1) {
+    // patron: dünya imza türü (tema atmosferine uygun)
+    return const [
+      GameKind.ring, GameKind.defend, GameKind.balance, GameKind.rhythm, GameKind.launch,
+      GameKind.catcher, GameKind.sort, GameKind.path, GameKind.merge, GameKind.stack,
+    ][stage % 10];
+  }
+  var k = kKindCycle[(i - kFirstFiveKinds.length) % kKindCycle.length];
+  // ardışık tekrar koruması
+  if (kindFor(i - 1) == k) {
+    k = kKindCycle[(kKindCycle.indexOf(k) + 1) % kKindCycle.length];
+  }
+  return k;
+}
+
+/// LevelDef'e tür ekleyen yardımcı (def.kind).
+extension LevelDefKind on LevelDef {
+  GameKind get kind => (daily || endless) ? GameKind.stack : kindFor(i);
+  KindSpec get kindSpec => kKindSpecs[kind]!;
+}

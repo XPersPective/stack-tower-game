@@ -1,19 +1,35 @@
-/// Stack Tower Game — oyun ekranı: Ticker + dokunma + HUD.
-/// game.js frame döngüsü + ui.js HUD davranışının Flutter portu (SPEC §2.8).
+/// Stack Tower Game — oyun ekranı: ANTLOJİ HOST (ADR-008).
+/// Tür-agnostik: LevelDef.kind → uygun MiniGame; ortak HUD, ticker, dokunma,
+/// kazanma/kaybetme zinciri (kutu → tören → tahta → sonuç → harita).
 library;
-
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../game/audio.dart';
 import '../game/game_session.dart';
-import '../game/gameplay.dart';
+import '../game/kinds/catcher_game.dart';
+import '../game/kinds/ring_game.dart';
+import '../game/kinds/stack_game.dart';
 import '../game/levels.dart';
-import '../game/scene_painter.dart';
+import '../game/mini_game.dart';
 import '../theme/tokens.dart';
 import 'flow_overlays.dart';
+
+/// MiniGame fabrikası — yeni türler buraya eklenir (DESIGN-V2 §4).
+MiniGame createMiniGame(GameKind kind) {
+  switch (kind) {
+    case GameKind.stack:
+      return StackGame();
+    case GameKind.catcher:
+      return CatcherGame();
+    case GameKind.ring:
+      return RingGame();
+    default:
+      // Henüz uygulanmamış türler geçici olarak STACK ile oynanır (PB-025..028)
+      return StackGame();
+  }
+}
 
 class PlayScreen extends StatefulWidget {
   const PlayScreen({
@@ -28,126 +44,149 @@ class PlayScreen extends StatefulWidget {
   final GameSession session;
   final AudioController audio;
   final LevelDef def;
-  final VoidCallback onExit; // HUD ‹ÇIK
-  /// Zincir bittiğinde (result → showMap) çağrılır.
+  final VoidCallback onExit;
   final VoidCallback onFlowDone;
 
   @override
   State<PlayScreen> createState() => PlayScreenState();
 }
 
-class PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateMixin {
-  late final GamePlay _engine;
-  late final GamePlayRepaint _repaint;
-  late final Ticker _ticker;
-  late LevelDef _def = widget.def;
+class PlayScreenState extends State<PlayScreen>
+    with SingleTickerProviderStateMixin
+    implements MiniGameHost {
+  late MiniGame _game;
+  late LevelDef _def;
+  late Ticker _ticker;
   Duration _last = Duration.zero;
+  Size _size = Size.zero;
 
-  // HUD anlık değerleri (her frame setState yok — değer değişince güncellenir)
   int _hudScore = 0, _hudCombo = 0, _hudShields = 1;
   bool _overlayOpen = false;
-  // Çıkış onayı: ilk dokunuş silahlanır, 2.5 sn içinde tekrar dokunuş çıkarır.
-  bool _exitArmed = false;
-  Timer? _exitResetTimer;
+  bool _won = false;
 
   @override
   void initState() {
     super.initState();
-    _engine = GamePlay();
-    _repaint = GamePlayRepaint(_engine);
-    _engine.onEvent = _onEngineEvent;
-    _engine.onHaptic = (_) {}; // titreşim: pb-010'da Haptics bağlanır
-    final start = widget.session.prepareLevel(_def);
-    _pendingStart = start;
-    _hudShields = start.shields;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final size = context.size;
-      if (size != null && size.width > 0) _engine.resize(size.width, size.height);
-      _startEngine();
-    });
+    _def = widget.def;
+    _prepare();
     _ticker = createTicker(_onTick)..start();
   }
 
-  LevelStart? _pendingStart;
-
-  /// Test gözlemcisi için motor erişimi (üretimde kullanılmaz).
-  @visibleForTesting
-  GamePlay get engineForTest => _engine;
-
-  void _startEngine() {
-    final start = _pendingStart!;
-    _engine.startLevel(_def, hue: start.hue, shields: start.shields);
-    widget.audio.play(GameSound.start);
+  void _prepare() {
+    final start = widget.session.prepareLevel(_def);
+    _game = createMiniGame(_def.kind);
+    _won = false;
+    if (_size.width > 0) _game.resize(_size.width, _size.height);
+    _game.start(_def,
+        host: this, shields: start.shields, hue: widget.session.activeSkinHue);
+    _hudShields = start.shields;
+    _hudScore = 0;
+    _hudCombo = 0;
     final got = widget.session.applyCoinStart();
-    if (widget.session.currentSurprise != null && mounted) {
-      final s = widget.session.currentSurprise!;
-      ToastHost.show(context, got > 0 ? '✨ Gizem çözüldü: +$got 🪙' : '✨ Gizem çözüldü: ${s.name}');
+    final surprise = widget.session.currentSurprise;
+    if (surprise != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ToastHost.show(
+            context,
+            got > 0
+                ? '✨ Gizem çözüldü: +$got 🪙'
+                : '✨ Gizem çözüldü: ${surprise.name}');
+      });
     }
-  }
-
-  void _onEngineEvent(EngineEvent event, EngineEventData data) {
-    if (!mounted) return;
-    switch (event) {
-      case EngineEvent.place:
-        setState(() {
-          _hudScore = data.score;
-          _hudCombo = data.combo;
-        });
-        widget.audio.play(data.perfect ? GameSound.perfect : GameSound.place, combo: data.combo);
-      case EngineEvent.shield:
-        setState(() => _hudShields = data.shieldLeft);
-        widget.audio.play(GameSound.shield);
-      case EngineEvent.win:
-        widget.session.onWin(_engine.result().blocks, _engine.perfects);
-        widget.audio.play(GameSound.win);
-        _openChain();
-      case EngineEvent.lose:
-        widget.session.onLose(_engine.result().blocks, _engine.perfects);
-        widget.audio.play(GameSound.lose);
-        _openChain();
-      case EngineEvent.ready:
-        break;
-    }
-  }
-
-  void _openChain() {
-    setState(() => _overlayOpen = true);
   }
 
   void _onTick(Duration elapsed) {
     final dt = ((elapsed - _last).inMicroseconds / 1e6).clamp(0.0, 0.05);
     _last = elapsed;
-    _engine.tick(dt);
-    _repaint.notify();
-  }
-
-  void _drop() {
-    if (_overlayOpen) return;
-    _engine.drop();
-  }
-
-  void _exit() {
-    if (!_exitArmed) {
-      // Yanlışlıkla çıkışı engelle: ilk dokunuş yalnız silahlanır (ui.js onay diyalogu karşılığı).
-      _exitArmed = true;
-      _exitResetTimer?.cancel();
-      _exitResetTimer = Timer(const Duration(milliseconds: 2500), () {
-        if (mounted) setState(() => _exitArmed = false);
-      });
-      setState(() {});
-      ToastHost.show(context, 'Çıkmak için tekrar dokun');
-      return;
+    _game.tick(dt);
+    if (_game.score != _hudScore ||
+        _game.combo != _hudCombo ||
+        _game.shieldsLeft != _hudShields) {
+      if (mounted) {
+        setState(() {
+          _hudScore = _game.score;
+          _hudCombo = _game.combo;
+          _hudShields = _game.shieldsLeft;
+        });
+      }
     }
-    _exitResetTimer?.cancel();
-    _ticker.stop();
-    _engine.stopLevel();
-    widget.onExit();
+  }
+
+  /* ------------------------- MiniGameHost ------------------------- */
+
+  @override
+  void playSound(String name, {int combo = 1}) {
+    final s = switch (name) {
+      'place' => GameSound.place,
+      'perfect' => GameSound.perfect,
+      'win' => GameSound.win,
+      'lose' => GameSound.lose,
+      'coin' => GameSound.coin,
+      'box' => GameSound.box,
+      'shield' => GameSound.shield,
+      'start' => GameSound.start,
+      _ => GameSound.place,
+    };
+    widget.audio.play(s, combo: combo);
   }
 
   @override
+  void haptic(int ms) {}
+
+  @override
+  void onEvent(String name, {Map<String, dynamic>? data}) {
+    if (!mounted) return;
+    switch (name) {
+      case 'win':
+        _won = true;
+        _finishLevel();
+      case 'lose':
+        _won = false;
+        _finishLevel();
+      case 'shield':
+        setState(() => _hudShields = (data?['left'] as int?) ?? 0);
+      default:
+        break;
+    }
+  }
+
+  void _finishLevel() {
+    final r = _game.result();
+    if (_won) {
+      widget.session.onWin(r.points, r.perfects);
+    } else {
+      widget.session.onLose(r.points, r.perfects);
+    }
+    setState(() => _overlayOpen = true);
+  }
+
+  DateTime? _lastBackTap;
+
+  /// Geri/ÇIK: yanlışlıkla çıkışı önlemek için çift dokunma onayı.
+  void _exit() {
+    final now = DateTime.now();
+    final prev = _lastBackTap;
+    _lastBackTap = now;
+    if (prev == null || now.difference(prev) > const Duration(seconds: 2)) {
+      ToastHost.show(context, 'Çıkmak için tekrar dokun');
+      return;
+    }
+    _ticker.stop();
+    _game.stop();
+    widget.onExit();
+  }
+
+  /// Test kancaları: aktif MiniGame ve (STACK ise) alttaki motor.
+  @visibleForTesting
+  MiniGame get gameForTest => _game;
+
+  @visibleForTesting
+  dynamic get engineForTest =>
+      _game is StackGame ? (_game as StackGame).engine : null;
+
+  @override
   void dispose() {
-    _exitResetTimer?.cancel();
     _ticker.dispose();
     super.dispose();
   }
@@ -155,6 +194,7 @@ class PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateMi
   @override
   Widget build(BuildContext context) {
     final def = _def;
+    final spec = def.kindSpec;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -162,24 +202,26 @@ class PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateMi
       },
       child: Scaffold(
         body: LayoutBuilder(builder: (context, constraints) {
-          if (constraints.maxWidth > 0 &&
-              (constraints.maxWidth != _engine.w || constraints.maxHeight != _engine.h)) {
+          final size = Size(constraints.maxWidth, constraints.maxHeight);
+          if (size != _size && size.width > 0) {
+            _size = size;
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) _engine.resize(constraints.maxWidth, constraints.maxHeight);
+              if (mounted) _game.resize(size.width, size.height);
             });
           }
           return Stack(
             children: [
-              // Oyun sahnesi — dokunma = bırakma
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTapDown: (_) => _drop(),
+                onTapDown: (d) {
+                  if (_overlayOpen) return;
+                  _game.onTap(d.localPosition);
+                },
                 child: CustomPaint(
-                  painter: ScenePainter(_repaint),
+                  painter: _MiniGamePainter(_game),
                   size: Size.infinite,
                 ),
               ),
-              // HUD
               SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -187,23 +229,38 @@ class PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateMi
                     children: [
                       Row(
                         children: [
-                          _hudButton(Icons.arrow_back, _exitArmed ? 'Çıkışı onayla' : 'ÇIK', _exit,
-                              armed: _exitArmed),
+                          _hudButton(Icons.arrow_back, 'ÇIK', _exit),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: Colors.white.withValues(alpha: .08),
+                              border: Border.all(
+                                  color: Colors.white.withValues(alpha: .18)),
+                            ),
+                            child: Text('${spec.icon} ${spec.name}',
+                                style: Theme.of(context).textTheme.bodyMedium),
+                          ),
                           const Spacer(),
                           Text(
-                            def.target > 0 ? '$_hudScore/${def.target}' : '$_hudScore',
+                            def.target > 0
+                                ? '$_hudScore/${def.target}'
+                                : '$_hudScore',
                             style: Theme.of(context).textTheme.headlineMedium,
                           ),
                           const Spacer(),
                           _hudButton(
-                            widget.audio.muted ? Icons.volume_off : Icons.volume_up,
+                            widget.audio.muted
+                                ? Icons.volume_off
+                                : Icons.volume_up,
                             '',
                             () => setState(() => widget.audio.toggleMute()),
                           ),
                         ],
                       ),
                       const SizedBox(height: 4),
-                      // hedef ilerleme çubuğu
                       if (def.target > 0)
                         ClipRRect(
                           borderRadius: BorderRadius.circular(6),
@@ -211,24 +268,28 @@ class PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateMi
                             value: (_hudScore / def.target).clamp(0.0, 1.0),
                             minHeight: 6,
                             backgroundColor: Colors.white.withValues(alpha: .12),
-                            valueColor: const AlwaysStoppedAnimation(NeonPalette.cyan),
+                            valueColor:
+                                const AlwaysStoppedAnimation(NeonPalette.cyan),
                           ),
                         ),
                       const SizedBox(height: 4),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // seri çarpanı
                           Text(
                             _hudCombo >= 2 ? '×$_hudCombo' : '',
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  color: NeonPalette.amber,
-                                  shadows: [
-                                    Shadow(color: NeonPalette.amber.withValues(alpha: .6), blurRadius: 18)
-                                  ],
-                                ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                    color: NeonPalette.amber,
+                                    shadows: [
+                                      Shadow(
+                                          color: NeonPalette.amber
+                                              .withValues(alpha: .6),
+                                          blurRadius: 18)
+                                    ]),
                           ),
-                          // kalkan rozeti
                           Opacity(
                             opacity: _hudShields > 0 ? 1 : 0.3,
                             child: Text('🛡 ×$_hudShields',
@@ -240,7 +301,6 @@ class PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateMi
                   ),
                 ),
               ),
-              // Zincir overlay'leri (kutu → tören → tahta → sonuç)
               if (_overlayOpen)
                 FlowOverlays(
                   session: widget.session,
@@ -251,27 +311,16 @@ class PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateMi
                     widget.onFlowDone();
                   },
                   onRetry: () {
-                    setState(() {
-                      _overlayOpen = false;
-                      _hudScore = 0;
-                      _hudCombo = 0;
-                    });
-                    _pendingStart = widget.session.prepareLevel(_def);
-                    _hudShields = _pendingStart!.shields;
-                    _startEngine();
+                    setState(() => _overlayOpen = false);
+                    _prepare();
                     if (!_ticker.isActive) _ticker.start();
                   },
                   onNext: (nextDef) {
-                    // SONRAKİ BÖLÜM: aynı ekran, yeni tanım
                     setState(() {
                       _def = nextDef;
                       _overlayOpen = false;
-                      _hudScore = 0;
-                      _hudCombo = 0;
                     });
-                    _pendingStart = widget.session.prepareLevel(nextDef);
-                    _hudShields = _pendingStart!.shields;
-                    _startEngine();
+                    _prepare();
                     if (!_ticker.isActive) _ticker.start();
                   },
                 ),
@@ -282,7 +331,7 @@ class PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateMi
     );
   }
 
-  Widget _hudButton(IconData icon, String label, VoidCallback onTap, {bool armed = false}) {
+  Widget _hudButton(IconData icon, String label, VoidCallback onTap) {
     return Semantics(
       button: true,
       label: label.isEmpty ? null : label,
@@ -292,16 +341,21 @@ class PlayScreenState extends State<PlayScreen> with SingleTickerProviderStateMi
         child: Container(
           constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
           alignment: Alignment.center,
-          decoration: armed
-              ? BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: NeonPalette.amber, width: 1.6),
-                )
-              : null,
-          child: Icon(icon,
-              color: armed ? NeonPalette.amber : NeonPalette.text, size: 26),
+          child: Icon(icon, color: NeonPalette.text, size: 26),
         ),
       ),
     );
   }
+}
+
+/// MiniGame.render'ı her karede çağıran painter.
+class _MiniGamePainter extends CustomPainter {
+  _MiniGamePainter(this.game);
+  final MiniGame game;
+
+  @override
+  void paint(Canvas canvas, Size size) => game.render(canvas, size);
+
+  @override
+  bool shouldRepaint(covariant _MiniGamePainter oldDelegate) => true;
 }

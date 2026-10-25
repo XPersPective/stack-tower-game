@@ -51,7 +51,7 @@ void main() {
 
   testWidgets('hedefe ulaşınca zincir: sonuç overlay açılır, TEKRAR yeniden başlatır', (tester) async {
     final session = await makeSession();
-    await tester.pumpWidget(host(session, levelDef(0))); // hedef 8
+    await tester.pumpWidget(host(session, levelDef(2))); // hedef 8
     await tester.pump(const Duration(milliseconds: 120));
 
     final state = tester.state<PlayScreenState>(find.byType(PlayScreen));
@@ -73,7 +73,7 @@ void main() {
     expect(find.text('TEKRAR'), findsOneWidget);
     expect(find.text('HARİTA'), findsOneWidget);
     // ödül uygulandı
-    expect(session.state.completed[0], isNotNull);
+    expect(session.state.completed[2], isNotNull);
     // yıldız animasyon zamanlayıcılarının tamamı akıtılsın (pending timer yok)
     for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 100));
@@ -84,7 +84,7 @@ void main() {
     final session = await makeSession();
     final before = session.state.coins;
     // teselli parası yalnız normal bölümlerde (JS: endless dalı para vermez)
-    await tester.pumpWidget(host(session, levelDef(0)));
+    await tester.pumpWidget(host(session, levelDef(2)));
     await tester.pump(const Duration(milliseconds: 120)); // layout + ilk frame
 
     final state = tester.state<PlayScreenState>(find.byType(PlayScreen));
@@ -109,7 +109,7 @@ void main() {
     final session = await makeSession();
     var flowDone = 0;
     await tester.pumpWidget(
-        host(session, levelDef(0), onFlowDone: () => flowDone++));
+        host(session, levelDef(2), onFlowDone: () => flowDone++));
     await tester.pump(const Duration(milliseconds: 120));
 
     final state = tester.state<PlayScreenState>(find.byType(PlayScreen));
@@ -137,7 +137,7 @@ void main() {
 
   testWidgets('SONRAKİ sonrası kayıpta TEKRAR doğru bölümle (i=1) yeniden başlatır', (tester) async {
     final session = await makeSession();
-    await tester.pumpWidget(host(session, levelDef(0)));
+    await tester.pumpWidget(host(session, levelDef(2)));
     await tester.pump(const Duration(milliseconds: 120));
 
     final state = tester.state<PlayScreenState>(find.byType(PlayScreen));
@@ -157,8 +157,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 120));
     e = state.engineForTest;
-    expect(e.def!.i, 1);
-    expect(session.currentDef!.i, 1);
+    expect(e.def!.i, 3);
+    expect(session.currentDef!.i, 3); // levelDef(2) → SONRAKİ = 3
 
     // i=1'de kaybet
     e.shieldsLeft = 0;
@@ -174,8 +174,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 120));
     e = state.engineForTest;
-    expect(e.def!.i, 1);
-    expect(session.currentDef!.i, 1);
+    expect(e.def!.i, 3);
+    expect(session.currentDef!.i, 3); // levelDef(2) → SONRAKİ = 3
 
     for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 100));
