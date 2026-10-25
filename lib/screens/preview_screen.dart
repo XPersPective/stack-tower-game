@@ -9,6 +9,7 @@ import '../game/game_session.dart';
 import '../game/progress.dart' as prog;
 import '../game/scene_painter.dart';
 import '../game/levels.dart';
+import '../preview/preview_painter.dart';
 import '../theme/tokens.dart';
 import 'flow_overlays.dart';
 import 'router.dart';
@@ -22,15 +23,29 @@ class PreviewScreen extends StatefulWidget {
 }
 
 class _PreviewScreenState extends State<PreviewScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _c =
       AnimationController(vsync: this, duration: const Duration(milliseconds: 2600))
         ..forward();
+  // sahne solunumu (hava/silüet sürüklenmesi) — sinematik süreden bağımsız akar
+  late final AnimationController _ambient = AnimationController(
+      vsync: this, duration: const Duration(seconds: 90))
+    ..repeat();
+
+  // sahne açılış başına bir kez kurulur — preview.js open() → buildParticles
+  // (preview.js:76-83); ambient tick'lerinde yalnız zaman ilerler.
+  late final PreviewScene _scene = PreviewScene(
+    theme: widget.def.theme,
+    levelI: widget.def.i,
+    stage: widget.def.stage,
+    daily: widget.def.daily,
+  );
 
   void _skip() => _c.forward(from: _c.value < .99 ? .99 : 1);
 
   @override
   void dispose() {
+    _ambient.dispose();
     _c.dispose();
     super.dispose();
   }
@@ -46,7 +61,9 @@ class _PreviewScreenState extends State<PreviewScreen>
         ? session.state.completed[def.i]!['stars']!
         : 0;
     final surprise = (def.endless || def.daily) ? null : surpriseFor(def.i, prog.dayOf(DateTime.now()));
-    var mystery = daily ? 'Bugünün bölümü herkes için aynı. Tahtada yerini al.' : mysteryFor(def.i);
+    // ui.js openIntro: teaser slotu günlükte günlük cümlesini taşır; gizem
+    // cümlesi her zaman mysteryFor(d.i) — günlük tanımda i=-2'den seçilir.
+    var mystery = mysteryFor(def.i);
     if (surprise != null) mystery = 'Altın bir fısıltı… şans bu bölümde senden yana olabilir.';
     final worldDoneCount = daily ? 0 : session.worldDone(def.stage);
 
@@ -65,9 +82,14 @@ class _PreviewScreenState extends State<PreviewScreen>
           child: SafeArea(
             child: Stack(
               children: [
-                // siluet + hava sahnesi
+                // siluet + hava sahnesi — preview.js birebir portu
                 Positioned.fill(
-                  child: CustomPaint(painter: _PreviewPainter(theme)),
+                  child: AnimatedBuilder(
+                    animation: _ambient,
+                    builder: (context, _) => CustomPaint(
+                      painter: PreviewPainter(scene: _scene, t: _ambient.value * 90),
+                    ),
+                  ),
                 ),
                 Column(
                   children: [
@@ -97,7 +119,10 @@ class _PreviewScreenState extends State<PreviewScreen>
                     const SizedBox(height: 8),
                     FadeTransition(
                       opacity: _fade(0.15, 0.6),
-                      child: Text(kWorldTeaser[def.stage],
+                      child: Text(
+                          daily
+                              ? 'Bugünün bölümü herkes için aynı. Tahtada yerini al.'
+                              : kWorldTeaser[def.stage],
                           style: Theme.of(context).textTheme.bodyMedium,
                           textAlign: TextAlign.center),
                     ),
@@ -121,9 +146,9 @@ class _PreviewScreenState extends State<PreviewScreen>
                               Text(daily ? 'GÜNLÜK MEYDAN OKUMA' : 'BÖLÜM ${def.num}',
                                   style: Theme.of(context).textTheme.displayMedium),
                               const SizedBox(height: 6),
-                              if (!daily)
-                                Text('$worldDoneCount/$kLevelsPerStage',
-                                    style: Theme.of(context).textTheme.bodyMedium),
+                              // ui.js openIntro(181): günlükte ilerleme slotu 'GÜNLÜK'
+                              Text(daily ? 'GÜNLÜK' : '$worldDoneCount/$kLevelsPerStage',
+                                  style: Theme.of(context).textTheme.bodyMedium),
                               const SizedBox(height: 8),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -194,12 +219,28 @@ class _StartButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final session = context.read<GameSession>();
     final locked = !def.daily && !def.endless && !isUnlockedNow(session, def);
-    return NeonButton(
-      locked ? '🔒 KİLİTLİ' : 'BAŞLA ▶',
-      locked
-          ? () {}
-          : () => Navigator.pushReplacementNamed(context, Routes.play, arguments: def),
-      enabled: !locked,
+    if (!locked) {
+      return NeonButton(
+          'BAŞLA ▶',
+          () => Navigator.pushReplacementNamed(context, Routes.play,
+              arguments: def));
+    }
+    // ui.js openIntro(212-218) introLock: kilit nedeni kartta gösterilir
+    final need = requiredStars(def.stage);
+    final reason = (def.stage > 0 && session.totalStars < need)
+        ? 'BU DÜNYA İÇİN $need YILDIZ GEREKİYOR'
+        : "ÖNCE BÖLÜM ${def.num - 1}'İ BİTİR";
+    return Column(
+      children: [
+        Text(reason,
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(color: NeonPalette.textDim),
+            textAlign: TextAlign.center),
+        const SizedBox(height: 8),
+        NeonButton('🔒 KİLİTLİ', () {}, enabled: false),
+      ],
     );
   }
 
@@ -209,53 +250,4 @@ class _StartButton extends StatelessWidget {
     return session.totalStars >= requiredStars(def.stage) ||
         def.stage == stageOf(def.i - 1);
   }
-}
-
-/// Önizleme sahnesi: tema gradyanı + iki katman silüet + hava parçacıkları.
-class _PreviewPainter extends CustomPainter {
-  _PreviewPainter(this.theme);
-  final dynamic theme;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width, h = size.height;
-    var seed = theme.id.codeUnitAt(0) * 97 + 5;
-    double rnd() {
-      seed |= 0;
-      seed = (seed + 0x6D2B79F5) & 0x7FFFFFFF;
-      var t = seed ^ (seed >> 15);
-      t = (t * (1 | seed)) & 0xFFFFFFFF;
-      t = (t + ((t ^ (t >> 7)) * 61 & 0xFFFFFFFF)) & 0xFFFFFFFF;
-      return ((t ^ (t >> 14)) & 0xFFFFFFFF) / 4294967296;
-    }
-
-    for (var layer = 0; layer < 2; layer++) {
-      final base = h * (0.96 - layer * 0.02);
-      final fill = Paint()..color = hsla(theme.glow, 46, layer == 1 ? 6 : 9, 1);
-      var x = -30.0;
-      while (x < w + 40) {
-        final bw = 40 + rnd() * 90;
-        final hgt = (20 + rnd() * 110) * (layer == 1 ? 0.7 : 1);
-        final path = Path()
-          ..moveTo(x, base)
-          ..lineTo(x + bw / 2, base - hgt)
-          ..lineTo(x + bw, base)
-          ..close();
-        canvas.drawPath(path, fill);
-        x += bw * 0.75;
-      }
-    }
-    // hava
-    final weatherColor = hsla(theme.glow, 90, 72, .5);
-    for (var i = 0; i < 26; i++) {
-      canvas.drawCircle(
-        Offset(rnd() * w, rnd() * h * 0.8),
-        1 + rnd() * 1.8,
-        Paint()..color = weatherColor.withValues(alpha: .2 + rnd() * .3),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _PreviewPainter oldDelegate) => oldDelegate.theme != theme;
 }

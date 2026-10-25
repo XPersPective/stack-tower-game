@@ -9,6 +9,14 @@ entegre edilebilecek. Çok daha iyi olabilir ama eksik olamaz; mantık her şey 
 iyi olabilir ama daha kötü olamaz. Projenin ismi Stack Tower Game, Neon Kule olmayacak.
 Bütün yapılacakların hepsini Project Brain'e ekle; tek gerçek kaynak Project Brain olsun." (user, 2026-10-24)
 
+"Ya açıkçası bu hep böyle mi olacak? Yani yukarıdan şeyler gelecek ve bunları dizmeye
+mi çalışacak? Başka bir mantık yok mu? Her oyun, her bölüm farklı oyun içermeli...
+Oyunu bağımlılık haline getirebilecek bir şekle çevirmen gerekiyor. Ve oyunun bir
+amacı olmalı. Amaç tamamlandıkça arkada o bölümde tamamlanan bir şey gösterilmeli ve
+çok güzel olmalı... birkaç aşamadan sonra hep böyle bir şeyler tamamlanmalı. Her oyun
+farklı mantıkla değişik sürprizler içermeli. Çok güzel efektler, harika efektleri
+olmalı. Bunu öyle kurgula." (user, 2026-10-25 ikinci yön — DESIGN-V2-diyar.md)
+
 "Oyun çok tekdüze olmuş... Hiçbir sürprizi yok. Her oyun birbirinin aynısı... Daha
 değişik mantıklar, daha değişik içerikler konabilir. Özellikle ilk birkaç bölüm çok
 sürprizli olmalı... Değişik sürprizler konması ve efektler mükemmel olmalı. Sesler de
@@ -30,7 +38,13 @@ değişikliği: RESEARCH-market.md §4 tasarım kararları + PB-015..021)
 ### screens
 - menu, map (3B takımada — PB-008), preview (sinematik), play+HUD, result, box,
   reward_room, shop, missions, board, settings — akış `reference/www/ui.js` ile aynı.
-### gameplay-variety (YENİ — kullanıcı yönü 2026-10-25)
+### anthology (YENİ — DESIGN-V2 §3.1)
+- 10 farklı MiniGame türü (STACK/CATCH/RING/LAUNCH/MERGE/PATH/SORT/BALANCE/DEFEND/RHYTHM);
+  her bölüm farklı tür (ardışık aynı ≤1); ilk 5 bölüm 5 farklı tür.
+### construction-meta (YENİ — DESIGN-V2 §3.2)
+- Görünür inşaat: her bölüm adada yapı parçası yükseltir; 3-5 bölümde yapı tamamlanır;
+  dünyada anıt töreni; 10 dünya = Diyar finali. Haritada blueprint merakı.
+### gameplay-variety (kullanıcı yönü 2026-10-25 tur 1)
 - 8 yeni twist türü + garantili ilk-5 şeması; her 3 bölümden biri yeni tür; juice
   paketi (hit-stop, squash&stretch, flaş, haptic); ses katmanları.
 ### economy-market (YENİ)

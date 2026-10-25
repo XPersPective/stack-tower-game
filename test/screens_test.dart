@@ -115,8 +115,11 @@ void main() {
     sessionForTests = session;
 
     // levelDef(1): önceki bölüm tamamlanmamış → kilitli
+    // (yeni önizlemede 90s sonsuz tekrar eden ortam animasyonu var → pumpAndSettle olmaz,
+    //  sabit süreli pump; preview_test.dart aynı kalıbı kullanıyor)
     await tester.pumpWidget(host(() => PreviewScreen(def: levelDef(1))));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('🔒 KİLİTLİ'), findsOneWidget);
     expect(find.text('BAŞLA ▶'), findsNothing);
     await tester.tap(find.text('🔒 KİLİTLİ')); // pasif düğme → rotaya geçiş olmamalı
@@ -125,7 +128,8 @@ void main() {
 
     // levelDef(0): ilk bölüm her zaman açık
     await tester.pumpWidget(host(() => PreviewScreen(def: levelDef(0))));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('BAŞLA ▶'), findsOneWidget);
     expect(find.text('🔒 KİLİTLİ'), findsNothing);
   });
