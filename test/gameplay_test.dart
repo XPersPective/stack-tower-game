@@ -1,0 +1,248 @@
+import 'dart:math' as math;
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:stack_tower_game/game/gameplay.dart';
+import 'package:stack_tower_game/game/levels.dart';
+
+double stepAmount(GamePlay e) {
+  final b = e.moving!;
+  final x0 = b.x;
+  e.tick(1 / 60);
+  return (b.x - x0).abs();
+}
+
+(double, double) movingBoundsOf(GamePlay e, dynamic top) {
+  final minX = top.x - top.w * 1.05;
+  return (minX, minX + top.w * 2.1);
+}
+
+void main() {
+  GamePlay engineFor(LevelDef d, {int shields = 1}) {
+    final e = GamePlay();
+    e.resize(460, 780);
+    e.startLevel(d, hue: 200, shields: shields);
+    return e;
+  }
+
+  /// Ust bloğun tam merkezine mükemmel bırakış.
+  void dropPerfect(GamePlay e) {
+    final top = e.blocks.last;
+    e.moving!.x = top.x;
+    e.moving!.w = top.w;
+    e.drop();
+  }
+
+  test('startLevel: dünya kurulumu + ready olayı', () {
+    var ready = false;
+    final e = GamePlay()..onEvent = (n, _) => ready = n == EngineEvent.ready;
+    e.resize(460, 780);
+    e.startLevel(levelDef(0));
+    expect(ready, isTrue);
+    expect(e.state, EngineState.playing);
+    expect(e.blocks.length, 1);
+    expect(e.moving, isNotNull);
+    expect(e.w, 460);
+    expect(e.scale, closeTo(1.0, 1e-9)); // 460/460=1, 780/780=1
+    expect(e.baseW, closeTo(230, 1e-9));
+    expect(e.groundY, closeTo(780 * 0.88, 1e-9));
+  });
+
+  test('mükemmel seri: combo artar, 4. mükemmelette geri büyüme', () {
+    final e = engineFor(levelDef(0));
+    // önce daralt: 20px kaydır (tol 6'yı aşar → kırpılır, combo sıfır)
+    final top0 = e.blocks.last;
+    e.moving!.x = top0.x + 20;
+    e.moving!.w = top0.w;
+    e.drop();
+    final w1 = e.blocks.last.w;
+    expect(w1, closeTo(top0.w - 20, 1e-9));
+    // şimdi 4 mükemmel: 4.'de %4 geri büyüme (baseW tavanı)
+    dropPerfect(e);
+    dropPerfect(e);
+    dropPerfect(e);
+    expect(e.combo, 3);
+    expect(e.blocks.last.w, w1); // 1-3'te büyüme yok
+    dropPerfect(e);
+    expect(e.combo, 4);
+    expect(e.blocks.last.w, closeTo(math.min(e.baseW, w1 * 1.04), 1e-6));
+    expect(e.perfects, 4);
+  });
+
+  test('HIZLI/PATRON: growthAllowed false — büyüme yok', () {
+    final hizli = levelDef(0).copyWith(modifier: 'hizli');
+    final e = engineFor(hizli);
+    final w0 = e.blocks.last.w;
+    for (var i = 0; i < 4; i++) {
+      dropPerfect(e);
+    }
+    expect(e.growthAllowed(), isFalse);
+    expect(e.blocks.last.w, w0);
+  });
+
+  test('kalkan: ilk kaçırmayı kurtarır, bir kez çalışır', () {
+    final e = engineFor(levelDef(0), shields: 1);
+    final top = e.blocks.last;
+    // tam ıskalat: bloğu uzağa taşı
+    e.moving!.x = top.x - e.moving!.w - 50;
+    e.moving!.w = top.w;
+    final before = e.blocks.length;
+    var shieldEvent = false;
+    e.onEvent = (n, d) {
+      if (n == EngineEvent.shield) shieldEvent = true;
+    };
+    e.drop();
+    expect(shieldEvent, isTrue);
+    expect(e.blocks.length, before + 1); // daralmış blok eklendi
+    expect(e.shieldsLeft, 0);
+    expect(e.combo, 0);
+    expect(e.state, EngineState.playing); // devam
+    expect(e.slowTimer, closeTo(0.55, 1e-9)); // ağır çekim
+    // ikinci ıska: kalkan yok → kayıp
+    final top2 = e.blocks.last;
+    e.moving!.x = top2.x - e.moving!.w - 50;
+    e.drop();
+    expect(e.state, EngineState.lost);
+    expect(e.misses, 1);
+  });
+
+  test('hedefe ulaşınca kazanma + endTimer gecikmesi', () {
+    final e = engineFor(levelDef(0)); // hedef 8
+    EngineEvent? last;
+    e.onEvent = (n, _) => last = n;
+    for (var i = 0; i < 8; i++) {
+      dropPerfect(e);
+    }
+    expect(e.state, EngineState.won);
+    expect(e.confetti.length, greaterThan(0)); // kutlama
+    expect(last, isNot(EngineEvent.win)); // endTimer henüz dolmadı
+    // 0.95sn tikle → win olayı gelir
+    e.tick(1.0);
+    expect(last, EngineEvent.win);
+    expect(e.result().reached, isTrue);
+    expect(e.result().blocks, 8);
+  });
+
+  test('dar blok çökmesi: w < 6*scale → kayıp', () {
+    final e = engineFor(endlessDef()); // hedef yok: kazanma yolu kapalı
+    // bloğu kademeli daralt: hep kenarından 5px kırp
+    var alive = true;
+    for (var i = 0; i < 200 && alive; i++) {
+      final top = e.blocks.last;
+      if (top.w <= 16) {
+        // dar üstte: 1px örtüşme + Δw=10 (tol 6'yı aşar → asla mükemmel sayılmaz)
+        e.moving!.x = top.x + top.w - 1;
+        e.moving!.w = top.w + 10;
+      } else {
+        e.moving!.x = top.x + 8; // 8px içeriden kırp (tol 6'yı aşar)
+        e.moving!.w = top.w;
+      }
+      e.drop();
+      alive = e.state == EngineState.playing;
+    }
+    expect(e.state, EngineState.lost);
+  });
+
+  test('AKAN tik: hız çarpanı sinüsle dalgalanır (hareket değişir)', () {
+    final e = engineFor(levelDef(0).copyWith(modifier: 'akan'));
+    final top = e.blocks.last;
+    final b = e.moving!;
+    b.x = (top.x + top.w / 2) - b.w / 2;
+    final x0 = b.x;
+    e.tick(1 / 60);
+    expect(b.x, isNot(closeTo(x0, 1e-9))); // hareket etti
+    // dalga tepe/noktalarında farklı hız: iki farklı t anında adım farkı
+    final e2 = engineFor(levelDef(0).copyWith(modifier: 'akan'));
+    e2.time = 0.0;
+    final step1 = stepAmount(e2);
+    e2.time = 0.96; // sin(2.6*0.96) ≈ sin(2.5) — farklı faz
+    final step2 = stepAmount(e2);
+    expect((step1 - step2).abs(), greaterThan(1e-6));
+  });
+
+  test('DEPREM tik: 2.2sn aralıklarla sarsıntı tetiklenir', () {
+    final e = engineFor(levelDef(0).copyWith(modifier: 'deprem'));
+    // 2.2sn kuantum sınırı: floor(time/2.2) atlanınca shake tetiklenir
+    e.shake = 0;
+    e.time = 2.0; // 2.0→2.017 aynı kuantum (0) → tetiklenmez
+    e.tick(1 / 60);
+    expect(e.shake, 0.0);
+    e.time = 2.19; // 2.19→2.207 kuantum atlar (0→1) → tetiklenir
+    e.tick(1 / 60);
+    expect(e.shake, greaterThan(0));
+  });
+
+  test('RÜZGAR tik: sinüs sürüklemesi sınırlar içinde kalır', () {
+    final e = engineFor(levelDef(0).copyWith(modifier: 'ruzgar'));
+    for (var i = 0; i < 600; i++) {
+      e.tick(1 / 60);
+      final top = e.blocks.last;
+      final b = movingBoundsOf(e, top);
+      expect(e.moving!.x, greaterThanOrEqualTo(b.$1 - 0.5));
+      expect(e.moving!.x, lessThanOrEqualTo(b.$2 + 0.5));
+    }
+  });
+
+  test('kamera: kule yükselirken camShift hedefe yaklaşır (monoton lerp)', () {
+    final e = engineFor(endlessDef()); // hedef yok: 25 blok diz
+    for (var i = 0; i < 25; i++) {
+      dropPerfect(e);
+    }
+    final prev = e.camShift;
+    for (var i = 0; i < 30; i++) {
+      e.tick(1 / 60);
+      expect(e.camShift, greaterThanOrEqualTo(prev - 1e-9));
+    }
+    expect(e.camShift, greaterThan(0));
+  });
+
+  test('resize: ölçek değişince kule çarpanla taşınır', () {
+    final e = engineFor(levelDef(0));
+    dropPerfect(e);
+    final x1 = e.blocks.last.x;
+    final w1 = e.blocks.last.w;
+    e.resize(700, 1100); // scale büyür
+    final f = e.baseW / 230; // yeni baseW / eski baseW
+    expect(e.blocks.last.w, closeTo(w1 * f, 1e-6));
+    expect(e.blocks.last.x, closeTo(x1 * f, 1e-6));
+  });
+
+  test('blockHue: ALTIN bölümde altın paleti', () {
+    final normal = engineFor(levelDef(0));
+    expect(normal.blockHue(3), (200 + 3 * 12) % 360);
+    final altin = engineFor(levelDef(4));
+    expect(altin.blockHue(3), (42 + (3 % 3) * 8) % 360);
+  });
+
+  test('serbest mod: hedef yok — sonsuz oynanır, kayıp tam ıska ile', () {
+    final e = engineFor(endlessDef(), shields: 0);
+    expect(e.def!.target, 0);
+    for (var i = 0; i < 30; i++) {
+      dropPerfect(e);
+    }
+    expect(e.state, EngineState.playing); // hedefsiz → kazanma yok
+    final top = e.blocks.last;
+    e.moving!.x = top.x - e.moving!.w - 50;
+    e.drop();
+    expect(e.state, EngineState.lost);
+  });
+}
+
+/// Test yardımcısı: LevelDef kopyalama (modifier değiştirmek için).
+extension LevelDefCopy on LevelDef {
+  LevelDef copyWith({String? modifier, int? target}) => LevelDef(
+        i: i,
+        stage: stage,
+        idx: idx,
+        num: this.num,
+        theme: theme,
+        target: target ?? this.target,
+        speed: speed,
+        tol: tol,
+        modifier: modifier ?? this.modifier,
+        coins: coins,
+        box: box,
+        name: name,
+        daily: daily,
+        endless: endless,
+      );
+}

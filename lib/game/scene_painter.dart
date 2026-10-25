@@ -225,8 +225,9 @@ class ScenePainter extends CustomPainter {
     final my = e.h * 0.16 - e.camShift * 0.012;
     final mr = math.min(e.w, e.h) * 0.085;
     final halo = Paint()
+      // game.js: iç mr*0.2 → dış mr*2.7, durak 0/0.45 → tek-yarıçap: 0.2/2.7, +0.45*0.926
       ..shader = ui.Gradient.radial(Offset(mx, my), mr * 2.7,
-          [rgba(gl, 0.34), rgba(gl, 0.10), rgba(gl, 0)], const [0.14, 0.45, 1]);
+          [rgba(gl, 0.34), rgba(gl, 0.10), rgba(gl, 0)], const [0.074, 0.491, 1]);
     canvas.drawCircle(Offset(mx, my), mr * 2.7, halo);
 
     final disc = Paint()
@@ -238,7 +239,8 @@ class ScenePainter extends CustomPainter {
           rgba(gl, 0.55),
           rgba(mixRgb(gl, bg0, 0.55), 0.18),
         ],
-        [mr * 0.1, mr * 0.62, 1].map((v) => (v / mr).clamp(0.0, 1.0)).toList(),
+        // game.js: iç mr*0.1 → dış mr; orta durak 0.62 → 0.1+0.62*0.9=0.658
+        [0.1, 0.658, 1],
       );
     canvas.drawCircle(Offset(mx, my), mr, disc);
 
