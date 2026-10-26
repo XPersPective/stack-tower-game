@@ -145,6 +145,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 350));
     // değiştirilen rotanın çıkış animasyonu + imhası ~600ms sonra tamamlanır
     await tester.pump(const Duration(milliseconds: 350));
+    // surprise toast'unun 2.2s kapanma zamanlayıcısını tüket (pending timer invariant'ı)
+    await tester.pump(const Duration(milliseconds: 2300));
     expect(find.byType(PlayScreen), findsOneWidget);
     expect(find.byType(PreviewScreen), findsNothing);
   });
