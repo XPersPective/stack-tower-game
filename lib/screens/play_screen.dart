@@ -9,11 +9,14 @@ import 'package:flutter/services.dart';
 
 import '../game/audio.dart';
 import '../game/game_session.dart';
+import '../game/kinds/balance_game.dart';
 import '../game/kinds/catcher_game.dart';
+import '../game/kinds/defend_game.dart';
 import '../game/kinds/launch_game.dart';
 import '../game/kinds/merge_game.dart';
 import '../game/kinds/path_game.dart';
 import '../game/kinds/sort_game.dart';
+import '../game/kinds/rhythm_game.dart';
 import '../game/kinds/ring_game.dart';
 import '../game/kinds/stack_game.dart';
 import '../game/levels.dart';
@@ -38,9 +41,12 @@ MiniGame createMiniGame(GameKind kind) {
       return PathGame();
     case GameKind.sort:
       return SortGame();
-    default:
-      // Henüz uygulanmamış türler geçici olarak STACK ile oynanır (PB-025..028)
-      return StackGame();
+    case GameKind.balance:
+      return BalanceGame();
+    case GameKind.defend:
+      return DefendGame();
+    case GameKind.rhythm:
+      return RhythmGame();
   }
 }
 
