@@ -135,6 +135,16 @@ void main() {
       expect(g.result().reached, isTrue);
       expect(g.score, greaterThanOrEqualTo(g.target));
     });
+
+    test('geç bölüm hedefi kırpılmaz: needed = def.target (>30 üst sınır yok)', () {
+      final host = _Host();
+      final def = levelDef(104); // snapshot: target 31+ — eski 30 s kelepçesi burada kazandırırdı
+      expect(def.target, greaterThan(30));
+      final g = BalanceGame()
+        ..resize(460, 780)
+        ..start(def, host: host);
+      expect(g.needed, def.target.toDouble());
+    });
   });
 
   group('DEFEND kuralları', () {

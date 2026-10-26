@@ -93,9 +93,10 @@ class BalanceGame implements MiniGame {
     _cd = 0;
     _weightSide = 0;
     _weightT = 0;
-    // hedef süre: blok hedefinden (DEFEND/RHYTHM ile aynı kaynak), kısa bandda
-    needed = (def.target > 0 ? def.target.toDouble() : 10 + def.speed * 1.2)
-        .clamp(8.0, 30.0);
+    // hedef süre: blok hedefinden (DEFEND/RHYTHM ile aynı kaynak); üst sınır yok —
+    // geç bölümlerin hedefi kırpılmaz, yalnız degenerate düşük değer alt sınıra çekilir
+    final t = def.target > 0 ? def.target.toDouble() : 10 + def.speed * 1.2;
+    needed = t < 8 ? 8 : t;
     host.playSound('start');
   }
 
