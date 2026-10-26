@@ -25,3 +25,4 @@ Only rules that change decisions. One line each, with source.
 - C-021: Görünür amaç: her bölüm sonunda adada yapı parçası yükselir; 3-5 bölümde yapı tamamlanır; dünya anıtı töreni (source: user, DESIGN-V2 §3.2)
 - C-022: Tüm türler TEK dokunuşla oynanır ve 3 saniyede okunur; ek mekanik meta katmanında yaşar (source: Game-Ace/GGA araştırması)
 - C-023: Juice yasaları: her eyleme anında görsel+işitsel yanıt; yoğunluk ∝ önem; çeşitlilik alışkanlığı kırar (source: BloodMoon)
+- C-024: CLI Agent Pool KESİNLİKLE kullanılmaz; inceleme/delegasyon için yalnızca kendi alt ajanları (Agent tool, general-purpose) kullanılır — basit işlerde serbest (source: user 2026-10-25, iki mesaj)

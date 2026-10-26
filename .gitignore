@@ -51,3 +51,6 @@ app.*.map.json
 android/app/build/
 android/build/
 build/
+
+# Project Brain run logs / scratch
+.cache/
