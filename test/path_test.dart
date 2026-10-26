@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stack_tower_game/game/kinds/path_game.dart';
 import 'package:stack_tower_game/game/levels.dart';
@@ -25,17 +27,58 @@ void main() {
   }
 
   group('PATH grafik kurulumu', () {
-    test('9 düğüm + 12 temel kenar + dünya kadar çapraz', () {
-      final host = _Host();
-      final g = gameWith(host, def: levelDef(5)); // stage 0 → extra 0
-      expect(g.nodesForTest.length, 9);
-      expect(g.edgesForTest.length, 12);
-      expect(g.target, 12);
+    test('graf daima Euler yolu içerir (tek-dereceli düğüm ≤ 2, bağlı)', () {
+      for (final def in [levelDef(5), levelDef(50), levelDef(95), levelDef(140)]) {
+        final g = PathGame(math.Random(3))
+          ..resize(460, 780)
+          ..start(def, host: _Host());
+        expect(g.edgesForTest.length, (6 + def.stage).clamp(6, 10),
+            reason: 'stage ${def.stage} kenar sayısı');
+        final deg = List.filled(9, 0);
+        for (final e in g.edgesForTest) {
+          deg[e.a]++;
+          deg[e.b]++;
+        }
+        expect(deg.where((d) => d.isOdd).length, lessThanOrEqualTo(2),
+            reason: 'Euler yolu için tek-dereceli düğüm 0 veya 2 olmalı');
+        // bağlılık: kenarları taşıyan düğümler tek bileşende
+        final adj = <int, Set<int>>{};
+        for (final e in g.edgesForTest) {
+          adj.putIfAbsent(e.a, () => <int>{}).add(e.b);
+          adj.putIfAbsent(e.b, () => <int>{}).add(e.a);
+        }
+        final seen = <int>{g.edgesForTest.first.a};
+        var grew = true;
+        while (grew) {
+          grew = false;
+          for (final n in seen.toList()) {
+            for (final m in adj[n] ?? const <int>{}) {
+              if (seen.add(m)) grew = true;
+            }
+          }
+        }
+        expect(seen.length, adj.length, reason: 'kenar taşıyan tüm düğümler bağlı');
+      }
+    });
 
-      final g2 = PathGame()
+    test('tanık çözümü: ardışık düğümler gerçek kenar, her kenar bir kez', () {
+      final g = PathGame(math.Random(11))
         ..resize(460, 780)
-        ..start(levelDef(50), host: host); // stage 3 → extra 3
-      expect(g2.edgesForTest.length, 15);
+        ..start(levelDef(50), host: _Host());
+      final sol = g.solutionForTest;
+      expect(sol.length, g.edgesForTest.length + 1);
+      final used = <String>{};
+      for (var i = 0; i + 1 < sol.length; i++) {
+        final a = sol[i], b = sol[i + 1];
+        expect(
+          g.edgesForTest
+              .any((e) => (e.a == a && e.b == b) || (e.a == b && e.b == a)),
+          isTrue,
+          reason: '$a-$b arası kenar yok',
+        );
+        used.add(a < b ? '$a-$b' : '$b-$a');
+      }
+      expect(used.length, g.edgesForTest.length, reason: 'kenar tekrarsız');
     });
 
     test('resize iki kez çağrılsa da yerleşim bozulmaz (regresyon)', () {
@@ -64,11 +107,13 @@ void main() {
     test('komşu düğüm: kenar çizilir, skor artar', () {
       final host = _Host();
       final g = gameWith(host);
-      g.tapNodeForTest(0);
-      g.tapNodeForTest(1); // 0-1 yatay kenar
+      final sol = g.solutionForTest;
+      g.tapNodeForTest(sol[0]);
+      g.tapNodeForTest(sol[1]); // tanığın ilk kenarı
       expect(g.tracedCount, 1);
       expect(g.score, 1);
-      expect(g.currentForTest, 1);
+      expect(g.currentForTest, sol[1]);
+      expect(g.isOver, isFalse, reason: 'tanık devam ediyor, çıkmaz yok');
       expect(host.sounds, contains('place'));
     });
 
@@ -86,9 +131,10 @@ void main() {
     test('aynı kenarı ikinci kez geçme: hata sayılır', () {
       final host = _Host();
       final g = gameWith(host);
-      g.tapNodeForTest(0);
-      g.tapNodeForTest(1);
-      g.tapNodeForTest(0); // 0-1 zaten çizildi
+      final sol = g.solutionForTest;
+      g.tapNodeForTest(sol[0]);
+      g.tapNodeForTest(sol[1]); // kenar çizilir
+      g.tapNodeForTest(sol[0]); // aynı kenar geri → hata
       expect(g.tracedCount, 1);
       expect(g.shieldsLeft, 0);
     });
@@ -103,44 +149,63 @@ void main() {
       expect(host.events, contains('lose'));
     });
 
-    test('tüm kenarlar çizilince kazanır', () {
+    test('tüm kenarlar yasal yürüyüşle çizilince kazanır (mutasyon yok)', () {
       final host = _Host();
       final g = gameWith(host);
-      // son kenar hariç hepsini çizilmiş say
-      for (var i = 0; i < g.edgesForTest.length - 1; i++) {
-        g.edgesForTest[i].traced = true;
+      for (final n in g.solutionForTest) {
+        g.tapNodeForTest(n);
       }
-      final last = g.edgesForTest.last;
-      g.tapNodeForTest(last.a);
-      g.tapNodeForTest(last.b);
       expect(g.isOver, isTrue);
       expect(g.result().reached, isTrue);
+      expect(g.score, g.edgesForTest.length);
       expect(host.events, contains('win'));
     });
 
-    test('çıkmaz: mevcut düğümden geçilmemiş kenar kalmadıysa kayıp', () {
-      final host = _Host();
-      final g = gameWith(host);
-      // 0 düğümünün tüm kenarlarını çizilmiş yap, sonra 0'a gel
-      for (final e in g.edgesForTest) {
-        if (e.a == 0 || e.b == 0) e.traced = true;
+    test('çıkmaz: yaprak düğümün tek kenarını geçince kayıp', () {
+      // Tohumları tarayıp yaprak uçlu (tek dereceli düğüm) graf üreten tohum bul;
+      // aynı tohum her seferinde aynı grafı üretir.
+      var seed = 0, leafA = -1, leafB = -1;
+      for (var s = 1; s <= 60; s++) {
+        final g = PathGame(math.Random(s))
+          ..resize(460, 780)
+          ..start(levelDef(20), host: _Host()); // stage 1 → 7 kenar
+        final deg = List.filled(9, 0);
+        for (final e in g.edgesForTest) {
+          deg[e.a]++;
+          deg[e.b]++;
+        }
+        for (final e in g.edgesForTest) {
+          final aLeaf = deg[e.a] == 1, bLeaf = deg[e.b] == 1;
+          if (aLeaf != bLeaf) {
+            seed = s;
+            leafA = aLeaf ? e.a : e.b;
+            leafB = aLeaf ? e.b : e.a;
+            break;
+          }
+        }
+        if (seed != 0) break;
       }
-      g.tapNodeForTest(1);
-      g.tapNodeForTest(0); // 1-0 kenarı çizilmiş → hata değil mi?
-      // 1-0 çizilmiş olduğundan bu bir hatadır → kalkan gider
-      expect(g.shieldsLeft, 0);
-      expect(g.isOver, isFalse);
+      expect(seed, greaterThan(0), reason: '60 tohum içinde yaprak uçlu graf bulunmalı');
+      final host = _Host();
+      final g = PathGame(math.Random(seed))
+        ..resize(460, 780)
+        ..start(levelDef(20), host: host);
+      g.tapNodeForTest(leafB); // yaprağın komşusundan başla
+      g.tapNodeForTest(leafA); // yaprağın tek kenarını çiz → orada sıkış
+      expect(g.tracedCount, 1);
+      expect(g.isOver, isTrue);
+      expect(g.result().reached, isFalse);
+      expect(host.events, contains('lose'));
     });
 
     test('kombo: 4 doğru geçişte mükemmel sayılır', () {
       final host = _Host();
       final g = gameWith(host);
-      // 0→1→2→5→4 yolu (ızgara kenarları)
-      g.tapNodeForTest(0);
-      g.tapNodeForTest(1);
-      g.tapNodeForTest(2);
-      g.tapNodeForTest(5);
-      g.tapNodeForTest(4);
+      final sol = g.solutionForTest;
+      expect(sol.length, greaterThanOrEqualTo(5), reason: 'en az 4 kenar');
+      for (var i = 0; i < 5; i++) {
+        g.tapNodeForTest(sol[i]);
+      }
       expect(g.score, 4);
       expect(g.result().perfects, greaterThanOrEqualTo(1));
     });

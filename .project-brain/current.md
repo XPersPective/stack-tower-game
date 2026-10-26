@@ -45,8 +45,8 @@ Sources: `lib/screens/**`, `lib/preview/**`, `test/{widget,play_screen,screens,p
 - önizleme sinematik ekranı preview.js/ui.js sadakatli (PB-009 DONE: review PASS — günlük slot sırası, saveLayer hale, introLock düzeltildi; emülatör kayıt kanıtı evidence/PB-009/)
 
 ### anthology
-Status: OBSERVED (CATCH PB-023 + RING PB-024 inceleme PASS ile kabul; LAUNCH/MERGE kodlandı+testlendi — görev akışları PB-025/PB-026 hâlâ READY; PATH/SORT kodlandı, PB-027 açık)
-Sources: `lib/game/mini_game.dart`, `lib/game/kinds/*.dart`, `test/{catch,ring,launch,merge}_test.dart`
+Status: OBSERVED (CATCH PB-023 + RING PB-024 + PATH/SORT PB-027 inceleme PASS ile kabul; LAUNCH/MERGE kodlandı+testlendi — görev akışları PB-025/PB-026 hâlâ READY; 10 türden 8'i oynanabilir)
+Sources: `lib/game/mini_game.dart`, `lib/game/kinds/*.dart`, `test/{catch,ring,launch,merge,path,sort}_test.dart`
 - MiniGame sözleşmesi; antoloji host play_screen içinde; RING tek halka uygulandı (çoklu iç/dış halka kapsam dışı — PB-024 inceleme MINOR)
 
 ### construction-meta

@@ -29,6 +29,9 @@ class PathGame implements MiniGame {
   @override
   GameKind get kind => GameKind.path;
 
+  /// [rng] yalnızca testlerde tohumlamak için; oyunda varsayılan rastgele.
+  PathGame([math.Random? rng]) : _rng = rng ?? math.Random();
+
   late LevelDef _def;
   MiniGameHost? _host;
   double w = 0, h = 0, scale = 1;
@@ -40,7 +43,8 @@ class PathGame implements MiniGame {
   bool _over = false, _reached = false;
   double time = 0, shake = 0, flash = 0;
   final List<int> trace = [];
-  final math.Random _rnd = math.Random();
+  final math.Random _rng;
+  final List<int> _solution = [];
 
   @override
   int get score => _score;
@@ -64,6 +68,8 @@ class PathGame implements MiniGame {
   int? get currentForTest => current;
   @visibleForTesting
   int get tracedCount => edges.where((e) => e.traced).length;
+  @visibleForTesting
+  List<int> get solutionForTest => List.unmodifiable(_solution);
   @visibleForTesting
   void tapNodeForTest(int id) => _tapNode(id);
 
@@ -95,10 +101,15 @@ class PathGame implements MiniGame {
     host.playSound('start');
   }
 
-  /// Grafik: hedef kadar kenarlı bağlı bir ağ (ızgara + çaprazlar).
+  /// Graf üretimi — yürüyüş-önce: rastgele bir yürüyüşün (her kenarı en çok
+  /// bir kez geçen yol) ilk `target` kenarı kenar kümesi olur. Bir yürüyüşün
+  /// kenar kümesinde tek dereceli düğüm yalnızca iki ucunda olabilir, dolayı-
+  /// sıyla üretilen graf daima bağlıdır ve Euler yolu içerir (tanık: yürüyüşün
+  /// kendisi). Böylece hiçbir aşamada kazanılamaz tahta çıkmaz.
   void _buildGraph() {
     nodes.clear();
     edges.clear();
+    _solution.clear();
     // 3x3 ızgara düğümleri (dokunulabilir boyut)
     var id = 0;
     for (var r = 0; r < 3; r++) {
@@ -106,21 +117,65 @@ class PathGame implements MiniGame {
         nodes.add(PathNode(id++, c.toDouble(), r.toDouble()));
       }
     }
-    // kenarlar: yatay + dikey + seçili çaprazlar (bölüm zorluğuyla artar)
+    // aday kenarlar: yatay + dikey + merkez-köşe çaprazları
+    final cand = <PathEdge>[];
     for (var r = 0; r < 3; r++) {
       for (var c = 0; c < 3; c++) {
         final i = r * 3 + c;
-        if (c < 2) edges.add(PathEdge(i, i + 1));
-        if (r < 2) edges.add(PathEdge(i, i + 3));
+        if (c < 2) cand.add(PathEdge(i, i + 1));
+        if (r < 2) cand.add(PathEdge(i, i + 3));
       }
     }
-    final extra = math.min(4, _def.stage);
-    const diagonals = [[0, 4], [4, 8], [2, 4], [4, 6]];
-    for (var k = 0; k < extra; k++) {
-      edges.add(PathEdge(diagonals[k][0], diagonals[k][1]));
+    for (final d in const [
+      [0, 4],
+      [4, 8],
+      [2, 4],
+      [4, 6]
+    ]) {
+      cand.add(PathEdge(d[0], d[1]));
     }
+    final target = (6 + _def.stage).clamp(6, 10);
+    List<int>? trail;
+    for (var attempt = 0; attempt < 120 && trail == null; attempt++) {
+      trail = _randomTrail(cand, target);
+    }
+    trail ??= _fallbackTrail(target);
+    for (var i = 0; i + 1 < trail.length; i++) {
+      final a = trail[i], b = trail[i + 1];
+      for (final e in cand) {
+        if ((e.a == a && e.b == b) || (e.a == b && e.b == a)) {
+          edges.add(e);
+          break;
+        }
+      }
+    }
+    _solution.addAll(trail);
     _totalEdges = edges.length;
   }
+
+  /// Rastgele yürüyüş: hedef kenar sayısına ulaşmadan tıkanırsa null.
+  List<int>? _randomTrail(List<PathEdge> cand, int target) {
+    final used = <int>{};
+    final seq = <int>[_rng.nextInt(nodes.length)];
+    while (used.length < target) {
+      final c = seq.last;
+      final options = <int>[
+        for (var i = 0; i < cand.length; i++)
+          if (!used.contains(i) && (cand[i].a == c || cand[i].b == c)) i
+      ];
+      if (options.isEmpty) return null;
+      final i = options[_rng.nextInt(options.length)];
+      used.add(i);
+      seq.add(cand[i].a == c ? cand[i].b : cand[i].a);
+    }
+    return seq;
+  }
+
+  /// El yapımı güvenli yürüyüş (rastgele denemeler tükenirse): 10 kenarlık
+  /// geçerli bir yol; ihtiyaç kadar öneki kullanılır.
+  static const _fallbackWalk = [1, 2, 5, 8, 7, 4, 6, 3, 0, 4, 2];
+  List<int> _fallbackTrail(int target) =>
+      _fallbackWalk.sublist(0, target + 1);
 
   void _layout() {
     if (nodes.isEmpty) return;
@@ -262,8 +317,8 @@ class PathGame implements MiniGame {
     );
     canvas.save();
     if (shake > 0.2) {
-      canvas.translate((_rnd.nextDouble() - 0.5) * shake,
-          (_rnd.nextDouble() - 0.5) * shake);
+      canvas.translate((_rng.nextDouble() - 0.5) * shake,
+          (_rng.nextDouble() - 0.5) * shake);
     }
 
     // kenarlar: çizilmiş olanlar parlak, kalanlar soluk

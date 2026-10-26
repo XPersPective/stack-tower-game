@@ -16,6 +16,9 @@ class SortGame implements MiniGame {
 
   static const int capacity = 4;
 
+  /// [rng] yalnızca testlerde tohumlamak için; oyunda varsayılan rastgele.
+  SortGame([math.Random? rng]) : _rnd = rng ?? math.Random();
+
   late LevelDef _def;
   MiniGameHost? _host;
   double w = 0, h = 0, scale = 1;
@@ -30,10 +33,17 @@ class SortGame implements MiniGame {
   int columns = 4;
   int movesLeft = 0;
 
+  /// Kurulan tahtanın çözücü-optimal hamle sayısı (bütçe güvencesi için).
+  int _dealtOptimal = 0;
+
+  /// Dağıtım denemelerinde çözücünün taramasına izin verilen toplam durum
+  /// üst sınırı — uç durumda start() süresi sınırlı kalır (PB-027 MINOR).
+  static const int maxDealWork = 120000;
+
   int _score = 0, _perfects = 0, _combo = 0, _shields = 1;
   bool _over = false, _reached = false;
   double time = 0, shake = 0, flash = 0;
-  final math.Random _rnd = math.Random();
+  final math.Random _rnd;
 
   @override
   int get score => _score;
@@ -84,26 +94,110 @@ class SortGame implements MiniGame {
     columns = colors + 1;
     stacks = List.generate(columns, (_) => <int>[]);
     _deal();
-    movesLeft = colors * capacity + 6 + def.stage; // cömert ama sınırlı bütçe
+    // Bütçe en az çözücünün optimalinden `capacity` fazlası: formül renk/kapasite
+    // büyüdüğünde küçük kalırsa bile tahta sessizce kazanılamaz hâle gelmez.
+    movesLeft = math.max(
+        colors * capacity + 6 + def.stage, _dealtOptimal + capacity);
     host.playSound('start');
-    // Dağıtım tek hamlede çözülmüş tahta verebilir (aşırı nadir): anında kazan.
-    if (_isSolved()) _win();
   }
 
-  /// Çözülebilir dağıtım: her renkten `capacity` top; sütun sayısı renkten
-  /// bir fazla olduğundan dağıtım sonunda daima en az bir boş sütun kalır.
+  /// Dağıtım: her renkten `capacity` topu karıp dağıtır; tahta BFS çözücüyle
+  /// doğrulanana (ve dağıtımda bitmemiş olana) dek yeniden dener. Çözücünün
+  /// toplam taraması `maxDealWork`'ü aşarsa (pratikte ~2 denemede bulunur)
+  /// ilk iki sütunun son topları takaslanmış 3 hamlede çözülen tahta kurulur.
   void _deal() {
-    final pool = <int>[
-      for (var c = 0; c < colors; c++) ...List.filled(capacity, c)
+    var work = 0;
+    for (var attempt = 0; attempt < 40; attempt++) {
+      stacks = List.generate(columns, (_) => <int>[]);
+      final pool = <int>[
+        for (var c = 0; c < colors; c++) ...List.filled(capacity, c)
+      ];
+      pool.shuffle(_rnd);
+      var i = 0;
+      for (var col = 0; col < columns && i < pool.length; col++) {
+        for (var k = 0; k < capacity && i < pool.length; k++) {
+          stacks[col].add(pool[i++]);
+        }
+      }
+      if (_isSolved()) continue;
+      final (optimal, used) = _solve(stacks);
+      work += used;
+      if (optimal >= 0) {
+        _dealtOptimal = optimal;
+        return;
+      }
+      if (work > maxDealWork) break;
+    }
+    stacks = List.generate(columns, (_) => <int>[]);
+    for (var c = 0; c < colors; c++) {
+      stacks[c] = List.filled(capacity, c, growable: true);
+    }
+    stacks[0][capacity - 1] = 1;
+    stacks[1][capacity - 1] = 0;
+    _dealtOptimal = 3; // takaslı iki topu boş sütun üzerinden geri takas et
+  }
+
+  /// Su-sıralama çözücüsü (BFS; kanonik durum = sütun dizeleri sıralı, böylece
+  /// simetrik sütunlar tek durum sayılır). Hedef: her sütun boş ya da tek
+  /// renk+dolu. Anlamsız hamleler budanır. Döndürdüğü kayıt:
+  /// (optimal hamle sayısı, taramaya alınan durum sayısı); optimal = -1 →
+  /// `maxStates` aşıldı ya da çözüm yok (dağıtım yeniden deneneceği için
+  /// güvenli taraf).
+  static (int, int) _solve(List<List<int>> board) {
+    bool solved(List<List<int>> b) => b.every(
+        (s) => s.isEmpty || (s.length == capacity && s.every((e) => e == s.first)));
+    if (solved(board)) return (0, 1);
+
+    String key(List<List<int>> b) =>
+        (b.map((s) => s.join(',')).toList()..sort()).join('|');
+    final seen = <String>{key(board)};
+    final queue = <List<List<int>>>[
+      [for (final s in board) List<int>.of(s)]
     ];
-    pool.shuffle(_rnd);
-    var i = 0;
-    for (var col = 0; col < columns && i < pool.length; col++) {
-      for (var k = 0; k < capacity && i < pool.length; k++) {
-        stacks[col].add(pool[i++]);
+    final depths = <int>[0];
+    const maxStates = 60000;
+    var head = 0;
+    while (head < queue.length) {
+      if (seen.length > maxStates) return (-1, seen.length);
+      final b = queue[head];
+      final depth = depths[head];
+      head++;
+      for (var f = 0; f < b.length; f++) {
+        final from = b[f];
+        if (from.isEmpty) continue;
+        final mono = from.every((e) => e == from.last);
+        if (mono && from.length == capacity) continue; // oturmuş sütun
+        var emptyTried = false;
+        for (var t = 0; t < b.length; t++) {
+          if (t == f) continue;
+          final to = b[t];
+          if (to.length >= capacity) continue;
+          if (to.isEmpty) {
+            if (mono || emptyTried) continue; // tek-renk→boş anlamsız; tek boş dene
+            emptyTried = true;
+          } else if (to.last != from.last) {
+            continue;
+          }
+          final nb = [for (final s in b) List<int>.of(s)];
+          nb[t].add(nb[f].removeLast());
+          final k = key(nb);
+          if (seen.contains(k)) continue;
+          if (solved(nb)) return (depth + 1, seen.length);
+          seen.add(k);
+          queue.add(nb);
+          depths.add(depth + 1);
+        }
       }
     }
+    return (-1, seen.length);
   }
+
+  @visibleForTesting
+  static bool isSolvable(List<List<int>> board) => _solve(board).$1 >= 0;
+
+  /// Tahtanın çözücü-optimal hamle sayısı; -1 → çözüm yok ya da tarama sınırı.
+  @visibleForTesting
+  static int optimalMoves(List<List<int>> board) => _solve(board).$1;
 
   @override
   void onTap(Offset local) {
@@ -169,7 +263,17 @@ class SortGame implements MiniGame {
       return;
     }
     if (movesLeft <= 0) {
-      _lose();
+      if (_shields > 0) {
+        // kalkan: kaybı bir kez iter — ekstra `capacity` hamle hakkı verir
+        _shields--;
+        movesLeft += capacity;
+        flash = 0.35;
+        _host?.playSound('shield');
+        _host?.haptic(30);
+        _host?.onEvent('shield', data: {'left': _shields});
+      } else {
+        _lose();
+      }
     }
   }
 
