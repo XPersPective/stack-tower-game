@@ -21,6 +21,7 @@ import '../game/kinds/ring_game.dart';
 import '../game/kinds/stack_game.dart';
 import '../game/levels.dart';
 import '../game/mini_game.dart';
+import '../game/twists.dart';
 import '../theme/tokens.dart';
 import 'flow_overlays.dart';
 
@@ -114,6 +115,16 @@ class PlayScreenState extends State<PlayScreen>
                 : '✨ Gizem çözüldü: ${surprise.name}');
       });
     }
+    // sürpriz motoru (PB-015): twist bölümü açılışta duyurulur — hint okunur
+    final twistType =
+        _def.kind == GameKind.stack ? (_game as StackGame).engine.twist : null;
+    final twist = twistType == null ? null : kTwists[twistType];
+    if (twist != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ToastHost.show(context, '${twist.icon} ${twist.name} — ${twist.hint}');
+      });
+    }
   }
 
   void _onTick(Duration elapsed) {
@@ -185,7 +196,8 @@ class PlayScreenState extends State<PlayScreen>
   void _finishLevel() {
     final r = _game.result();
     if (_won) {
-      widget.session.onWin(r.points, r.perfects);
+      widget.session.onWin(r.points, r.perfects,
+          crits: r.crits, goldBlocks: r.goldBlocks);
     } else {
       widget.session.onLose(r.points, r.perfects);
     }

@@ -443,15 +443,27 @@ class _FlowOverlaysToastState extends State<FlowOverlaysToast> {
 }
 
 /// Statik toast yardımcısı (PlayScreen içinde overlay olarak gösterilir).
+/// Eşzamanlı toast'lar dikey olarak üst üste BINMEZ — her yeni toast
+/// aktif toast'ların üzerine ayrı bir sıraya yerleşir (inceleme bulgusu).
 class ToastHost {
+  /// Kök overlay'de o anda dolu toast yuvaları (yerleşim ofseti için).
+  /// Yeni toast en düşük boş yuvaya yerleşir; süre sonunda yuva boşalır —
+  /// ara gelen toast'un bitişi, hâlâ görünür toast'un yerini çalamaz.
+  static final Set<int> _slots = {};
+
   static void show(BuildContext context, String message) {
     final overlay = Overlay.of(context, rootOverlay: true);
+    var slot = 0;
+    while (_slots.contains(slot)) {
+      slot++;
+    }
+    _slots.add(slot);
     late OverlayEntry real;
     real = OverlayEntry(
       builder: (_) => Positioned(
         left: 24,
         right: 24,
-        bottom: 90,
+        bottom: 90.0 + slot * 72.0,
         child: IgnorePointer(
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -469,6 +481,7 @@ class ToastHost {
     overlay.insert(real);
     Future.delayed(const Duration(milliseconds: 2200), () {
       if (real.mounted) real.remove();
+      _slots.remove(slot);
     });
   }
 }

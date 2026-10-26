@@ -678,6 +678,15 @@ class ScenePainter extends CustomPainter {
     final m = e.moving;
     if (m == null) return;
     final y = e.movingY();
+    // GÖLGE BLOK: hayalet ikiz — soluk, gerçek bloktan önce çizilir
+    final gh = e.ghost;
+    if (gh != null) {
+      canvas.saveLayer(
+          Offset(gh.x - 4, y - 4) & Size(gh.w + 8, e.bh + 8),
+          Paint()..color = const Color(0x40FFFFFF));
+      _drawBlock(canvas, e, gh.x, y, gh.w, e.bh, e.blockHue(e.blocks.length));
+      canvas.restore();
+    }
     // ruzgargulu: blok hafif eğimle süzülür
     if (e.spawnTilt != 0) {
       canvas.save();

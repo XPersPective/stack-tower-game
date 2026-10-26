@@ -107,12 +107,28 @@ class GameSession extends ChangeNotifier {
   /* --------------------------- Motor olayları --------------------------- */
 
   /// win sonrası ödül hesabı + zincir kurulumu (ui.js onEngineEvent 'win').
-  prog.CompleteResult onWin(int blocks, int perfects) {
+  /// [crits]/[goldBlocks] (STACK twist sayaçları) para olarak ödenir:
+  /// KRİTİK mükemmelin ×5'i (taban 2 completeLevel'de ödenir, burada +8 → toplam 10),
+  /// altın blok 10 (inceleme bulgusu).
+  prog.CompleteResult onWin(int blocks, int perfects,
+      {int crits = 0, int goldBlocks = 0}) {
     final def = currentDef!;
     final stars = starsFor(perfects, def.target);
     final rewards = prog.completeLevel(state, def,
         blocks: blocks, perfects: perfects, reached: true, stars: stars);
-    if (doubleCoinsThisLevel) rewards.coins *= 2;
+    if (def.kind == GameKind.stack) {
+      final twistCoins = crits * 8 + goldBlocks * 10;
+      if (twistCoins > 0) {
+        rewards.coins += twistCoins;
+        state.coins += twistCoins;
+      }
+    }
+    if (doubleCoinsThisLevel) {
+      // sürpriz ödül×2 hem rapora hem cüzdana yansır
+      final extra = rewards.coins;
+      rewards.coins += extra;
+      state.coins += extra;
+    }
     if (def.daily) prog.recordDaily(state, prog.dayOf(_clock()), blocks);
 
     int? worldBonusCoins;
@@ -142,12 +158,17 @@ class GameSession extends ChangeNotifier {
     return rewards;
   }
 
-  /// lose sonrası (ui.js onEngineEvent 'lose').
+  /// lose sonrası (ui.js onEngineEvent 'lose'). Twist coin'leri yalnız
+  /// kazanılan bölümde ödenir — kayıpta para birikmez.
   prog.CompleteResult onLose(int blocks, int perfects) {
     final def = currentDef!;
     final rw =
         prog.completeLevel(state, def, blocks: blocks, perfects: perfects, reached: false);
-    if (doubleCoinsThisLevel) rw.coins *= 2;
+    if (doubleCoinsThisLevel) {
+      final extra = rw.coins;
+      rw.coins += extra;
+      state.coins += extra;
+    }
     if (def.daily) prog.recordDaily(state, prog.dayOf(_clock()), blocks);
     persist();
 

@@ -5,6 +5,7 @@ import 'package:stack_tower_game/game/audio.dart';
 import 'package:stack_tower_game/game/game_session.dart';
 import 'package:stack_tower_game/game/gameplay.dart';
 import 'package:stack_tower_game/game/levels.dart';
+import 'package:stack_tower_game/game/twists.dart';
 import 'package:stack_tower_game/screens/play_screen.dart';
 import 'package:stack_tower_game/services/storage.dart';
 
@@ -175,7 +176,7 @@ void main() {
     expect(session.currentDef!.i, 3);
     expect(state.gameForTest.kind, GameKind.launch);
 
-    for (var i = 0; i < 20; i++) {
+    for (var i = 0; i < 30; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
   });
@@ -203,7 +204,7 @@ void main() {
     expect(state.gameForTest.kind, GameKind.stack);
     expect(state.engineForTest.score, 0, reason: 'motor sıfırlanmış olmalı');
 
-    for (var i = 0; i < 20; i++) {
+    for (var i = 0; i < 30; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
   });
@@ -229,5 +230,42 @@ void main() {
     for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 300));
     }
+  });
+
+  testWidgets('twist bölümü açılışta duyurulur: ad + hint toast (RÜZGAR GÜLÜ)', (tester) async {
+    final session = await makeSession();
+    // i=15 → 3. stack bölümü; twist şeması ruzgargulu verir (twists_test'te sabit)
+    await tester.pumpWidget(host(session, levelDef(15)));
+    await tester.pump(const Duration(milliseconds: 120));
+    final t = kTwists[twistFor(15)]!;
+    expect(t.type, TwistType.ruzgargulu);
+    expect(find.textContaining('RÜZGAR GÜLÜ'), findsOneWidget);
+    expect(find.textContaining(t.hint), findsOneWidget);
+    // toast süreölçerini akıt (pending timer kalmasın)
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+  });
+
+  test('KRİTİK ×5 ve ALTIN blok paraları kazanan bölümde cüzdana yazılır', () async {
+    final session = await makeSession();
+    final def = levelDef(5); // stack → ALTIN YAĞMURU (ilk-5 şeması)
+    session.prepareLevel(def);
+    final before = session.state.coins;
+    final rw = session.onWin(10, 5, crits: 2, goldBlocks: 3);
+    final twistPay = 2 * 8 + 3 * 10; // KRİTİK mükemmel ×5 (taban 2 + 8 = 10), altın blok 10
+    expect(rw.coins, greaterThanOrEqualTo(def.coins + 5 * 2 + twistPay),
+        reason: 'ödül raporu taban + twist parası içermeli');
+    expect(session.state.coins - before, rw.coins,
+        reason: 'rapor ile cüzdan tutarlı (inceleme bulgusu kapanışı)');
+  });
+
+  test('kayıpta twist parası ödenmez — para birikmez', () async {
+    final session = await makeSession();
+    session.prepareLevel(levelDef(5));
+    final before = session.state.coins;
+    final rw = session.onLose(10, 5);
+    expect(rw.coins, 2, reason: 'teselli 2 (progress completeLevel)');
+    expect(session.state.coins - before, 2);
   });
 }

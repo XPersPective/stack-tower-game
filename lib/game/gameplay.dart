@@ -145,7 +145,8 @@ class GamePlay {
   @visibleForTesting
   bool get goldNowForTest => _goldNow;
   double hitStop = 0; // mükemmelde mikro duraklama (PB-016 juice)
-  double spawnTilt = 0; // ruzgargulu görsel açı
+  double spawnTilt = 0; // ruzgargulu görsel açı (±15°)
+  Moving? ghost; // GÖLGE BLOK: hayalet ikiz — farklı hızda, hiçbir kuralı etkilemez
 
   final List<Debris> debris = [];
   final List<Particle> particles = [];
@@ -341,6 +342,22 @@ class GamePlay {
     spawnMoving();
   }
 
+  /// DAR GEÇİT: daralan duvarların izin verdiği hareket aralığı. Spawn ve uçuş
+  /// (sekme) aynı sınırı kullanır — blok çizili duvarların ötesine taşmaz.
+  (double, double) dargecitBounds(Block top) {
+    final b = movingBounds(top);
+    var minX = b.minX, maxX = b.maxX;
+    final inset = math.min(top.w * 0.3, blocks.length * 6.0 * scale);
+    minX += inset;
+    maxX -= inset;
+    if (maxX < minX) {
+      final mid = (minX + maxX) / 2;
+      minX = mid;
+      maxX = mid;
+    }
+    return (minX, maxX);
+  }
+
   void spawnMoving() {
     final top = blocks[blocks.length - 1];
     final b = movingBounds(top);
@@ -349,18 +366,15 @@ class GamePlay {
     // dargecit: duvarlar daraldıkça hareket aralığı da daralır
     var minX = b.minX, maxX = b.maxX;
     if (twist == TwistType.dargecit) {
-      final inset = math.min(top.w * 0.3, blocks.length * 6.0 * scale);
-      minX += inset;
-      maxX -= inset;
-      if (maxX < minX) {
-        final mid = (minX + maxX) / 2;
-        minX = mid;
-        maxX = mid;
-      }
+      (minX, maxX) = dargecitBounds(top);
     }
     moving = Moving(fromLeft ? minX : maxX, top.w, fromLeft ? 1 : -1);
     _goldNow = twist == TwistType.altinyagmuru &&
         (goldRoll ?? _rnd.nextDouble)() < 0.25;
+    // GÖLGE BLOK: hayalet ikiz ters taraftan doğar, farklı hızda dolaşır
+    ghost = twist == TwistType.golgeblok
+        ? Moving(fromLeft ? maxX : minX, top.w, fromLeft ? -1 : 1)
+        : null;
   }
 
   void startLevel(LevelDef d, {int hue = 200, int shields = 1, TwistType? twistType}) {
@@ -375,6 +389,7 @@ class GamePlay {
     _goldNow = false;
     hitStop = 0;
     spawnTilt = 0;
+    ghost = null;
     state = EngineState.playing;
     resetWorld();
     makeWeather();
@@ -465,8 +480,11 @@ class GamePlay {
       }
       if (wasCrit) coinBurst(x2 + w2 / 2, y, 10);
       shake = math.min(13, 4 + combo * 0.8) + (wasCrit ? 6 : 0);
-      // juice: hit-stop (PB-016 kancası — mükemmelle mikro duraklama)
-      hitStop = math.min(hitStopMax, 0.04 + combo * 0.004) + (wasCrit ? 0.03 : 0);
+      // juice: hit-stop (PB-016 kancası) — yalnız twist bölümlerinde; twistsiz
+      // bölümlerde referans game.js pacing'i birebir korunur
+      if (twist != null) {
+        hitStop = math.min(hitStopMax, 0.04 + combo * 0.004) + (wasCrit ? 0.03 : 0);
+      }
       onHaptic?.call(wasCrit ? 45 : 12);
       if (twist == TwistType.zitakis) _zitFlip = !_zitFlip;
     } else {
@@ -567,6 +585,21 @@ class GamePlay {
 
   /* --------------------------- Güncelleme --------------------------- */
 
+  /// GÖLGE BLOK: gerçek bloğun 1.6 katı hızla dolaşan hayalet ikizi.
+  /// Yalnızca görsel bir aldatmacadır — yerleştirme/skor hiçbir kuralı etkilemez.
+  void _stepGhost(Moving g, Block top, int placed, double dt) {
+    final b = movingBounds(top);
+    final speed = travelRange(top.w) * 0.5 * speedMultiplier(placed) * 1.6;
+    g.x += g.dir * speed * dt;
+    if (g.x >= b.maxX) {
+      g.x = b.maxX;
+      g.dir = -1;
+    } else if (g.x <= b.minX) {
+      g.x = b.minX;
+      g.dir = 1;
+    }
+  }
+
   void tick(double dt0) {
     var dt = dt0;
     if (slowTimer > 0) {
@@ -580,9 +613,9 @@ class GamePlay {
       dt = dt0 - consume;
     }
     time += dt;
-    // ruzgargulu görsel açı salınımı
+    // ruzgargulu görsel açı salınımı — spec: ±15° (toparlanma: oturan blok düz çizilir)
     if (twist == TwistType.ruzgargulu) {
-      spawnTilt = math.sin(time * 3) * 0.12;
+      spawnTilt = math.sin(time * 3) * 15 * math.pi / 180;
     } else {
       spawnTilt = 0;
     }
@@ -602,10 +635,23 @@ class GamePlay {
         if (q1 != q0) shake = math.max(shake, 11 + _rnd.nextDouble() * 7);
       }
       stepMoving(moving!, top, placed, dt, speedScale);
+      if (ghost != null) _stepGhost(ghost!, top, placed, dt);
       if (def?.modifier == 'ruzgar') {
         final b = movingBounds(top);
         moving!.x += math.sin(time * 2.1) * travelRange(top.w) * 0.14 * dt * 6;
         moving!.x = clamp(moving!.x, b.minX, b.maxX);
+      }
+      // DAR GEÇİT: uçuşta da daralan duvarlarda seker — stepMoving tam genişlikte
+      // sektiği için çizili duvarların ötesine taşan geziyi burada daralt
+      if (twist == TwistType.dargecit) {
+        final (dMin, dMax) = dargecitBounds(top);
+        if (moving!.x <= dMin) {
+          moving!.x = dMin;
+          moving!.dir = 1;
+        } else if (moving!.x >= dMax) {
+          moving!.x = dMax;
+          moving!.dir = -1;
+        }
       }
     }
 

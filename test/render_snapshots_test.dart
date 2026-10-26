@@ -28,6 +28,13 @@ class _Host implements MiniGameHost {
   void onEvent(String name, {Map<String, dynamic>? data}) {}
 }
 
+/// Kanıt PNG'leri normal test koşusunda evidence'a DOKUNMAZ (inceleme bulgusu:
+/// her koşuda yeniden yazıp PB-022/028 kanıt dosyalarını kirletme); `.cache/runs`
+/// altına yazar. `PB_EVIDENCE=1` ile koşulunca evidence dizinine yazar.
+String _resolveOut(String dir) =>
+    Platform.environment['PB_EVIDENCE'] == '1' ? dir : '.cache/runs/snapshots';
+File _pngPath(String dir, String name) => File('${_resolveOut(dir)}/$name.png');
+
 Future<void> _snapshot(MiniGame game, LevelDef def, String name,
     {int ticks = 90,
     Size size = const Size(540, 1200),
@@ -45,7 +52,7 @@ Future<void> _snapshot(MiniGame game, LevelDef def, String name,
   final picture = recorder.endRecording();
   final image = await picture.toImage(size.width.toInt(), size.height.toInt());
   final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-  final dir = Directory(outDir);
+  final dir = Directory(_resolveOut(outDir));
   dir.createSync(recursive: true);
   File('${dir.path}/$name.png').writeAsBytesSync(bytes!.buffer.asUint8List());
 }
@@ -53,22 +60,22 @@ Future<void> _snapshot(MiniGame game, LevelDef def, String name,
 void main() {
   test('CATCH sahne anlık görüntüsü üretilir', () async {
     await _snapshot(CatcherGame(), levelDef(0), 'catch');
-    expect(File('.project-brain/evidence/PB-022/catch.png').lengthSync(), greaterThan(2000));
+    expect(_pngPath('.project-brain/evidence/PB-022', 'catch').lengthSync(), greaterThan(2000));
   });
 
   test('RING sahne anlık görüntüsü üretilir', () async {
     await _snapshot(RingGame(), levelDef(1), 'ring');
-    expect(File('.project-brain/evidence/PB-022/ring.png').lengthSync(), greaterThan(2000));
+    expect(_pngPath('.project-brain/evidence/PB-022', 'ring').lengthSync(), greaterThan(2000));
   });
 
   test('LAUNCH sahne anlık görüntüsü üretilir', () async {
     await _snapshot(LaunchGame(), levelDef(3), 'launch');
-    expect(File('.project-brain/evidence/PB-022/launch.png').lengthSync(), greaterThan(2000));
+    expect(_pngPath('.project-brain/evidence/PB-022', 'launch').lengthSync(), greaterThan(2000));
   });
 
   test('MERGE sahne anlık görüntüsü üretilir', () async {
     await _snapshot(MergeGame(), levelDef(4), 'merge');
-    expect(File('.project-brain/evidence/PB-022/merge.png').lengthSync(), greaterThan(2000));
+    expect(_pngPath('.project-brain/evidence/PB-022', 'merge').lengthSync(), greaterThan(2000));
   });
 
   test('STACK sahne anlık görüntüsü üretilir', () async {
@@ -89,9 +96,9 @@ void main() {
     g.render(canvas, const Size(540, 1200));
     final image = await recorder.endRecording().toImage(540, 1200);
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    Directory('.project-brain/evidence/PB-022').createSync(recursive: true);
-    File('.project-brain/evidence/PB-022/stack.png').writeAsBytesSync(bytes!.buffer.asUint8List());
-    expect(File('.project-brain/evidence/PB-022/stack.png').lengthSync(), greaterThan(2000));
+    Directory(_resolveOut('.project-brain/evidence/PB-022')).createSync(recursive: true);
+    _pngPath('.project-brain/evidence/PB-022', 'stack').writeAsBytesSync(bytes!.buffer.asUint8List());
+    expect(_pngPath('.project-brain/evidence/PB-022', 'stack').lengthSync(), greaterThan(2000));
   });
 
   test('BALANCE sahne anlık görüntüsü üretilir (tahterevalli + ağırlık)', () async {
@@ -105,7 +112,7 @@ void main() {
             g.tick(1 / 60);
           }
         });
-    expect(File('.project-brain/evidence/PB-028/balance.png').lengthSync(), greaterThan(2000));
+    expect(_pngPath('.project-brain/evidence/PB-028', 'balance').lengthSync(), greaterThan(2000));
   });
 
   test('DEFEND sahne anlık görüntüsü üretilir (dalga + kalkan halkası)', () async {
@@ -119,12 +126,12 @@ void main() {
             g.tick(1 / 60);
           }
         });
-    expect(File('.project-brain/evidence/PB-028/defend.png').lengthSync(), greaterThan(2000));
+    expect(_pngPath('.project-brain/evidence/PB-028', 'defend').lengthSync(), greaterThan(2000));
   });
 
   test('RHYTHM sahne anlık görüntüsü üretilir (vuruş çizgisi + notalar)', () async {
     await _snapshot(RhythmGame(), levelDef(7), 'rhythm',
         ticks: 90, outDir: '.project-brain/evidence/PB-028');
-    expect(File('.project-brain/evidence/PB-028/rhythm.png').lengthSync(), greaterThan(2000));
+    expect(_pngPath('.project-brain/evidence/PB-028', 'rhythm').lengthSync(), greaterThan(2000));
   });
 }
