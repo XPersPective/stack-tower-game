@@ -23,7 +23,7 @@ Verified present reality only. Markers: VERIFIED | OBSERVED | INFERRED | STALE |
 - `lib/screens/*` — menu, map(hub), preview, play+HUD, flow_overlays(kutu→tören→tahta→sonuç), shop+relics, missions, settings, router
 - `lib/theme/tokens.dart` — THEMES 10 palet + NeonPalette + Inter (variable font)
 - `lib/services/storage.dart` — KeyValueStorage (SharedPreferences/Memory)
-- `test/` — 23 dosya / 233 test öğesi (flutter test 2026-10-26): parite snapshot, ekonomi, drop, motor, twist, ekran akışları, antoloji mini-oyunlar
+- `test/` — 25 dosya / 260 test öğesi (flutter test 2026-10-29): parite snapshot, ekonomi, drop, motor, twist, juice, ekran akışları, antoloji mini-oyunlar
 - `tools_js/gen_levels_snapshot.js` — JS parite fixture üreteci (node)
 - `worker/` — HENÜZ YOK (SPEC §7 backend; PB-012)
 
@@ -45,18 +45,18 @@ Sources: `lib/game/{gameplay,scene_painter,twists}.dart`, `test/{gameplay,twists
 ### screens
 Status: OBSERVED (tüm ekranlar emülatörde çalışıyor: menü→harita→önizleme→oyun→sonuç→mağaza/görevler; ekran kanıtları .project-brain/evidence/PB-006/)
 Sources: `lib/screens/**`, `lib/preview/**`, `test/{widget,play_screen,screens,preview}_test.dart`
-- harita şu an işlevsel hub (grid) — PB-008 3B perspektife yükseltecek
+- harita 3B takımada + inşaat önizlemesi; dünya panelinde "SIRADA: <yapı> · n/m" ipucu (metin + Semantics)
 - önizleme sinematik ekranı preview.js/ui.js sadakatli (PB-009 DONE: review PASS — günlük slot sırası, saveLayer hale, introLock düzeltildi; emülatör kayıt kanıtı evidence/PB-009/)
 - twist duyuru toast'u play_screen'de (PB-015): Türkçe ad+hint, IgnorePointer, ToastHost yuva kuyruğu — eşzamanlı toast'lar üst üste binmez
 
 ### anthology
-Status: OBSERVED (CATCH PB-023 + RING PB-024 + PATH/SORT PB-027 inceleme PASS ile kabul; LAUNCH/MERGE kodlandı+testlendi — görev akışları PB-025/PB-026 hâlâ READY; 10 türden 8'i oynanabilir)
+Status: VERIFIED (10/10 tür oynanabilir; PB-022/023/024/027/028 + PB-025/026 kabul edildi — denetimde LAUNCH hedeflerinin (0,0)'da doğması ve MERGE tahtasının hiç dolmaması düzeltildi)
 Sources: `lib/game/mini_game.dart`, `lib/game/kinds/*.dart`, `test/{catch,ring,launch,merge,path,sort}_test.dart`
 - MiniGame sözleşmesi; antoloji host play_screen içinde; RING tek halka uygulandı (çoklu iç/dış halka kapsam dışı — PB-024 inceleme MINOR)
 
 ### construction-meta
-Status: OBSERVED (PB-029 kodlandı: tamamlanan bölüm adada yapı parçası yükseltir; görev akışı açık)
-Sources: `lib/game/game_session.dart`, `lib/screens/flow_overlays.dart`
+Status: VERIFIED (PB-029 DONE: tamamlanan bölüm adada yapı parçası yükseltir; haritada 1.2s ease-out yükselme + parıltı, blueprint metin/Semantics ipucu; dünya anıtı töreni görseli PB-030'da)
+Sources: `lib/map/construction.dart`, `lib/map/map3d.dart`, `lib/screens/map_screen.dart`, `lib/screens/flow_overlays.dart`
 
 ### theme
 Status: VERIFIED (kThemes 10/10 alan bağımsız karşılaştırmayla eşleşti; Inter variable woff2→ttf)
@@ -68,6 +68,6 @@ Status: OBSERVED (storage soyutlaması VERIFIED; leaderboard/session henüz yok 
 Status: UNKNOWN (worker/ yok; SPEC §7.3-7.4 tanımlı — PB-012)
 
 ## Known Unknowns
-- map.js/preview.js satır satır port detayları (PB-008/009'da okunacak)
+- dünya anıtı töreni (ışık köprüleri) henüz görsel değil — PB-030 kapsamı
 - Ses varlık üretimi WebAudio parametre birebirliği (PB-010)
 - Eşzamanlı oturum riski: bu makinede başka bir ajan (zcode-glm53) Brain görevlerini araya girip sahipleniyor — atomik takeover+accept komutlarıyla yönetiliyor

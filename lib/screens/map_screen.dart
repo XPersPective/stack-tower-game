@@ -12,6 +12,7 @@ import '../game/game_session.dart';
 import '../game/levels.dart';
 import '../game/progress.dart' as prog;
 import '../game/scene_painter.dart' show hslColor;
+import '../map/construction.dart';
 import '../map/map3d.dart';
 import '../theme/tokens.dart';
 import 'flow_overlays.dart';
@@ -38,6 +39,9 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   void initState() {
     super.initState();
     _scene = MapScene(context.read<GameSession>());
+    // PB-029: haritaya dönüşte en son inşa edilen parça 1.2s yükselir
+    final next = nextBuildIdx(context.read<GameSession>().state, _scene.focusStage);
+    if (next != null && next > 0) _scene.startRise(next - 1);
     _camera = MapCamera();
     _repaint = MapRepaint();
     _ticker = createTicker(_onTick)..start();
@@ -57,6 +61,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
       _yawVel *= 0.9;
       if (_yawVel.abs() < 0.001) _yawVel = 0;
     }
+    _scene.updateRise(dt);
     _camera.update(_scene, dt, snap: _snap);
     _snap = false;
     _repaint.notify();
@@ -174,6 +179,8 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                             : '🔒 ${session.totalStars}/${isl.need} yıldız',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
+                      // PB-029: blueprint ipucu METİNLE de okunur (accessibility)
+                      _buildHint(context, session, isl.stage),
                     ],
                   ),
                 ),
@@ -190,6 +197,39 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
       }),
     );
   }
+
+  /// PB-029: "burada ne yükselecek?" — haritadaki silüetin metin karşılığı.
+  Widget _buildHint(BuildContext context, GameSession session, int stage) {
+    final save = session.state;
+    final next = nextBuildIdx(save, stage);
+    final String visible;
+    final String spoken;
+    if (next == null) {
+      visible = '🏛 ANIT TAMAM · DİYAR YOLU AÇIK';
+      spoken = 'Bu dünyada tüm yapılar tamamlandı; anıt hazır.';
+    } else {
+      final spec = structureAt(next);
+      final built = piecesBuilt(save, stage, slotOf(next).structure);
+      visible = 'SIRADA: ${spec.name} · $built/${spec.pieces.length}';
+      spoken = 'Burada ne yükselecek? ${spec.name}, $built/${spec.pieces.length} parça tamam. '
+          'Sıradaki parça: ${pieceName(next)}.';
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Semantics(
+        label: spoken,
+        child: Text(
+          visible,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: hslColor(_glowFor(stage), 90, 78),
+                letterSpacing: 1.2,
+              ),
+        ),
+      ),
+    );
+  }
+
+  int _glowFor(int stage) => kThemes[stage].glow;
 }
 
 class _Drag {

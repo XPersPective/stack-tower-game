@@ -68,6 +68,17 @@ abstract class InputGate {
   bool get acceptsInput;
 }
 
+/// PB-025: basılı tutma girdisi (LAUNCH: basılı tut = şarj, bırak = fırlat).
+/// Uygulamayan türler tek dokunuşla oynanır; host yalnız bu arayüzü uygulayan
+/// türlerde bas/bırak olaylarını yönlendirir.
+abstract class HoldGame {
+  void onHoldStart(Offset local);
+  void onRelease(Offset local);
+
+  /// Dokunuş iptal edildi (kaydırma/geri tuşu): atış yapılmaz, şarj sıfırlanır.
+  void onHoldCancel();
+}
+
 /// Basit host uygulaması (test + üretim).
 class SimpleMiniGameHost implements MiniGameHost, HapticPatternHost {
   SimpleMiniGameHost({this.onSound, this.onHaptic, this.onHapticPattern, this.onGameEvent});

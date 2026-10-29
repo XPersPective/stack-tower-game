@@ -32,7 +32,7 @@ class BoomFx {
   BoomFx(this.x, this.y) : life = 0;
 }
 
-class LaunchGame implements MiniGame {
+class LaunchGame implements MiniGame, HoldGame {
   @override
   GameKind get kind => GameKind.launch;
 
@@ -45,6 +45,11 @@ class LaunchGame implements MiniGame {
   double power = 0.5;
   double time = 0;
   int shotsLeft = 0;
+
+  /// PB-025: basılı tut = şarj (0→1, ~0.62s), bırak = fırlat; nişan dönmeye
+  /// devam eder ama şarj sırasında yavaşlar (kontrol edilebilir kalsın).
+  bool charging = false;
+  double charge = 0;
 
   final List<Projectile> shots = [];
   final List<Target> targets = [];
@@ -63,6 +68,10 @@ class LaunchGame implements MiniGame {
   int get combo => _combo;
   @override
   int get shieldsLeft => _shields;
+
+  /// Hedefler ancak ilk yerleşimden (w>0) sonra doğar — üretim akışında
+  /// `start()` yerleşimden önce çağrılıyor (play_screen post-frame resize).
+  bool _targetsReady = false;
   @override
   bool get isOver => _over;
 
@@ -113,8 +122,16 @@ class LaunchGame implements MiniGame {
     targets.clear();
     // atış bütçesi: hedef + 5 (cömert ama sonsuz değil)
     shotsLeft = def.target + 5;
-    _spawnTargets();
+    _targetsReady = false;
+    targets.clear();
+    _ensureTargets(); // w>0 ise hemen, değilse ilk tick'te
     host.playSound('start');
+  }
+
+  void _ensureTargets() {
+    if (_targetsReady || w <= 0 || h <= 0) return;
+    _targetsReady = true;
+    _spawnTargets();
   }
 
   void _spawnTargets() {
@@ -131,6 +148,27 @@ class LaunchGame implements MiniGame {
   void onTap(Offset local) {
     if (_over) return;
     _fire();
+  }
+
+  @override
+  void onHoldStart(Offset local) {
+    if (_over) return;
+    charging = true;
+    charge = 0;
+  }
+
+  @override
+  void onRelease(Offset local) {
+    if (_over || !charging) return;
+    charging = false;
+    _fire();
+    charge = 0;
+  }
+
+  @override
+  void onHoldCancel() {
+    charging = false;
+    charge = 0;
   }
 
   void _fire() {
@@ -152,10 +190,18 @@ class LaunchGame implements MiniGame {
       slowMo -= dt0;
       dt = dt0 * 0.4;
     }
+    _ensureTargets();
     time += dt;
-    // nişan dönüşü + güç salınımı (bölüm hızıyla)
-    aim = -math.pi / 2 + math.sin(time * (0.9 + _def.speed * 0.35)) * 1.05;
-    power = 0.5 + 0.5 * math.sin(time * (1.3 + _def.speed * 0.4) + 1.1);
+    // nişan dönüşü (şarj sırasında %55 hızda) + güç
+    final aimSpeed = (0.9 + _def.speed * 0.35) * (charging ? 0.55 : 1.0);
+    aim = -math.pi / 2 + math.sin(time * aimSpeed) * 1.05;
+    if (charging) {
+      charge = math.min(1, charge + dt * 1.6);
+      power = charge;
+    } else {
+      // dokun modu: güç otomatik salınır (tek dokunuş akışı korunur)
+      power = 0.5 + 0.5 * math.sin(time * (1.3 + _def.speed * 0.4) + 1.1);
+    }
 
     shake = math.max(0, shake - dt * 55);
     flash = math.max(0, flash - dt * 3);
@@ -167,6 +213,14 @@ class LaunchGame implements MiniGame {
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       p.life += dt;
+      // duvar sekmesi (spec §2): yan duvarlardan %72 enerjiyle döner
+      if (p.x < 0) {
+        p.x = -p.x;
+        p.vx = -p.vx * 0.72;
+      } else if (p.x > w) {
+        p.x = 2 * w - p.x;
+        p.vx = -p.vx * 0.72;
+      }
       if (p.y > h + 60 || p.x < -80 || p.x > w + 80 || p.life > 6) {
         shots.removeAt(i);
         // kaçan atış komboyu kırar
@@ -323,14 +377,33 @@ class LaunchGame implements MiniGame {
           Paint()..color = const Color(0xFFDFFBFF));
     }
 
-    // patlamalar
+    // patlamalar: iç flaş + genişleyen halka + 8 kıvılcım (juice, C-023)
     for (final b in booms) {
-      final t = b.life / 0.5;
-      canvas.drawCircle(Offset(b.x, b.y), 12 + t * 52 * scale,
+      final t = (b.life / 0.5).clamp(0.0, 1.0);
+      final c = Offset(b.x, b.y);
+      canvas.drawCircle(
+          c,
+          (10 + t * 20) * scale,
+          Paint()
+            ..color = const Color(0xFFFFD24A).withValues(alpha: (1 - t) * .45)
+            ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(2.0, 10 * scale)));
+      canvas.drawCircle(c, (12 + t * 52) * scale,
           Paint()
             ..color = const Color(0xFFFFD24A).withValues(alpha: (1 - t) * .85)
             ..style = PaintingStyle.stroke
             ..strokeWidth = 4 * (1 - t) + 1);
+      for (var k = 0; k < 8; k++) {
+        final a = k * math.pi / 4 + b.life * 3;
+        final r0 = (14 + t * 30) * scale;
+        final r1 = r0 + (10 + 16 * (1 - t)) * scale;
+        canvas.drawLine(
+            c + Offset(math.cos(a), math.sin(a)) * r0,
+            c + Offset(math.cos(a), math.sin(a)) * r1,
+            Paint()
+              ..color = const Color(0xFFFFE9A8).withValues(alpha: (1 - t) * .9)
+              ..strokeWidth = 2.2
+              ..strokeCap = StrokeCap.round);
+      }
     }
 
     // fırlatıcı + nişan
@@ -360,8 +433,9 @@ class LaunchGame implements MiniGame {
     // atış bütçesi
     final tp = TextPainter(
       text: TextSpan(
-          text: 'ATış $shotsLeft',
+          text: 'ATIŞ $shotsLeft',
           style: const TextStyle(
+              fontFamily: 'Inter',
               color: Color(0xFFEEF2FF), fontSize: 15, fontWeight: FontWeight.w700)),
       textDirection: TextDirection.ltr,
     )..layout();

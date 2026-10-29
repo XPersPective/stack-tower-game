@@ -159,20 +159,46 @@ void main() {
       expect(g.combo, 3);
     });
 
-    test('tahta dolu ve eşit çift yoksa kayıp (softlock yok)', () {
+    test('tahta dolu + eşit çift yok → taşma kaybı (süre bitmeden)', () {
       final host = _Host();
       final g = gameWith(host, shields: 0);
       // 16 hücreye birbirinden farklı 16 değer → hamle yok
       for (var i = 0; i < MergeGame.cells; i++) {
         g.setCellForTest(i, i + 1);
       }
-      g.onTap(_center(g, 0));
-      g.onTap(_center(g, 1)); // eşit değil → birleşme yok
-      // birleşme olmadan kayıp tetiklenmez; süre bitince biter
-      for (var i = 0; i < 1800 && !g.isOver; i++) {
+      // periyodik doğum anında tahta dolu → kayıp (fuse 12s'den ÖNCE)
+      var elapsed = 0.0;
+      for (var i = 0; i < 400 && !g.isOver; i++) {
         g.tick(1 / 60);
+        elapsed += 1 / 60;
       }
       expect(g.isOver, isTrue);
+      expect(host.events, contains('lose'));
+      expect(elapsed, lessThan(MergeGame.spawnEvery + 1),
+          reason: 'kayıp taşma kontrolünden gelmeli, süre dolmasından değil');
+    });
+
+    test('doluluk zamanla artar: her 5 sn yeni parça doğar', () {
+      final host = _Host();
+      final g = gameWith(host);
+      int filled() => g.gridForTest.where((c) => c != null).length;
+      expect(filled(), 4, reason: 'başlangıç 4 parça');
+      for (var i = 0; i < 310; i++) {
+        g.tick(1 / 60); // 5.16s
+      }
+      expect(filled(), 5, reason: 'tahta dolabilmeli (PB-026)');
+    });
+
+    test('tahta dolu ama eşit çift varsa kayıp yok', () {
+      final host = _Host();
+      final g = gameWith(host, shields: 0);
+      for (var i = 0; i < MergeGame.cells; i++) {
+        g.setCellForTest(i, 1 + (i ~/ 2)); // her değerden iki tane
+      }
+      for (var i = 0; i < 310; i++) {
+        g.tick(1 / 60);
+      }
+      expect(g.isOver, isFalse, reason: 'hamle var → taşma kaybı değil');
     });
   });
 }

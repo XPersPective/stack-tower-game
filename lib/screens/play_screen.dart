@@ -277,7 +277,18 @@ class PlayScreenState extends State<PlayScreen>
                   if (_overlayOpen) return;
                   // juice (PB-016): hit-stop penceresinde dokunuş yok sayılır
                   if (_game is InputGate && !(_game as InputGate).acceptsInput) return;
-                  _game.onTap(d.localPosition);
+                  // PB-025: basılı tut = şarj (LAUNCH); diğer türler tek dokunuş
+                  if (_game is HoldGame) {
+                    (_game as HoldGame).onHoldStart(d.localPosition);
+                  } else {
+                    _game.onTap(d.localPosition);
+                  }
+                },
+                onTapUp: (d) {
+                  if (_game is HoldGame) (_game as HoldGame).onRelease(d.localPosition);
+                },
+                onTapCancel: () {
+                  if (_game is HoldGame) (_game as HoldGame).onHoldCancel();
                 },
                 child: CustomPaint(
                   painter: _MiniGamePainter(_game),

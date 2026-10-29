@@ -199,4 +199,62 @@ void main() {
       expect(g.power, inInclusiveRange(0.0, 1.0));
     });
   });
+
+  group('LAUNCH PB-025 düzeltmeleri', () {
+    test('yerleşimden ÖNCE start: hedefler (0,0) yerine ilk tick\'te doğar', () {
+      final host = _Host();
+      final g = LaunchGame();
+      // üretim akışı: start() ilk yerleşimden önce çağrılır (post-frame resize)
+      g.start(levelDef(3), host: host);
+      expect(g.targetsForTest, isEmpty, reason: 'w=0 iken hedef üretilmez');
+      g.resize(460, 780);
+      g.tick(1 / 60);
+      expect(g.targetsForTest, isNotEmpty, reason: 'ilk tick hedefleri kurar');
+      for (final t in g.targetsForTest) {
+        expect(t.x, greaterThan(0));
+        expect(t.y, greaterThan(0));
+        expect(t.x, lessThan(g.wForTest));
+      }
+    });
+
+    test('basılı tut = şarj, bırak = fırlat; iptal atış yapmaz', () {
+      final host = _Host();
+      final g = gameWith(host);
+      aimStraightUpAtTarget(g);
+      final shots0 = g.shotsForTest.length;
+      g.onHoldStart(const Offset(200, 600));
+      for (var i = 0; i < 18; i++) {
+        g.tick(1 / 60); // 0.3s → charge ≈ 0.48
+      }
+      expect(g.power, closeTo(0.48, 0.02));
+      expect(g.shotsForTest.length, shots0, reason: 'bırakana kadar atış yok');
+      g.onRelease(const Offset(200, 600));
+      expect(g.shotsForTest.length, shots0 + 1);
+
+      // iptal: şarj sıfırlanır, atış olmaz
+      final shots1 = g.shotsForTest.length;
+      g.onHoldStart(const Offset(200, 600));
+      g.tick(1 / 60);
+      g.onHoldCancel();
+      expect(g.shotsForTest.length, shots1);
+      expect(g.charging, isFalse);
+    });
+
+    test('duvar sekmesi: mermi yan duvardan döner, ekranı terk etmez', () {
+      final host = _Host();
+      final g = gameWith(host);
+      g.setAimForTest(0, 1.0); // tam sağa
+      g.fireForTest();
+      final p = g.shotsForTest.single;
+      var bounced = false;
+      for (var i = 0; i < 60 && g.shotsForTest.isNotEmpty; i++) {
+        final vx0 = p.vx;
+        g.tick(1 / 60);
+        if (p.vx.sign != vx0.sign) bounced = true;
+        expect(p.x, greaterThanOrEqualTo(-1));
+        expect(p.x, lessThanOrEqualTo(g.wForTest + 1));
+      }
+      expect(bounced, isTrue, reason: 'sağ duvardan sekme olmalı');
+    });
+  });
 }

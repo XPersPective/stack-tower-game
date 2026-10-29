@@ -39,6 +39,11 @@ class MergeGame implements MiniGame {
   int _score = 0, _perfects = 0, _combo = 0, _shields = 1;
   bool _over = false, _reached = false;
   double _sinceMerge = 0;
+
+  /// PB-026: tahta dolabilsin diye zamanla yeni parça doğar (yoksa doluluk
+  /// hep 4'te sabit kalıyordu ve "ızgara taşması = kayıp" hiç gerçekleşmiyordu).
+  static const double spawnEvery = 5.0;
+  double _spawnT = 0;
   double time = 0, shake = 0, flash = 0;
   final List<MergePop> pops = [];
   final math.Random _rnd = math.Random();
@@ -84,6 +89,7 @@ class MergeGame implements MiniGame {
     _over = false;
     _reached = false;
     _sinceMerge = 0;
+    _spawnT = 0;
     time = 0;
     shake = 0;
     flash = 0;
@@ -205,6 +211,13 @@ class MergeGame implements MiniGame {
     time += dt;
     _sinceMerge += dt;
     if (_sinceMerge > 2.5) _combo = 0;
+    // PB-026: periyodik doğum — doluluk artabilir, taşma kaybı gerçek olur
+    _spawnT += dt;
+    if (_spawnT >= spawnEvery) {
+      _spawnT = 0;
+      _spawn();
+      if (!_hasMove()) _lose();
+    }
     fuse -= dt * (0.85 + _def.speed * 0.12);
     shake = math.max(0, shake - dt * 55);
     flash = math.max(0, flash - dt * 3);
@@ -328,12 +341,29 @@ class MergeGame implements MiniGame {
         text: TextSpan(
             text: label,
             style: TextStyle(
+                fontFamily: 'Inter',
                 color: Colors.white,
                 fontSize: (cw * (label.length > 3 ? 0.26 : 0.34)).clamp(12.0, 34.0),
                 fontWeight: FontWeight.w800)),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, rect.center - Offset(tp.width / 2, tp.height / 2));
+    }
+
+    // birleşme patlaması: hücrede genişleyen halka (C-023 juice)
+    for (final p in pops) {
+      final t = (p.life / 0.4).clamp(0.0, 1.0);
+      final cx = board.left + (p.cell % cols) * cw + cw / 2;
+      final cy = board.top + (p.cell ~/ cols) * ch + ch / 2;
+      canvas.drawCircle(
+          Offset(cx, cy),
+          (cw * 0.35 + t * cw * 0.55),
+          Paint()
+            ..color = HSLColor.fromAHSL((1 - t) * .85,
+                    (theme.glow + (grid[p.cell] ?? 1) * 26) % 360, 1, .72)
+                .toColor()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 3.2 * (1 - t) + 0.8);
     }
 
     // eriyen süre çubuğu

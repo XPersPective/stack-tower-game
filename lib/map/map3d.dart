@@ -113,8 +113,23 @@ class MapScene {
 
   final int? _initialFocus;
 
+  /// PB-029: haritada en son yükselen parça — 1.2s ease-out yükselme animasyonu.
+  int? riseIdx;
+  double riseT = 1;
+
   MapScene(this.session, {int? initialFocus}) : _initialFocus = initialFocus, focusStage = initialFocus ?? 0 {
     rebuild();
+  }
+
+  /// [levelIdx] parçası haritada yükselsin (bölüm bitiminden sonra çağrılır).
+  void startRise(int levelIdx) {
+    riseIdx = levelIdx;
+    riseT = 0;
+  }
+
+  void updateRise(double dt) {
+    if (riseT >= 1) return;
+    riseT = math.min(1, riseT + dt / 1.2); // spec: 1.2s
   }
 
   void rebuild() {
@@ -615,11 +630,19 @@ class MapScenePainter extends CustomPainter {
       }
 
       // inşa edilen parçalar (alttan üste)
+      final riseSlot = scene.riseIdx == null ? null : slotOf(scene.riseIdx!);
       for (var k = 0; k < built; k++) {
-        final yTop = p.y - (k + 1) * unitH;
+        // PB-029: en son parça haritada 1.2s ease-out ile yükselir
+        final rising = riseSlot != null &&
+            riseSlot.structure == si &&
+            riseSlot.piece == k &&
+            scene.riseT < 1;
+        final grow = rising ? _easeOutCubic(scene.riseT) : 1.0;
+        final pieceH = unitH * 0.92 * grow;
+        final yTop = p.y - (k + 1) * unitH + (unitH * 0.92 - pieceH);
         final shrink = 1.0 - k * 0.12;
         final rect = Rect.fromLTWH(
-            p.x - baseW * shrink / 2, yTop, baseW * shrink, unitH * 0.92);
+            p.x - baseW * shrink / 2, yTop, baseW * shrink, pieceH);
         canvas.drawRect(rect, Paint()..color = hslColor(isl.theme.glow, 55, 26 + k * 8));
         canvas.drawRect(
             rect,
@@ -627,6 +650,18 @@ class MapScenePainter extends CustomPainter {
               ..color = hslColor(isl.theme.glow, 95, 70).withValues(alpha: .75)
               ..style = PaintingStyle.stroke
               ..strokeWidth = math.max(0.8, 1.2 * s));
+      }
+      // PB-029: yükselme sırasında parıltı (tam 1.2s)
+      if (riseSlot != null && riseSlot.structure == si && scene.riseT < 1) {
+        final k = riseSlot.piece;
+        final topY = p.y - (k + 1) * unitH;
+        canvas.drawCircle(
+            Offset(p.x, topY + unitH * 0.5),
+            18 * s * (1 - scene.riseT * 0.4),
+            Paint()
+              ..color = hslColor(isl.theme.glow, 100, 85)
+                  .withValues(alpha: .45 * (1 - scene.riseT))
+              ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(2.0, 8 * s)));
       }
       // yapı tamamlandıysa tepe ışığı
       if (built == spec.pieces.length) {
@@ -641,6 +676,11 @@ class MapScenePainter extends CustomPainter {
             Paint()..color = hslColor(isl.theme.glow, 100, 82));
       }
     }
+  }
+
+  static double _easeOutCubic(double t) {
+    final u = 1 - t;
+    return 1 - u * u * u;
   }
 
   void _drawNodes(Canvas canvas, Size size) {
