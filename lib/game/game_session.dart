@@ -123,6 +123,12 @@ class GameSession extends ChangeNotifier {
         state.coins += twistCoins;
       }
     }
+    // PB-030: tür başına cömertlik bonusu (kayıpta ödenmez, C-019)
+    final kindCoins = kindBonus(def.kind, perfects: perfects);
+    if (kindCoins > 0) {
+      rewards.coins += kindCoins;
+      state.coins += kindCoins;
+    }
     if (doubleCoinsThisLevel) {
       // sürpriz ödül×2 hem rapora hem cüzdana yansır
       final extra = rewards.coins;

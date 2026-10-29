@@ -126,7 +126,7 @@ class _PreviewScreenState extends State<PreviewScreen>
                           style: Theme.of(context).textTheme.bodyMedium,
                           textAlign: TextAlign.center),
                     ),
-                    const SizedBox(height: 26),
+                    const SizedBox(height: 14),
                     FadeTransition(
                       opacity: _fade(0.35, 0.8),
                       child: Padding(
@@ -174,7 +174,63 @@ class _PreviewScreenState extends State<PreviewScreen>
                               Text(mod.hint,
                                   style: Theme.of(context).textTheme.bodyMedium,
                                   textAlign: TextAlign.center),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 6),
+                              // PB-030: TÜR KARTI — bu bölüm hangi oyun?
+                              Container(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: hslColor(def.kindSpec.accentHue, 90, 60)
+                                      .withValues(alpha: .12),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                      color: hslColor(def.kindSpec.accentHue, 90, 65)
+                                          .withValues(alpha: .45)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(def.kindSpec.icon,
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            color: hslColor(
+                                                def.kindSpec.accentHue, 95, 78))),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text('BU BÖLÜM: ${def.kindSpec.name}',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleMedium
+                                                  ?.copyWith(
+                                                      color: hslColor(
+                                                          def.kindSpec.accentHue, 95, 78))),
+                                          Text(def.kindSpec.hint,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // "sırada ne var" merak kartı (gizem — PB-019/021 ile derinleşir)
+                              if (!daily && !def.endless) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  'SIRADA: ${kKindSpecs[kindFor(def.i + 1)]!.name} · '
+                                  '${kKindSpecs[kindFor(def.i + 1)]!.icon}',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: NeonPalette.textDim,
+                                        letterSpacing: 1.2,
+                                      ),
+                                ),
+                              ],
+                              const SizedBox(height: 6),
                               Text('${def.target} blok · ${def.coins} 🪙${def.box ? ' + 🎁' : ''}',
                                   style: Theme.of(context).textTheme.bodyLarge),
                               const SizedBox(height: 10),
@@ -186,7 +242,7 @@ class _PreviewScreenState extends State<PreviewScreen>
                                             : NeonPalette.textDim,
                                       ),
                                   textAlign: TextAlign.center),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 8),
                               FadeTransition(
                                 opacity: _fade(0.6, 0.9),
                                 child: _StartButton(def: def),

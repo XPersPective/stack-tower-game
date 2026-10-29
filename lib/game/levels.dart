@@ -321,6 +321,14 @@ GameKind kindFor(int i) {
   return k;
 }
 
+/// PB-030: tür başına cömertlik bonusu (yalnız KAZANILAN bölümde ödenir).
+/// C-019: her 4-5 bölümde 1 satın alma gücü — stack dışı türler taban 2,
+/// 3+ mükemmelde +1. Stack'in bonusu twist paralarıdır (çift ödeme olmasın).
+int kindBonus(GameKind kind, {required int perfects}) {
+  if (kind == GameKind.stack) return 0;
+  return perfects >= 3 ? 3 : 2;
+}
+
 /// LevelDef'e tür ekleyen yardımcı (def.kind).
 extension LevelDefKind on LevelDef {
   GameKind get kind => (daily || endless) ? GameKind.stack : kindFor(i);

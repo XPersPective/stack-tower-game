@@ -23,7 +23,7 @@ Verified present reality only. Markers: VERIFIED | OBSERVED | INFERRED | STALE |
 - `lib/screens/*` — menu, map(hub), preview, play+HUD, flow_overlays(kutu→tören→tahta→sonuç), shop+relics, missions, settings, router
 - `lib/theme/tokens.dart` — THEMES 10 palet + NeonPalette + Inter (variable font)
 - `lib/services/storage.dart` — KeyValueStorage (SharedPreferences/Memory)
-- `test/` — 25 dosya / 260 test öğesi (flutter test 2026-10-29): parite snapshot, ekonomi, drop, motor, twist, juice, ekran akışları, antoloji mini-oyunlar
+- `test/` — 27 dosya / 270 test öğesi (flutter test 2026-10-29): parite snapshot, ekonomi, drop, motor, twist, juice, ekran akışları, antoloji mini-oyunlar
 - `tools_js/gen_levels_snapshot.js` — JS parite fixture üreteci (node)
 - `worker/` — HENÜZ YOK (SPEC §7 backend; PB-012)
 
@@ -48,6 +48,8 @@ Sources: `lib/screens/**`, `lib/preview/**`, `test/{widget,play_screen,screens,p
 - harita 3B takımada + inşaat önizlemesi; dünya panelinde "SIRADA: <yapı> · n/m" ipucu (metin + Semantics)
 - önizleme sinematik ekranı preview.js/ui.js sadakatli (PB-009 DONE: review PASS — günlük slot sırası, saveLayer hale, introLock düzeltildi; emülatör kayıt kanıtı evidence/PB-009/)
 - twist duyuru toast'u play_screen'de (PB-015): Türkçe ad+hint, IgnorePointer, ToastHost yuva kuyruğu — eşzamanlı toast'lar üst üste binmez
+- önizleme tür kartı (PB-030): "BU BÖLÜM: <tür>" + ipucu + "SIRADA: <sonraki tür>" — oyuncu bölüme girmeden oyunu bilir
+- dağıtım (PB-030): 150 bölümde ardışık aynı tür yok, ilk-5 beş farklı tür, patron imza türleri 10/10 farklı; tür ödülü: stack 0 (twist parası ayrı), diğerleri 2/3 — rapor=cüzdan
 
 ### anthology
 Status: VERIFIED (10/10 tür oynanabilir; PB-022/023/024/027/028 + PB-025/026 kabul edildi — denetimde LAUNCH hedeflerinin (0,0)'da doğması ve MERGE tahtasının hiç dolmaması düzeltildi)
