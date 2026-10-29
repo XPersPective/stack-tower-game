@@ -429,7 +429,12 @@ class GamePlay {
     final idx = blocks.length;
     final y = movingY();
     // JS: def.tol || PERFECT_TOLERANCE — 0/falsey değere düşmez.
-    final tol = (def?.tol ?? 0) == 0 ? kPerfectTolerance : def!.tol;
+    var tol = (def?.tol ?? 0) == 0 ? kPerfectTolerance : def!.tol;
+    // PB-021: ilk bölümde ilk 5 blok affedici (12px). Runtime override — JS
+    // paritesi dosyada bozulmaz; diğer bölümlerde def.tol aynen geçerli.
+    if (def != null && !def!.daily && !def!.endless && def!.i == 0 && blocks.length <= 5) {
+      tol = 12;
+    }
     final res = resolveDrop(moving!, top, tol);
 
     if (!res.ok) {

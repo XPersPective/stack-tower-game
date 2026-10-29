@@ -210,6 +210,23 @@ MarketPurchase buy(prog.SaveState state, MarketEntry e,
   }
 }
 
+/// Kalıntı parçası ekler; 3'e ulaşınca sıradaki kalıntıyı açar.
+/// Dönüş: açılan kalıntının adı (parça 3'e ulaşmadıysa null).
+String? addRelicPiece(prog.SaveState state) {
+  state.relicPieces += 1;
+  if (state.relicPieces < 3) return null;
+  state.relicPieces -= 3;
+  final missing =
+      prog.kRelics.where((r) => state.relics[r.stage.toString()] != true);
+  if (missing.isEmpty) {
+    state.coins += 150; // tüm kalıntılar açık → paraya çevrilir
+    return null;
+  }
+  final relic = missing.first;
+  state.relics[relic.stage.toString()] = true;
+  return relic.name;
+}
+
 /// Sandık: %45 para, %30 görünüm, %25 kalıntı parçası (3 parça = 1 kalıntı).
 MarketPurchase _openChest(prog.SaveState state, MarketEntry e, math.Random rnd, int stage) {
   final r = rnd.nextDouble();
@@ -236,25 +253,17 @@ MarketPurchase _openChest(prog.SaveState state, MarketEntry e, math.Random rnd, 
         ok: true, message: 'SANDIK: +120 PARA', coinsSpent: e.price);
   }
   // kalıntı parçası
-  state.relicPieces += 1;
-  if (state.relicPieces >= 3) {
-    final missing = prog.kRelics.where((r) => state.relics[r.stage.toString()] != true);
-    if (missing.isNotEmpty) {
-      final relic = missing.first;
-      state.relics[relic.stage.toString()] = true;
-      state.relicPieces -= 3;
-      return MarketPurchase(
-          ok: true,
-          message: 'SANDIK: ${relic.name} KALINTISI',
-          coinsSpent: e.price);
-    }
-    state.relicPieces -= 3;
-    state.coins += 150;
+  final relicName = addRelicPiece(state);
+  if (relicName != null) {
     return MarketPurchase(
-        ok: true, message: 'SANDIK: +150 PARA', coinsSpent: e.price);
+        ok: true,
+        message: 'SANDIK: $relicName KALINTISI',
+        coinsSpent: e.price);
   }
   return MarketPurchase(
       ok: true,
-      message: 'SANDIK: KALINTI PARÇASI (${state.relicPieces}/3)',
+      message: state.relicPieces == 0
+          ? 'SANDIK: +150 PARA'
+          : 'SANDIK: KALINTI PARÇASI (${state.relicPieces}/3)',
       coinsSpent: e.price);
 }

@@ -236,6 +236,13 @@ class PlayScreenState extends State<PlayScreen>
       widget.session.onLose(r.points, r.perfects);
     }
     setState(() => _overlayOpen = true);
+    // PB-021: ilk-5 mini sürpriz kapısı sonucu
+    final gift = widget.session.lastFirstRunGift;
+    if (gift != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ToastHost.show(context, gift);
+      });
+    }
   }
 
   DateTime? _lastBackTap;

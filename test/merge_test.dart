@@ -38,7 +38,8 @@ void main() {
       expect(g.selectedForTest, 0);
       g.onTap(_center(g, 1));
       expect(g.gridForTest[1], 2, reason: '1+1 → 2 seviyesi');
-      expect(g.gridForTest[0], isNull);
+      // birleşme sonrası yeni taş doğar (rastgele hücre) → toplam 2 dolu hücre
+      expect(g.gridForTest.where((c) => c != null).length, 2);
       expect(g.score, 1);
       expect(g.selectedForTest, isNull);
       expect(host.sounds, contains('place'));

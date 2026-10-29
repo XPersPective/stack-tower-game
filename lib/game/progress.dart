@@ -123,6 +123,8 @@ class SaveState {
   bool marketDouble;
   bool marketJoker;
   int relicPieces;
+  /// PB-021: pazar keşfi bir kez duyurulur.
+  bool marketSeen;
 
   SaveState({
     this.v = 2,
@@ -146,6 +148,7 @@ class SaveState {
     this.marketDouble = false,
     this.marketJoker = false,
     this.relicPieces = 0,
+    this.marketSeen = false,
   })  : marketBought = marketBought ?? {},
         completed = completed ?? {},
         skins = skins ?? ['default'],
@@ -176,6 +179,7 @@ class SaveState {
         'marketDouble': marketDouble,
         'marketJoker': marketJoker,
         'relicPieces': relicPieces,
+        'marketSeen': marketSeen,
       };
 
   /// JS şemasıyla aynı JSON (anahtar sırası fark etmez, alan adları aynı).
@@ -222,6 +226,7 @@ class SaveState {
       marketDouble: j['marketDouble'] == true,
       marketJoker: j['marketJoker'] == true,
       relicPieces: (j['relicPieces'] as num?)?.toInt() ?? 0,
+      marketSeen: j['marketSeen'] == true,
     );
   }
 }

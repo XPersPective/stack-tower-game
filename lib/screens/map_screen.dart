@@ -39,6 +39,17 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   void initState() {
     super.initState();
     _scene = MapScene(context.read<GameSession>());
+    // PB-021: 3. bölümden sonra pazar keşfi bir kez duyurulur
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final s = context.read<GameSession>();
+      if (s.pendingMarketDiscovery && !s.state.marketSeen) {
+        s.pendingMarketDiscovery = false;
+        s.state.marketSeen = true;
+        s.persist();
+        ToastHost.show(context, 'PAZAR YERİ AÇILDI — adadaki tezgaha dokun');
+      }
+    });
     // PB-029: haritaya dönüşte en son inşa edilen parça 1.2s yükselir
     final next = nextBuildIdx(context.read<GameSession>().state, _scene.focusStage);
     if (next != null && next > 0) _scene.startRise(next - 1);

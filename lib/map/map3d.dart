@@ -648,6 +648,18 @@ class MapScenePainter extends CustomPainter {
           ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(2.0, 8 * s)));
     canvas.drawCircle(Offset(base.dx, base.dy - h - 13 * s), 2.6 * s,
         Paint()..color = const Color(0xFFFFE9A8));
+    // PB-021: keşif parıltısı — ilk alışverişe kadar tezgah nabız gibi parlar
+    if (scene.session.state.marketBought.isEmpty) {
+      final pulse = 0.55 + 0.45 * math.sin(time * 3.2);
+      canvas.drawCircle(
+          Offset(base.dx, base.dy - h * 0.5),
+          (26 + 10 * pulse) * s,
+          Paint()
+            ..color = hslColor(isl.theme.glow, 95, 72)
+                .withValues(alpha: .18 + .18 * pulse)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.0 * s);
+    }
     // "PAZAR" işareti (metin yerine üç nokta — font maliyeti yok)
     for (var i = 0; i < 3; i++) {
       canvas.drawCircle(

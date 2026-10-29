@@ -12,6 +12,7 @@ import 'levels.dart';
 import 'progress.dart' as prog;
 import '../map/construction.dart';
 import '../services/storage.dart';
+import 'market.dart' show addRelicPiece;
 
 /// Sonuç sonrası oynatılacak adımlar (ui.js chain karşılığı).
 enum FlowStep { construction, box, world, board, result, showMap }
@@ -57,6 +58,11 @@ class GameSession extends ChangeNotifier {
 
   final KeyValueStorage storage;
   final DateTime Function() _clock;
+
+  /// PB-021: ilk-5 mini sürpriz kapısı — test enjeksiyonu ve son ödül etiketi.
+  math.Random? firstRunRand;
+  String? lastFirstRunGift;
+  bool pendingMarketDiscovery = false;
 
   late prog.SaveState state;
   LevelDef? currentDef;
@@ -155,6 +161,23 @@ class GameSession extends ChangeNotifier {
       rewards.coins += extra;
       state.coins += extra;
     }
+    // PB-021: ilk 5 bölümde her bölüm sonunda mini sürpriz kapısı
+    lastFirstRunGift = null;
+    if (rewards.firstClear && !def.daily && !def.endless && def.i >= 0 && def.i < 5) {
+      final gift = _firstRunGift(def.i);
+      if (gift.coins > 0) {
+        rewards.coins += gift.coins;
+        state.coins += gift.coins;
+      }
+      final skin = gift.skinId;
+      if (skin != null) state.skins.add(skin);
+      lastFirstRunGift = gift.label;
+    }
+    // PB-021: 3. bölümden sonra pazar keşfi bir kez duyurulur
+    if (!def.daily && !def.endless && state.levelsDone >= 3 && !state.marketSeen) {
+      pendingMarketDiscovery = true;
+    }
+
     if (def.daily) prog.recordDaily(state, prog.dayOf(_clock()), blocks);
 
     int? worldBonusCoins;
@@ -182,6 +205,34 @@ class GameSession extends ChangeNotifier {
     _chain.add(FlowStep.result);
     _chain.add(FlowStep.showMap);
     return rewards;
+  }
+
+  /// PB-021: ilk-5 kapısı — %80 para (20-60), %15 görünüm, %5 kalıntı parçası.
+  ({String label, int coins, String? skinId}) _firstRunGift(int levelIdx) {
+    final rnd = firstRunRand ?? math.Random(levelIdx * 7919 + 17);
+    final r = rnd.nextDouble();
+    if (r < 0.80) {
+      final coins = 20 + rnd.nextInt(41); // 20..60
+      return (label: 'SÜRPRİZ: +$coins 🪙', coins: coins, skinId: null);
+    }
+    if (r < 0.95) {
+      final locked = prog.kSkins
+          .where((s) => s.price > 0 && !state.skins.contains(s.id))
+          .toList(growable: false);
+      if (locked.isNotEmpty) {
+        final s = locked[rnd.nextInt(locked.length)];
+        return (label: 'SÜRPRİZ: ${s.name} GÖRÜNÜMÜ', coins: 0, skinId: s.id);
+      }
+      return (label: 'SÜRPRİZ: +40 🪙', coins: 40, skinId: null);
+    }
+    final relic = addRelicPiece(state);
+    return (
+      label: relic == null
+          ? 'SÜRPRİZ: KALINTI PARÇASI (${state.relicPieces}/3)'
+          : 'SÜRPRİZ: $relic KALINTISI',
+      coins: 0,
+      skinId: null
+    );
   }
 
   /// lose sonrası (ui.js onEngineEvent 'lose'). Twist coin'leri yalnız
