@@ -17,15 +17,20 @@ Verified present reality only. Markers: VERIFIED | OBSERVED | INFERRED | STALE |
 - `lib/game/gameplay.dart` — motor durumu/tik/efekt havuzları (game.js birebir; ADR-002)
 - `lib/game/scene_painter.dart` — tüm render katmanları (game.js render birebir; inceleme PASS)
 - `lib/game/game_session.dart` — oturum/akış orkestrasyonu (ui.js onEngineEvent karşılığı)
-- `lib/game/mini_game.dart` + `lib/game/kinds/*` — antoloji: MiniGame sözleşmesi + 7 mini-oyun (stack,catcher,ring,launch,merge,path,sort)
+- `lib/game/mini_game.dart` + `lib/game/kinds/*` — antoloji: MiniGame sözleşmesi + 10 mini-oyun (stack,catcher,ring,launch,merge,path,sort,balance,defend,rhythm) + opsiyonel yetenek arayüzleri (HapticPatternHost, InputGate, HoldGame)
+- `lib/game/market.dart` — pazar yeri saf mantığı (gün tohumlu rotasyon, satın alma, sandık, kalıntı parçası)
 - `lib/preview/preview_painter.dart` — önizleme sahnesi painter'ı (preview.js draw birebir; PB-009 kabul)
 - `lib/game/audio.dart` — ses denetleyicisi (varlıklar PB-010'da üretilir; eksik varlık güvenli)
-- `lib/screens/*` — menu, map(hub), preview, play+HUD, flow_overlays(kutu→tören→tahta→sonuç), shop+relics, missions, settings, router
+- `lib/screens/*` — menu, map(3B takımada), preview, play+HUD, flow_overlays(kutu→tören→tahta→sonuç), market, shop+relics, missions, settings, router
 - `lib/theme/tokens.dart` — THEMES 10 palet + NeonPalette + Inter (variable font)
 - `lib/services/storage.dart` — KeyValueStorage (SharedPreferences/Memory)
-- `test/` — 27 dosya / 270 test öğesi (flutter test 2026-10-29): parite snapshot, ekonomi, drop, motor, twist, juice, ekran akışları, antoloji mini-oyunlar
+- `lib/services/leaderboard_service.dart` — kalıcı skor kuyruğu + toplu flush + fetchBoard (dart:io taşıyıcı, ek paket yok)
+- `lib/services/session.dart` — oturum belirteci (SecureStore soyutlaması), AuthProvider arayüzü, hesap silme
+- `test/` — 35+ dosya / 336 test öğesi (flutter test 2026-10-29): parite snapshot, ekonomi, drop, motor, twist, juice, ekran akışları, antoloji mini-oyunlar, pazar, dağıtım, duman + entegrasyon, skor istemcisi
 - `tools_js/gen_levels_snapshot.js` — JS parite fixture üreteci (node)
-- `worker/` — HENÜZ YOK (SPEC §7 backend; PB-012)
+- `worker/` — Cloudflare Workers + D1 API (auth/me/leaderboard/score/account; jwt.ts + providers.ts + logic.ts; node:test 12 test)
+- `store/` — mağaza metinleri + gizlilik politikası; `.github/workflows/build.yml` — CI (analyze/test/appbundle)
+- `tools/gen_sounds.dart` — 21 ses varlığı üreteci; `test/tools/gen_icons_test.dart` — ikon seti üreteci (PB_ICONS=1)
 
 ## Domains
 
@@ -64,12 +69,18 @@ Sources: `lib/map/construction.dart`, `lib/map/map3d.dart`, `lib/screens/map_scr
 Status: VERIFIED (kThemes 10/10 alan bağımsız karşılaştırmayla eşleşti; Inter variable woff2→ttf)
 
 ### services
-Status: OBSERVED (storage soyutlaması VERIFIED; leaderboard/session henüz yok — PB-011)
+Status: VERIFIED (storage + skor kuyruğu + oturum; PB-011 DONE)
+- kuyruk: board+day başına en yüksek skor, tavan 50, kalıcı; flush tek eşzamanlı, hata → kuyruk korunur; fetchBoard hata → null (yerel tahtaya düşer)
+- oturum: belirteç SecureStore'da (üretimde PrefsSecureStore; native keychain PB-031), e-posta yok, hesap silme yerel temizlikle
 
 ### backend
-Status: UNKNOWN (worker/ yok; SPEC §7.3-7.4 tanımlı — PB-012)
+Status: VERIFIED kod (worker/ DONE; deploy edilmedi — wrangler + D1 hesabı gerekir)
+- uçlar: POST /auth/google|apple, GET /me, GET /leaderboard, POST /score, DELETE /account; HS256 oturum (30g), RS256+JWKS sağlayıcı doğrulama, UTC gün, tavanlar, hız sınırı
+- testler: node --experimental-strip-types --test → 12/12 (D1 entegrasyonu miniflare gerektirir, koşulmadı)
 
 ## Known Unknowns
-- dünya anıtı töreni (ışık köprüleri) henüz görsel değil — PB-030 kapsamı
+- dünya anıtı töreni (ışık köprüleri) henüz görsel değil (PB-031 sonrası polish)
+- native giriş SDK'ları bağlı değil (google_sign_in / Sign in with Apple / secure storage) — PB-031
+- TD-001 yayın paket kimliği açık; TD-002 tahtada ad (şu an otomatik takma ad)
 - Ses varlık üretimi WebAudio parametre birebirliği (PB-010)
 - Eşzamanlı oturum riski: bu makinede başka bir ajan (zcode-glm53) Brain görevlerini araya girip sahipleniyor — atomik takeover+accept komutlarıyla yönetiliyor
