@@ -1,0 +1,15 @@
+name = "stack-tower-api"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "stack_tower"
+database_id = "REPLACE_WITH_D1_ID"
+
+# wrangler secret put SESSION_SECRET
+# wrangler secret put GOOGLE_CLIENT_ID
+# wrangler secret put APPLE_CLIENT_ID
+# wrangler secret put ALLOWED_ORIGIN
+[vars]
+ALLOWED_ORIGIN = "*"
