@@ -223,6 +223,23 @@ class _RelicGrid extends StatelessWidget {
     final ownedCount = prog.kRelics.where((r) => session.state.relics[r.stage.toString()] == true).length;
     return Column(
       children: [
+        // PB-020: sezonluk rozet — 7 gün üst üste günlük
+        if (prog.weeklyBadge(session.state))
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Row(
+              children: [
+                Text('🏅 7 GÜN SERİSİ',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: NeonPalette.star, letterSpacing: 1.4)),
+                const Spacer(),
+                Text('SEZON ROZETİ',
+                    style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(

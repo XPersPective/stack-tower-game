@@ -18,6 +18,13 @@ import '../theme/tokens.dart';
 import 'flow_overlays.dart';
 import 'router.dart';
 
+/// PB-019: kilitli dünya ipucu — teaser'ın ilk yarısı + '…' (merak).
+String lockedWorldHint(int stage) {
+  final t = kWorldTeaser[stage % kWorldTeaser.length];
+  final cut = (t.length * 0.55).round();
+  return '${t.substring(0, cut).trimRight()}…';
+}
+
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
@@ -184,7 +191,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                       Text('DÜNYA ${isl.stage + 1}',
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: hslColor(isl.theme.glow, 90, 70), letterSpacing: 2)),
-                      Text(isl.open ? isl.theme.name : '🔒 ${isl.theme.name}',
+                      Text(isl.open ? isl.theme.name : '🔒 ???',
                           style: Theme.of(context).textTheme.displayMedium),
                       Text(
                         isl.open
@@ -192,6 +199,13 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                             : '🔒 ${session.totalStars}/${isl.need} yıldız',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
+                      // PB-019: kilitli dünyada kademeli ipucu
+                      if (!isl.open)
+                        Text(lockedWorldHint(isl.stage),
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                fontStyle: FontStyle.italic,
+                                color: NeonPalette.textDim)),
                       // PB-029: blueprint ipucu METİNLE de okunur (accessibility)
                       _buildHint(context, session, isl.stage),
                     ],

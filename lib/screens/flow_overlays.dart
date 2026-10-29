@@ -2,12 +2,15 @@
 /// ui.js'teki ovBox/ovWorld/ovBoard/ovResult zincirinin Flutter karşılığı.
 library;
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../game/audio.dart';
 import '../game/game_session.dart';
 import '../game/levels.dart';
+import '../game/progress.dart' as prog;
 import '../map/construction.dart';
 import '../widgets/construction_art.dart';
 import '../theme/tokens.dart';
@@ -155,7 +158,10 @@ class _FlowOverlaysState extends State<FlowOverlays> {
                 '${DateTime.fromMillisecondsSinceEpoch(widget.session.boardDay * 86400000).toIso8601String().substring(0, 10)} · herkes aynı bölüm',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
+              // PB-020: kişisel rekor yayı + bu hafta geçilen rakip sayısı
+              DailyLiveliness(session: widget.session),
+              const SizedBox(height: 12),
               for (var i = 0; i < rows.length; i++)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 4),
@@ -403,6 +409,92 @@ class NeonButton extends StatelessWidget {
 }
 
 /// Toast (ui.js toast karşılığı) — kısa süreli üst bildirim.
+/// PB-020: tahta canlılığı — rekor yayı, geçilen rakip, sezon rozeti.
+class DailyLiveliness extends StatelessWidget {
+  const DailyLiveliness({super.key, required this.session});
+  final GameSession session;
+
+  @override
+  Widget build(BuildContext context) {
+    final st = session.state;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 44,
+          width: double.infinity,
+          child: CustomPaint(painter: _SparkPainter(st.dailyHistory, NeonPalette.cyan)),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'SON 7 GÜN · bu hafta ${prog.beatenCount(st)} kişiyi geçtin',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        if (prog.weeklyBadge(st))
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text('🏅 7 GÜN SERİSİ',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: NeonPalette.star, letterSpacing: 1.5)),
+          ),
+      ],
+    );
+  }
+}
+
+/// PB-020: 7 günlük rekor yayı — basit, ucuz çizgi grafik.
+class _SparkPainter extends CustomPainter {
+  _SparkPainter(this.history, this.color);
+  final Map<int, int> history;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (history.length < 2) {
+      final p = Paint()
+        ..color = color.withValues(alpha: .35)
+        ..strokeWidth = 1.2;
+      canvas.drawLine(Offset(0, size.height * .6),
+          Offset(size.width, size.height * .6), p);
+      return;
+    }
+    final days = history.keys.toList()..sort();
+    final values = [for (final d in days) history[d]!];
+    final maxV = values.reduce(math.max).clamp(1, 1 << 30);
+    final dx = size.width / (values.length - 1);
+    final pts = <Offset>[
+      for (var i = 0; i < values.length; i++)
+        Offset(i * dx, size.height - (values[i] / maxV) * (size.height - 6) - 3),
+    ];
+    final path = Path()..moveTo(pts.first.dx, pts.first.dy);
+    for (final p in pts.skip(1)) {
+      path.lineTo(p.dx, p.dy);
+    }
+    canvas.drawPath(
+        path,
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..strokeJoin = StrokeJoin.round);
+    for (final p in pts) {
+      canvas.drawCircle(p, 2.2, Paint()..color = color);
+    }
+    canvas.drawCircle(
+        pts.last,
+        5,
+        Paint()
+          ..color = color.withValues(alpha: .25)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6));
+  }
+
+  @override
+  bool shouldRepaint(covariant _SparkPainter old) =>
+      old.history.length != history.length || old.color != color;
+}
+
 class FlowOverlaysToast extends StatefulWidget {
   const FlowOverlaysToast({super.key, required this.message, required this.child});
   final String message;

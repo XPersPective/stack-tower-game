@@ -125,6 +125,8 @@ class SaveState {
   int relicPieces;
   /// PB-021: pazar keşfi bir kez duyurulur.
   bool marketSeen;
+  /// PB-020: son 7 günün en iyi skoru (gün → blok).
+  Map<int, int> dailyHistory;
 
   SaveState({
     this.v = 2,
@@ -149,7 +151,9 @@ class SaveState {
     this.marketJoker = false,
     this.relicPieces = 0,
     this.marketSeen = false,
-  })  : marketBought = marketBought ?? {},
+    Map<int, int>? dailyHistory,
+  })  : dailyHistory = dailyHistory ?? {},
+        marketBought = marketBought ?? {},
         completed = completed ?? {},
         skins = skins ?? ['default'],
         daily = daily ?? {'day': -1, 'best': 0},
@@ -180,6 +184,7 @@ class SaveState {
         'marketJoker': marketJoker,
         'relicPieces': relicPieces,
         'marketSeen': marketSeen,
+        'dailyHistory': dailyHistory.map((k, v) => MapEntry(k.toString(), v)),
       };
 
   /// JS şemasıyla aynı JSON (anahtar sırası fark etmez, alan adları aynı).
@@ -227,6 +232,8 @@ class SaveState {
       marketJoker: j['marketJoker'] == true,
       relicPieces: (j['relicPieces'] as num?)?.toInt() ?? 0,
       marketSeen: j['marketSeen'] == true,
+      dailyHistory: (j['dailyHistory'] as Map<String, dynamic>? ?? {})
+          .map((k, v) => MapEntry(int.parse(k), (v as num).toInt())),
     );
   }
 }
@@ -471,8 +478,43 @@ int recordDaily(SaveState state, int day, int blocks) {
     state.daily = {'day': day, 'best': 0};
   }
   if (blocks > (state.daily['best'] ?? 0)) state.daily['best'] = blocks;
+  // PB-020: rekor yayı — günün en iyisi, son 7 gün tutulur
+  final prev = state.dailyHistory[day] ?? 0;
+  state.dailyHistory[day] = blocks > prev ? blocks : prev;
+  if (state.dailyHistory.length > 7) {
+    final keys = state.dailyHistory.keys.toList()..sort();
+    while (state.dailyHistory.length > 7) {
+      state.dailyHistory.remove(keys.removeAt(0));
+    }
+  }
   return state.daily['best']!;
 }
+
+/// PB-020: bugünün tahtasında geçilen rakip sayısı (0..9).
+int beatenCount(SaveState state) {
+  final day = state.daily['day'] ?? -1;
+  final best = state.daily['best'] ?? 0;
+  if (day < 0 || best <= 0) return 0;
+  return rivalsFor(day, best).where((r) => r.score < best).length;
+}
+
+/// PB-020: ardışık günlük serisi (son günden geriye).
+int dailyStreak(SaveState state) {
+  final days = state.dailyHistory.keys.toList()..sort();
+  if (days.isEmpty) return 0;
+  var streak = 1;
+  for (var i = days.length - 1; i > 0; i--) {
+    if (days[i] - days[i - 1] == 1) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+/// PB-020: 7 gün üst üste günlük → sezonluk rozet.
+bool weeklyBadge(SaveState state) => dailyStreak(state) >= 7;
 
 /// Günün skor tahtası rakipleri: deterministik LCG (progress.js rivalsFor birebir).
 class Rival {

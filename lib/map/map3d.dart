@@ -598,6 +598,99 @@ class MapScenePainter extends CustomPainter {
     _drawStructures(canvas, isl);
     // PB-018: pazar yeri binası (3+ bölüm bitmiş adalarda)
     _drawMarket(canvas, isl);
+    // PB-019: kilitli adada sis, açık adada mikro-canlılık
+    final center = isl.center;
+    if (center != null) {
+      if (!isl.open) {
+        _drawFog(canvas, isl, center, rScreen);
+      } else {
+        _drawIslandLife(canvas, isl, center, rScreen);
+      }
+    }
+  }
+
+  /// PB-019: sis yoğunluğu — açık adada 0, kilitli adada nabız (0.10-0.145).
+  static double fogStrength({required bool open, required double time, double phase = 0}) {
+    if (open) return 0;
+    return 0.10 + 0.045 * (0.5 + 0.5 * math.sin(time * 0.7 + phase));
+  }
+
+  /// PB-019: kilitli ada sisi — 4 yarı saydam damla, sinüs salınımlı.
+  void _drawFog(Canvas canvas, MapIsland isl, Offset c, double r) {
+    for (var i = 0; i < 4; i++) {
+      final ph = isl.seed * 0.37 + i * 1.7;
+      final dx = math.sin(time * 0.45 + ph) * r * 0.30;
+      final dy = math.cos(time * 0.38 + ph) * r * 0.10;
+      final rr = r * (0.62 - i * 0.09);
+      final alpha = fogStrength(open: isl.open, time: time, phase: ph);
+      canvas.drawOval(
+        Rect.fromCenter(
+            center: Offset(c.dx + dx, c.dy - r * 0.10 + dy),
+            width: rr * 1.9,
+            height: rr * 0.9),
+        Paint()
+          ..color = Colors.white.withValues(alpha: alpha)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(6.0, r * 0.22)),
+      );
+    }
+    // kilit halkası (sisin içinde soluk)
+    canvas.drawArc(
+        Rect.fromCircle(center: c, radius: r * 0.72),
+        time * 0.3,
+        math.pi * 1.1,
+        false,
+        Paint()
+          ..color = Colors.white.withValues(alpha: .10)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = math.max(1.0, r * 0.02));
+  }
+
+  /// PB-019: açık ada mikro-animasyonları — uydu halkası + kuş sürüsü + parıltı.
+  void _drawIslandLife(Canvas canvas, MapIsland isl, Offset c, double r) {
+    final glow = hslColor(isl.theme.glow, 90, 70);
+    // uydu halkası (yörüngede dönen yay + nokta)
+    final orbit = Rect.fromCenter(
+        center: Offset(c.dx, c.dy - r * 0.05), width: r * 1.7, height: r * 0.55);
+    final ang = time * 0.6 + isl.seed * 0.11;
+    canvas.drawArc(
+        orbit,
+        ang,
+        0.55,
+        false,
+        Paint()
+          ..color = glow.withValues(alpha: .45)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = math.max(1.0, r * 0.012));
+    final sat = Offset(
+        orbit.center.dx + math.cos(ang) * orbit.width / 2,
+        orbit.center.dy + math.sin(ang) * orbit.height / 2);
+    canvas.drawCircle(sat, math.max(1.4, r * 0.022), Paint()..color = glow);
+
+    // kuş sürüsü: 3 üçgen, adanın üstünde salınır
+    for (var i = 0; i < 3; i++) {
+      final ph = time * 0.8 + i * 0.9 + isl.seed * 0.05;
+      final bx = c.dx + math.sin(ph) * r * 0.55 + (i - 1) * r * 0.14;
+      final by = c.dy - r * 0.55 + math.cos(ph * 1.3) * r * 0.06;
+      final sz = math.max(2.0, r * 0.035);
+      final path = Path()
+        ..moveTo(bx, by)
+        ..lineTo(bx + sz, by - sz * 0.6)
+        ..lineTo(bx + sz * 2, by)
+        ..close();
+      canvas.drawPath(path, Paint()..color = Colors.white.withValues(alpha: .45));
+    }
+
+    // yıldız parıltısı (4 nokta, düşük maliyet)
+    for (var i = 0; i < 4; i++) {
+      final ph = time * 1.6 + i * 2.1 + isl.seed;
+      final a = 0.15 + 0.35 * (0.5 + 0.5 * math.sin(ph));
+      canvas.drawCircle(
+        Offset(c.dx + math.cos(i * 1.9) * r * 0.45,
+            c.dy - r * 0.18 + math.sin(i * 2.7) * r * 0.22),
+        math.max(1.0, r * 0.016),
+        Paint()..color = Colors.white.withValues(alpha: a),
+      );
+    }
   }
 
   /// PB-018: pazar yeri — ışıklı tezgah, dokunulabilir (hitTest 'market').
