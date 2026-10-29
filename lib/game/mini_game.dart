@@ -29,6 +29,14 @@ abstract class MiniGameHost {
   void onEvent(String name, {Map<String, dynamic>? data});
 }
 
+/// juice (PB-016): opsiyonel çoklu vuruş deseni yeteneği.
+/// Liste, vuruşların BAŞLANGIÇ anlarıdır (ms): `[0, 60]` = hemen bir vuruş,
+/// 60ms sonra ikinci vuruş. Ayrı arayüz: mevcut host'lar (test sahteleri dahil)
+/// kırılmaz; uygulamayan host'a motor tek vuruş yedeği gönderir.
+abstract class HapticPatternHost {
+  void hapticPattern(List<int> onsetsMs);
+}
+
 /// Tüm türlerin uyguladığı sözleşme.
 abstract class MiniGame {
   GameKind get kind;
@@ -52,17 +60,35 @@ abstract class MiniGame {
   void stop() {}
 }
 
+/// juice (PB-016): opsiyonel giriş kapısı. Uygulayan tür, kısa bir sunum
+/// penceresinde (ör. STACK hit-stop ≤70ms) dokunuşu yok sayabilir; bu sırada
+/// yeni blok kenarda donmuş görünür ve dokunuş garantili ıskalama olurdu.
+/// Ayrı arayüz: mevcut türler ve test sahteleri değişmez.
+abstract class InputGate {
+  bool get acceptsInput;
+}
+
 /// Basit host uygulaması (test + üretim).
-class SimpleMiniGameHost implements MiniGameHost {
-  SimpleMiniGameHost({this.onSound, this.onHaptic, this.onGameEvent});
+class SimpleMiniGameHost implements MiniGameHost, HapticPatternHost {
+  SimpleMiniGameHost({this.onSound, this.onHaptic, this.onHapticPattern, this.onGameEvent});
   final void Function(String, int)? onSound;
   final void Function(int)? onHaptic;
+  final void Function(List<int>)? onHapticPattern;
   final void Function(String, Map<String, dynamic>?)? onGameEvent;
 
   @override
   void playSound(String name, {int combo = 1}) => onSound?.call(name, combo);
   @override
   void haptic(int ms) => onHaptic?.call(ms);
+  @override
+  void hapticPattern(List<int> onsetsMs) {
+    final cb = onHapticPattern;
+    if (cb != null) {
+      cb(onsetsMs);
+    } else {
+      onHaptic?.call(50); // desen yoksa kritik tek uzun vuruş yedeği
+    }
+  }
   @override
   void onEvent(String name, {Map<String, dynamic>? data}) => onGameEvent?.call(name, data);
 }

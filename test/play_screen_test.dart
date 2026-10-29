@@ -268,4 +268,31 @@ void main() {
     expect(rw.coins, 2, reason: 'teselli 2 (progress completeLevel)');
     expect(session.state.coins - before, 2);
   });
+
+  testWidgets('juice (PB-016): hit-stop penceresinde dokunuş blok düşürmez', (tester) async {
+    final session = await makeSession();
+    await tester.pumpWidget(host(session, endlessDef()));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    final state = tester.state<PlayScreenState>(find.byType(PlayScreen));
+    final e = state.engineForTest;
+    e.moving!.x = e.blocks.last.x;
+    await tester.tap(find.byType(PlayScreen));
+    await tester.pump();
+    expect(e.score, 1);
+    expect(e.hitStop, greaterThan(0), reason: 'mükemmel → hit-stop penceresi açık');
+    final blocks = e.blocks.length;
+
+    // pencere içindeki dokunuş yok sayılır (kenarda donmuş blok = garantili ıskalama)
+    await tester.tap(find.byType(PlayScreen));
+    await tester.pump();
+    expect(e.blocks.length, blocks, reason: 'hit-stop sırasında blok düşmemeli');
+
+    // pencere kapanınca tek dokunuş akışı aynen çalışır
+    await tester.pump(const Duration(milliseconds: 120));
+    e.moving!.x = e.blocks.last.x;
+    await tester.tap(find.byType(PlayScreen));
+    await tester.pump();
+    expect(e.blocks.length, blocks + 1, reason: 'pencere sonrası dokunuş normal');
+  });
 }

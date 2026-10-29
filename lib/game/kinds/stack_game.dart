@@ -9,7 +9,7 @@ import '../levels.dart';
 import '../mini_game.dart';
 import '../scene_painter.dart';
 
-class StackGame implements MiniGame {
+class StackGame implements MiniGame, InputGate {
   @override
   GameKind get kind => GameKind.stack;
 
@@ -29,6 +29,11 @@ class StackGame implements MiniGame {
   bool get isOver =>
       engine.state == EngineState.won || engine.state == EngineState.lost;
 
+  /// juice (PB-016): hit-stop penceresinde dokunuş yok sayılır (kenarda donmuş
+  /// blokta dokunuş garantili ıskalama olurdu); pencere ≤70ms, akış değişmez.
+  @override
+  bool get acceptsInput => engine.hitStop <= 0;
+
   @override
   void resize(double w, double h) => engine.resize(w, h);
 
@@ -39,6 +44,12 @@ class StackGame implements MiniGame {
       _ready = true;
     }
     engine.onHaptic = host.haptic;
+    // juice (PB-016): kritik çift vuruş deseni — yalnız destekleyen host'ta;
+    // önceki oturumun deseni temizlenir (host değişirse bayat kapanış kalmasın)
+    engine.onHapticPattern = null;
+    if (host is HapticPatternHost) {
+      engine.onHapticPattern = (host as HapticPatternHost).hapticPattern;
+    }
     // Motor olayları MiniGameHost olay adlarına çevrilir (aynı yük alanları).
     engine.onEvent = (e, d) {
       // ESKİ davranış korunur: motor olayları ses de tetikler (audio regresyonu düzeltmesi)

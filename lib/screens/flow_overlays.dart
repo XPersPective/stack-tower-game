@@ -3,6 +3,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../game/audio.dart';
 import '../game/game_session.dart';
@@ -66,6 +67,17 @@ class _FlowOverlaysState extends State<FlowOverlays> {
   void _openBox() {
     final prize = widget.session.openBoxNow();
     widget.audio.play(GameSound.box);
+    // juice (PB-016): kutu açılışı üçlü vuruş — başlangıç anları 0/60/120ms
+    for (final at in const [0, 60, 120]) {
+      if (at == 0) {
+        HapticFeedback.lightImpact();
+      } else {
+        final d = Duration(milliseconds: at);
+        Future.delayed(d, () {
+          if (mounted) HapticFeedback.lightImpact();
+        });
+      }
+    }
     setState(() {
       if (prize == null) {
         boxTitle = 'SÜRPRİZ KUTU';

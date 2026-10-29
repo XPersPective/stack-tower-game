@@ -75,6 +75,21 @@ const _defaultGlow = 268;
 class ScenePainter extends CustomPainter {
   ScenePainter(this.g) : super(repaint: g);
 
+  /// juice (PB-016): squash&stretch süresi (sn) — motor `squashT` ile aynı.
+  static const double kSquashDuration = 0.12;
+
+  /// juice (PB-016): yerleşen bloğun squash dikdörtgeni. Kalan sürenin kübüyle
+  /// yumuşak toparlanma (easeOut); genişlik +%12'ye kadar, yükseklik -%12,
+  /// merkez ve ALT kenar sabit (blok zemine oturmuş görünür).
+  static Rect squashedRect(Rect block, double squashT) {
+    if (squashT <= 0) return block;
+    final t = (squashT / kSquashDuration).clamp(0.0, 1.0);
+    final k = 0.12 * t * t * t;
+    final w = block.width * (1 + k);
+    final h = block.height * (1 - k);
+    return Rect.fromLTWH(block.left - (w - block.width) / 2, block.bottom - h, w, h);
+  }
+
   final GamePlayRepaint g;
   final math.Random _shakeRnd = math.Random();
 
@@ -101,8 +116,13 @@ class ScenePainter extends CustomPainter {
     _drawTowerBeam(canvas, e, glow);
     _drawAimShade(canvas, e);
     for (var i = 0; i < e.blocks.length; i++) {
-      _drawBlock(canvas, e, e.blocks[i].x, e.groundY - i * e.bh + e.camShift, e.blocks[i].w,
-          e.bh, e.blockHue(i));
+      // juice (PB-016): yerleşen blokta squash&stretch — 120ms, ±%12,
+      // kalan sürenin kübüyle yumuşak toparlanma (easeOut); merkez+alt kenar sabit
+      final r = squashedRect(
+        Rect.fromLTWH(e.blocks[i].x, e.groundY - i * e.bh + e.camShift, e.blocks[i].w, e.bh),
+        i == e.squashIdx ? e.squashT : 0,
+      );
+      _drawBlock(canvas, e, r.left, r.top, r.width, r.height, e.blockHue(i));
     }
     if (e.state == EngineState.playing) _drawMoving(canvas, e);
 
@@ -130,6 +150,14 @@ class ScenePainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5;
         canvas.drawCircle(Offset(p.x, p.y), p.size / 2, st);
+      } else if (p.star) {
+        // juice (PB-016): yıldız izi — 45° döndürülmüş parıltı (elmas)
+        canvas.save();
+        canvas.translate(p.x, p.y);
+        canvas.rotate(0.7853982);
+        final sp = Paint()..color = hsla(p.hue, 100, 85, a);
+        canvas.drawRect(Rect.fromLTWH(-p.size / 2, -p.size / 2, p.size, p.size), sp);
+        canvas.restore();
       } else {
         final pp = Paint()..color = hsla(p.hue, 95, 72, a);
         canvas.drawRect(Rect.fromLTWH(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size), pp);
@@ -157,6 +185,14 @@ class ScenePainter extends CustomPainter {
       canvas.restore();
     }
     canvas.restore();
+
+    // juice (PB-016): tam-ekran flaş — mükemmel tema-glow 0.18 / kritik beyaz 0.35, 90ms fade
+    if (e.flashT > 0) {
+      final a = (e.flashAlpha * (e.flashT / 0.09)).clamp(0.0, 1.0);
+      final fp = Paint()
+        ..color = e.flashWhite ? Color.fromRGBO(255, 255, 255, a) : hsla(glow, 95, 62, a);
+      canvas.drawRect(Offset.zero & size, fp);
+    }
 
     _drawVignette(canvas, e);
     _drawDark(canvas, e);

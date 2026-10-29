@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stack_tower_game/game/gameplay.dart';
 import 'package:stack_tower_game/game/levels.dart';
+import 'package:stack_tower_game/game/twists.dart';
 
 double stepAmount(GamePlay e) {
   final b = e.moving!;
@@ -226,6 +227,86 @@ void main() {
     e.moving!.x = top.x - e.moving!.w - 50;
     e.drop();
     expect(e.state, EngineState.lost);
+  });
+
+  group('juice (PB-016)', () {
+    test('hit-stop: her mükemmelde 40ms + kombo başına 4ms, tavan 70ms', () {
+      final e = engineFor(endlessDef());
+      dropPerfect(e); // kombo 1
+      expect(e.hitStop, closeTo(0.044, 1e-9));
+      e.tick(0.2); // hit-stop'i tüket
+      dropPerfect(e); // kombo 2
+      expect(e.hitStop, closeTo(0.048, 1e-9));
+      for (var i = 0; i < 10; i++) {
+        e.tick(0.2);
+        dropPerfect(e);
+        expect(e.hitStop, lessThanOrEqualTo(0.07 + 1e-9),
+            reason: 'kombo $i: hit-stop tavanı (70ms) aşılmamalı');
+      }
+    });
+
+    test('hit-stop: kritik ek darbesi de 70ms tavanını aşmaz', () {
+      final e = GamePlay();
+      e.resize(460, 780);
+      e.startLevel(endlessDef(), twistType: TwistType.kritik);
+      e.critRoll = () => 0.1;
+      for (var i = 0; i < 12; i++) {
+        dropPerfect(e); // kombo büyüdükçe taban artar
+        expect(e.hitStop, lessThanOrEqualTo(0.07 + 1e-9),
+            reason: 'kritik dahil tavan 70ms (kombo ${e.combo})');
+        e.tick(0.2);
+      }
+    });
+
+    test('squash: yerleşen blokta 120ms, hit-stop sırasında da akar', () {
+      final e = engineFor(endlessDef());
+      dropPerfect(e);
+      expect(e.squashIdx, e.blocks.length - 1);
+      expect(e.squashT, closeTo(0.12, 1e-9));
+      expect(e.hitStop, greaterThan(0));
+      e.tick(0.05); // hit-stop (0.044s) içindeyken bile efekt akar
+      expect(e.squashT, closeTo(0.07, 1e-9));
+      e.tick(0.2);
+      expect(e.squashT, 0);
+      dropPerfect(e); // yeni yerleşim → yeni indeks + taze squash süresi
+      expect(e.squashIdx, e.blocks.length - 1);
+      expect(e.squashT, closeTo(0.12, 1e-9));
+    });
+
+    test('flaş: mükemmelde tema-glow 0.18 / kritikte beyaz 0.35, 90ms fade', () {
+      final e = engineFor(endlessDef());
+      dropPerfect(e);
+      expect(e.flashT, closeTo(0.09, 1e-9));
+      expect(e.flashAlpha, 0.18);
+      expect(e.flashWhite, isFalse);
+      e.tick(0.09);
+      expect(e.flashT, 0);
+    });
+
+    test('flaş + haptic desen: kritikte beyaz 0.35 + çift vuruş + konfeti + yıldız izi', () {
+      final e = GamePlay();
+      e.resize(460, 780);
+      e.startLevel(endlessDef(), twistType: TwistType.kritik);
+      e.critRoll = () => 0.1; // <0.20 → kritik
+      final pulses = <List<int>>[];
+      e.onHapticPattern = pulses.add;
+      dropPerfect(e);
+      expect(e.flashWhite, isTrue);
+      expect(e.flashAlpha, 0.35);
+      expect(pulses, [
+        [0, 60]
+      ]);
+      expect(e.confetti.length, 12, reason: 'mükemmel konfetisi 12 parça');
+      expect(e.particles.any((p) => p.star), isTrue, reason: 'yıldız izi parçacıkları');
+    });
+
+    test('haptic: mükemmelde tek 10ms nabız', () {
+      final e = engineFor(endlessDef());
+      final ms = <int>[];
+      e.onHaptic = ms.add;
+      dropPerfect(e);
+      expect(ms, [10]);
+    });
   });
 }
 

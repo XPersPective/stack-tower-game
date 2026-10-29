@@ -51,8 +51,10 @@ class Particle {
   double x, y, vx, vy, life, max, size;
   int hue;
   bool coin;
+  bool star; // PB-016 juice: yıldız izi parıltısı (yerçekimsiz, yıldız biçimli)
   Particle(this.x, this.y, this.vx, this.vy, this.max, this.size, this.hue, {this.coin = false})
-      : life = 0;
+      : life = 0,
+        star = false;
 }
 
 class Ring {
@@ -145,6 +147,11 @@ class GamePlay {
   @visibleForTesting
   bool get goldNowForTest => _goldNow;
   double hitStop = 0; // mükemmelde mikro duraklama (PB-016 juice)
+  double squashT = 0; // PB-016 juice: yerleştirme squash'ı kalan süre — hit-stop'tan bağımsız akar
+  int squashIdx = -1; // squash yapan blok indeksi
+  double flashT = 0; // PB-016 juice: tam-ekran flaş kalan süre
+  double flashAlpha = 0; // flaş başlangıç alfası (mükemmel 0.18 / kritik 0.35)
+  bool flashWhite = false; // kritik: beyaz flaş
   double spawnTilt = 0; // ruzgargulu görsel açı (±15°)
   Moving? ghost; // GÖLGE BLOK: hayalet ikiz — farklı hızda, hiçbir kuralı etkilemez
 
@@ -161,12 +168,18 @@ class GamePlay {
   List<SilLayer> silhouettes = [];
 
   final math.Random _rnd = math.Random();
+  /// juice (PB-016): sunum amaçlı ayrı akış — oyun zarlarını (kritik/altın)
+  /// tüketmez, JS paritesindeki olasılıkları kaydırmaz.
+  final math.Random _fxRnd = math.Random(1016);
 
   /// Motor olay dinleyicisi (place/shield/win/lose/ready).
   void Function(EngineEvent, EngineEventData)? onEvent;
 
   /// Dokunsal geri bildirim kancası (ms).
   void Function(int ms)? onHaptic;
+
+  /// PB-016 juice: çoklu vuruş deseni kancası (kritik çift 10+40, kutu üçlü).
+  void Function(List<int> pulsesMs)? onHapticPattern;
 
   /* --------------------------- Geometri --------------------------- */
 
@@ -388,6 +401,11 @@ class GamePlay {
     goldBlocks = 0;
     _goldNow = false;
     hitStop = 0;
+    squashT = 0; // juice (PB-016): yeniden başlatmada efekt durumu sıfırlanır
+    squashIdx = -1;
+    flashT = 0;
+    flashAlpha = 0;
+    flashWhite = false;
     spawnTilt = 0;
     ghost = null;
     state = EngineState.playing;
@@ -459,6 +477,7 @@ class GamePlay {
       final w2 = growthAllowed() ? growthWidth(res.placed!.w, baseW, combo) : res.placed!.w;
       final x2 = res.placed!.x - (w2 - res.placed!.w) / 2;
       blocks.add(Block(x2, w2));
+      _markSquash(); // juice (PB-016): yerleştirme squash&stretch
       final hue = blockHue(idx);
       var burstCount = 22 + math.min(26, combo * 3).toInt();
       // KRİTİK: %20 ihtimalle ×5 para + büyük patlama
@@ -473,6 +492,8 @@ class GamePlay {
         }
       }
       burst(x2 + w2 / 2, y, w2, hue, burstCount);
+      _confettiBurst(x2 + w2 / 2, y, 12, hue); // juice (PB-016): mükemmel konfetisi
+      _starTrail(x2 + w2 / 2, y, hue); // juice (PB-016): yıldız izi
       rings.add(Ring(x2 + w2 / 2, y + bh / 2, w2 * 0.3, 0.5, hue));
       popupText(combo > 1 ? 'MÜKEMMEL ×$combo' : 'MÜKEMMEL', x2 + w2 / 2, y - 12 * scale, hue);
       if (def?.modifier == 'altin') {
@@ -480,12 +501,25 @@ class GamePlay {
       }
       if (wasCrit) coinBurst(x2 + w2 / 2, y, 10);
       shake = math.min(13, 4 + combo * 0.8) + (wasCrit ? 6 : 0);
-      // juice: hit-stop (PB-016 kancası) — yalnız twist bölümlerinde; twistsiz
-      // bölümlerde referans game.js pacing'i birebir korunur
-      if (twist != null) {
-        hitStop = math.min(hitStopMax, 0.04 + combo * 0.004) + (wasCrit ? 0.03 : 0);
+      // juice (PB-016): hit-stop her mükemmelde — 40ms + kombo başına 4ms (tavan
+      // 70ms); yerleştirme matematiğine (C-002) dokunmaz, yalnız his katmanıdır
+      hitStop = math.min(hitStopMax, 0.04 + combo * 0.004 + (wasCrit ? 0.03 : 0));
+      // juice (PB-016): tam-ekran flaş — mükemmel tema-glow 0.18, kritik beyaz 0.35 (90ms fade)
+      flashAlpha = wasCrit ? 0.35 : 0.18;
+      flashWhite = wasCrit;
+      flashT = 0.09;
+      // juice (PB-016): haptic — desen vuruş başlangıç anlarıdır (ms):
+      // [0, 60] = hemen bir vuruş + 60ms sonra ikinci vuruş
+      if (wasCrit) {
+        final pattern = onHapticPattern;
+        if (pattern != null) {
+          pattern(const [0, 60]);
+        } else {
+          onHaptic?.call(50); // desen desteklemeyen host: tek uzun vuruş yedeği
+        }
+      } else {
+        onHaptic?.call(10);
       }
-      onHaptic?.call(wasCrit ? 45 : 12);
       if (twist == TwistType.zitakis) _zitFlip = !_zitFlip;
     } else {
       combo = 0;
@@ -497,6 +531,7 @@ class GamePlay {
         placed = Block(placed.x + nudge, placed.w);
       }
       blocks.add(placed);
+      _markSquash(); // juice (PB-016): yerleştirme squash&stretch
       for (final c in res.cuts) {
         debris.add(Debris(c.x, y, c.w, bh, -40 * scale,
             (_rnd.nextDouble() < 0.5 ? -1 : 1) * (2.5 + _rnd.nextDouble() * 3.5), blockHue(idx).toDouble()));
@@ -579,6 +614,45 @@ class GamePlay {
     }
   }
 
+  /// juice (PB-016): yerleşen son blokta 120ms squash&stretch işaretle.
+  void _markSquash() {
+    squashIdx = blocks.length - 1;
+    squashT = 0.12;
+  }
+
+  /// juice (PB-016): mükemmel konfeti patlaması (12 parça).
+  void _confettiBurst(double cx, double cy, int n, int hue) {
+    for (var i = 0; i < n; i++) {
+      confetti.add(Confetti(
+        cx + (_fxRnd.nextDouble() - 0.5) * 30,
+        cy,
+        (_fxRnd.nextDouble() - 0.5) * 260,
+        -(140 + _fxRnd.nextDouble() * 200),
+        (_fxRnd.nextDouble() - 0.5) * 10,
+        (5 + _fxRnd.nextDouble() * 6) * scale,
+        (8 + _fxRnd.nextDouble() * 8) * scale,
+        ((hue + 40 * (_fxRnd.nextDouble() - 0.5)) % 360 + 360) % 360,
+        0.8 + _fxRnd.nextDouble() * 0.4,
+        rot: _fxRnd.nextDouble() * 6.28,
+      ));
+    }
+  }
+
+  /// juice (PB-016): mükemmel üzerinde yükselen yıldız izi (yerçekimsiz parıltı).
+  void _starTrail(double cx, double cy, int hue) {
+    for (var i = 0; i < 6; i++) {
+      particles.add(Particle(
+        cx + (_fxRnd.nextDouble() - 0.5) * 44,
+        cy - _fxRnd.nextDouble() * 12,
+        (_fxRnd.nextDouble() - 0.5) * 60,
+        -(28 + _fxRnd.nextDouble() * 56),
+        0.7 + _fxRnd.nextDouble() * 0.35,
+        (3 + _fxRnd.nextDouble() * 3) * scale,
+        hue,
+      )..star = true);
+    }
+  }
+
   void popupText(String text, double x, double y, int hue) {
     popups.add(Popup(text, x, y, hue));
   }
@@ -602,16 +676,21 @@ class GamePlay {
 
   void tick(double dt0) {
     var dt = dt0;
-    if (slowTimer > 0) {
-      slowTimer -= dt;
-      dt *= 0.35; // ağır çekim anı
-    }
-    // juice: hit-stop — hareketi bu kadar oranda durdur (büyük dt'yi yutmaz)
+    var fxDt = dt0; // efekt saati: hit-stop'ta durmaz, ağır çekimde yavaşlar
+    // juice: hit-stop ÖNCE uygulanır — ağır çekim çarpanını ezmesin
     if (hitStop > 0) {
       final consume = math.min(hitStop, dt0);
       hitStop -= consume;
       dt = dt0 - consume;
     }
+    if (slowTimer > 0) {
+      slowTimer -= dt;
+      dt *= 0.35; // ağır çekim anı
+      fxDt *= 0.35;
+    }
+    // juice (PB-016): squash/flaş zamanlayıcıları hit-stop'tan bağımsız akar
+    if (squashT > 0) squashT = math.max(0, squashT - fxDt);
+    if (flashT > 0) flashT = math.max(0, flashT - fxDt);
     time += dt;
     // ruzgargulu görsel açı salınımı — spec: ±15° (toparlanma: oturan blok düz çizilir)
     if (twist == TwistType.ruzgargulu) {
@@ -665,49 +744,49 @@ class GamePlay {
       }
     }
 
-    shake = math.max(0, shake - dt * 55);
+    shake = math.max(0, shake - fxDt * 55);
 
     for (var i = debris.length - 1; i >= 0; i--) {
       final d = debris[i];
-      d.vy += 1500 * scale * dt;
-      d.y += d.vy * dt;
-      d.rot += d.vr * dt;
-      d.life += dt;
+      d.vy += 1500 * scale * fxDt;
+      d.y += d.vy * fxDt;
+      d.rot += d.vr * fxDt;
+      d.life += fxDt;
       if (d.y > h + 300) debris.removeAt(i);
     }
     for (var i = particles.length - 1; i >= 0; i--) {
       final p = particles[i];
-      p.vy += 900 * scale * dt;
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.life += dt;
+      if (!p.star) p.vy += 900 * scale * fxDt; // yıldız izi yerçekimsiz süzülür
+      p.x += p.vx * fxDt;
+      p.y += p.vy * fxDt;
+      p.life += fxDt;
       if (p.life >= p.max) particles.removeAt(i);
     }
     for (var i = rings.length - 1; i >= 0; i--) {
       final r = rings[i];
-      r.life += dt;
-      r.r += 340 * scale * dt;
+      r.life += fxDt;
+      r.r += 340 * scale * fxDt;
       if (r.life >= r.max) rings.removeAt(i);
     }
     for (var i = popups.length - 1; i >= 0; i--) {
       final q = popups[i];
-      q.life += dt;
-      q.y -= 42 * scale * dt;
+      q.life += fxDt;
+      q.y -= 42 * scale * fxDt;
       if (q.life >= q.max) popups.removeAt(i);
     }
     for (var i = confetti.length - 1; i >= 0; i--) {
       final cf = confetti[i];
-      cf.vy += 60 * dt;
-      cf.x += cf.vx * dt;
-      cf.y += cf.vy * dt;
-      cf.rot += cf.vr * dt;
-      cf.life += dt;
+      cf.vy += 60 * fxDt;
+      cf.x += cf.vx * fxDt;
+      cf.y += cf.vy * fxDt;
+      cf.rot += cf.vr * fxDt;
+      cf.life += fxDt;
       if (cf.life >= cf.max || cf.y > h + 40) confetti.removeAt(i);
     }
     for (var i = 0; i < weather.length; i++) {
       final wb = weather[i];
-      wb.y += wb.sp * dt;
-      wb.x += math.sin(time * 0.8 + wb.ph) * 14 * dt;
+      wb.y += wb.sp * fxDt;
+      wb.x += math.sin(time * 0.8 + wb.ph) * 14 * fxDt;
       if (wb.kind == 'embers') {
         if (wb.y < -20) weather[i] = newWeatherBit(wb.kind, false);
       } else if (wb.y > h + 20) {
@@ -715,7 +794,7 @@ class GamePlay {
       }
     }
     for (final cl in clouds) {
-      cl.x += cl.sp * dt;
+      cl.x += cl.sp * fxDt;
       if (cl.x > w + cl.rx) cl.x = -cl.rx;
       if (cl.x < -cl.rx) cl.x = w + cl.rx;
     }

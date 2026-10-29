@@ -250,8 +250,11 @@ void main() {
       dropPerfect(e);
       expect(e.crits, 0);
       expect(e.goldBlocks, 0);
-      expect(e.hitStop, 0,
-          reason: 'twistsiz bölümde referans pacing korunur — hit-stop twist-gated');
+      // PB-016: hit-stop artık genel juice — twistsiz bölümde mükemmel
+      // duraklaması da var (40ms + kombo başına 4ms); yerleştirme matematiği
+      // (C-002) değişmez, yalnız his katmanıdır
+      expect(e.hitStop, closeTo(0.044, 1e-9),
+          reason: 'PB-016: hit-stop twist-gated değil');
     });
   });
 

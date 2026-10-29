@@ -36,10 +36,11 @@ Sources: `lib/game/{levels,progress,drop_core,twists}.dart`, `test/{levels,progr
 - twist yasası: yalnız stack bölümleri twist alır, 1. stack twistsiz, ilk-5 [null,altın,rüzgar,zıt,kritik], ardışık ≤2; mevcut 9 modifier aynen (çiftkule C-002 kapsam dışı)
 
 ### game-engine
-Status: VERIFIED (gameplay+scene_painter JS birebir; 13 motor testi; inceleme PASS — MAJOR karanlık perde durakları düzeltildi; twist kancaları PB-015 DONE)
+Status: VERIFIED (gameplay+scene_painter JS birebir; 13 motor testi; inceleme PASS — MAJOR karanlık perde durakları düzeltildi; twist kancaları PB-015 DONE; juice paketi PB-016 DONE — ADR-010)
 Sources: `lib/game/{gameplay,scene_painter,twists}.dart`, `test/{gameplay,twists}_test.dart`
 - render sırası game.js render() ile aynı; dt clamp 0.05 play_screen'de
 - twist kancaları (spawn yönü/açısı, daralan duvar + uçuş clamp'i, altın/kritik zarı, hayalet ikiz, hit-stop) `twist != null` koşullu — twistsiz bölümlerde referans pacing birebir; drop_core paritesine dokunmaz (C-002); KRİTİK ×5 + altın blok paraları onWin'de cüzdana ödenir
+- juice (PB-016, ADR-010): hit-stop her mükemmelde 40ms+4ms×kombo (tavan 70ms, kritik dahil), squash&stretch 120ms ±%12, tam-ekran flaş (mükemmel α0.18 tema / kritik α0.35 beyaz, 90ms), haptic desenleri (`HapticPatternHost`, başlangıç anları), 12 konfeti + yıldız izi, `_fxRnd` sunum RNG'si; efektler `fxDt` saatiyle akar; hit-stop penceresinde dokunuş `InputGate` ile yok sayılır
 
 ### screens
 Status: OBSERVED (tüm ekranlar emülatörde çalışıyor: menü→harita→önizleme→oyun→sonuç→mağaza/görevler; ekran kanıtları .project-brain/evidence/PB-006/)

@@ -73,7 +73,7 @@ class PlayScreen extends StatefulWidget {
 
 class PlayScreenState extends State<PlayScreen>
     with SingleTickerProviderStateMixin
-    implements MiniGameHost {
+    implements MiniGameHost, HapticPatternHost {
   late MiniGame _game;
   late LevelDef _def;
   late Ticker _ticker;
@@ -177,6 +177,22 @@ class PlayScreenState extends State<PlayScreen>
   }
 
   @override
+  void hapticPattern(List<int> onsetsMs) {
+    // C-023 juice (PB-016): liste vuruş BAŞLANGIÇ anlarıdır (ms); her vuruş
+    // kısa bir darbe olarak çalınır (platform süresi ms cinsinden yok sayar)
+    for (final at in onsetsMs) {
+      if (at <= 0) {
+        haptic(10);
+      } else {
+        final d = Duration(milliseconds: at);
+        Future.delayed(d, () {
+          if (mounted) haptic(10);
+        });
+      }
+    }
+  }
+
+  @override
   void onEvent(String name, {Map<String, dynamic>? data}) {
     if (!mounted) return;
     switch (name) {
@@ -259,6 +275,8 @@ class PlayScreenState extends State<PlayScreen>
                 behavior: HitTestBehavior.opaque,
                 onTapDown: (d) {
                   if (_overlayOpen) return;
+                  // juice (PB-016): hit-stop penceresinde dokunuş yok sayılır
+                  if (_game is InputGate && !(_game as InputGate).acceptsInput) return;
                   _game.onTap(d.localPosition);
                 },
                 child: CustomPaint(
