@@ -22,13 +22,23 @@ List<double> tone({
   required String type,
   required double vol,
   double delay = 0,
+  int rate = sampleRate,
 }) {
-  final n = (dur * sampleRate).round();
+  final n = (dur * rate).round();
   final out = List<double>.filled(n, 0);
   final ef = endFreq ?? freq;
-  final attackN = (0.012 * sampleRate).round().clamp(1, n);
+  final attackN = (0.012 * rate).round().clamp(1, n);
+  var noiseState = 0x2545F491;
+  double noise() {
+    // deterministik beyaz gürültü (xorshift) — hi-hat için
+    noiseState ^= (noiseState << 13) & 0xFFFFFFFF;
+    noiseState ^= noiseState >> 17;
+    noiseState ^= (noiseState << 5) & 0xFFFFFFFF;
+    return (noiseState & 0xFFFF) / 32768.0 - 1.0;
+  }
+
   for (var i = 0; i < n; i++) {
-    final t = i / sampleRate;
+    final t = i / rate;
     final k = n > 1 ? i / (n - 1) : 0.0;
     // üstel frekans rampası
     final f = freq * math.pow(ef / freq, k);
@@ -43,6 +53,8 @@ List<double> tone({
         v = math.sin(phase) >= 0 ? 1.0 : -1.0;
       case 'sawtooth':
         v = 2 * (f * t % 1) - 1;
+      case 'noise':
+        v = noise();
       default:
         v = math.sin(phase);
     }
@@ -82,7 +94,7 @@ List<double> toneDelayed(double delaySec, List<double> t) {
   return [...List<double>.filled(pad, 0), ...t];
 }
 
-void writeWav(String name, List<double> samples) {
+void writeWav(String name, List<double> samples, {int rate = sampleRate}) {
   final bytes = BytesBuilder();
   final dataLen = samples.length * 2;
   // RIFF header
@@ -93,8 +105,8 @@ void writeWav(String name, List<double> samples) {
   bytes.add(_u32(16));
   bytes.add(_u16(1)); // PCM
   bytes.add(_u16(1)); // mono
-  bytes.add(_u32(sampleRate));
-  bytes.add(_u32(sampleRate * 2));
+  bytes.add(_u32(rate));
+  bytes.add(_u32(rate * 2));
   bytes.add(_u16(2));
   bytes.add(_u16(16));
   bytes.add('data'.codeUnits);
@@ -168,10 +180,109 @@ void main(List<String> args) {
 
   // start: tone(480, 900, 0.16, triangle, 0.18)
   writeWav('start.wav', tone(freq: 480, endFreq: 900, dur: 0.16, type: 'triangle', vol: 0.18));
+
+  /* ---------------- PB-017: kombo katmanları + kritik/gizem ---------------- */
+
+  // crit: çift oktav arpej (660 → 1320 → 990 → 1980), kısa ve parlak
+  writeWav('crit.wav', mix([
+    for (var i = 0; i < 4; i++)
+      toneDelayed(
+        i * 0.055,
+        tone(
+          freq: [660.0, 1320.0, 990.0, 1980.0][i],
+          dur: 0.14,
+          type: 'square',
+          vol: 0.12,
+        ),
+      ),
+  ]));
+
+  // fanfare: kombo ×10 kilometre taşı — yükselen beşli + final akoru
+  writeWav('fanfare.wav', mix([
+    for (var i = 0; i < 5; i++)
+      toneDelayed(
+        i * 0.09,
+        tone(freq: [523.0, 659.0, 784.0, 1047.0, 1319.0][i],
+            dur: 0.18, type: 'triangle', vol: 0.18),
+      ),
+    toneDelayed(0.5, tone(freq: 1047, dur: 0.5, type: 'sine', vol: 0.12)),
+    toneDelayed(0.5, tone(freq: 1319, dur: 0.5, type: 'sine', vol: 0.10)),
+  ]));
+
+  // mystery: sandık gizemi — alçak tremololu sürüklenme + parıltı
+  writeWav('mystery.wav', mix([
+    tone(freq: 220, endFreq: 330, dur: 1.2, type: 'sine', vol: 0.14),
+    toneDelayed(0.25, tone(freq: 440, endFreq: 660, dur: 0.9, type: 'triangle', vol: 0.07)),
+    toneDelayed(0.6, tone(freq: 880, dur: 0.5, type: 'sine', vol: 0.05)),
+  ]));
+
+  // Ritim katmanları: 4 bar × 120 BPM = 8.0s, 22.05kHz (dosya boyutu/parlaklık dengesi)
+  const layerRate = 22050;
+  const bpm = 120.0;
+  const beat = 60.0 / bpm; // 0.5s
+  const bars = 4;
+  const total = beat * 4 * bars; // 8s
+
+  // layer1: kick (her vuruş) + yumuşak bas vurgusu
+  final l1 = <double>[];
+  for (var b = 0; b < 4 * bars; b++) {
+    final at = b * beat;
+    final start = (at * layerRate).round();
+    final hit = tone(freq: 95, endFreq: 45, dur: 0.16, type: 'sine', vol: 0.30, rate: layerRate);
+    for (var i = 0; i < hit.length; i++) {
+      final idx = start + i;
+      if (idx < l1.length) {
+        l1[idx] += hit[i];
+      } else {
+        l1.add(hit[i]);
+      }
+    }
+    while (l1.length < start + hit.length) {
+      l1.add(0);
+    }
+  }
+  writeWav('layer1.wav', _fit(l1, (total * layerRate).round()), rate: layerRate);
+
+  // layer2: hi-hat (sekizlik) — yüksek gürültü, kısa
+  final l2 = List<double>.filled((total * layerRate).round(), 0);
+  for (var i = 0; i < 8 * bars * 4; i++) {
+    final at = i * beat / 2;
+    final start = (at * layerRate).round();
+    final hat = tone(freq: 9000, dur: 0.035, type: 'noise', vol: 0.05, rate: layerRate);
+    for (var k = 0; k < hat.length && start + k < l2.length; k++) {
+      l2[start + k] += hat[k];
+    }
+  }
+  writeWav('layer2.wav', l2, rate: layerRate);
+
+  // layer3: bas arpej (çeyrek notalar) — 110/110/146.8/98 döngüsü
+  final l3 = List<double>.filled((total * layerRate).round(), 0);
+  const bassNotes = [110.0, 110.0, 146.8, 98.0];
+  for (var i = 0; i < 4 * bars; i++) {
+    final at = i * beat;
+    final start = (at * layerRate).round();
+    final note = tone(
+        freq: bassNotes[i % 4], dur: 0.42, type: 'triangle', vol: 0.12, rate: layerRate);
+    for (var k = 0; k < note.length && start + k < l3.length; k++) {
+      l3[start + k] += note[k];
+    }
+  }
+  writeWav('layer3.wav', l3, rate: layerRate);
+}
+
+/// Loop uzunluğunu tam örnek sayısına sabitle (sondaki kuyruk kırpılır).
+List<double> _fit(List<double> src, int n) {
+  if (src.length == n) return src;
+  final out = List<double>.filled(n, 0);
+  for (var i = 0; i < n && i < src.length; i++) {
+    out[i] = src[i];
+  }
+  return out;
 }
 
 const List<String> _expected = [
-  'place.wav',
+  'place.wav', 'crit.wav', 'fanfare.wav', 'mystery.wav',
+  'layer1.wav', 'layer2.wav', 'layer3.wav',
   'perfect1.wav', 'perfect2.wav', 'perfect3.wav', 'perfect4.wav',
   'perfect5.wav', 'perfect6.wav', 'perfect7.wav', 'perfect8.wav',
   'win.wav', 'lose.wav', 'coin.wav', 'box.wav', 'shield.wav', 'start.wav',

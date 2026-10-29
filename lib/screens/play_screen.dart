@@ -81,6 +81,8 @@ class PlayScreenState extends State<PlayScreen>
   Size _size = Size.zero;
 
   int _hudScore = 0, _hudCombo = 0, _hudShields = 1, _hudTarget = 0;
+  int _layerCombo = 0; // PB-017: son bildirilen kombo (katman eşikleri)
+  bool _fanfarePlayed = false;
   bool _overlayOpen = false;
   bool _won = false;
 
@@ -102,6 +104,9 @@ class PlayScreenState extends State<PlayScreen>
     _hudShields = start.shields;
     _hudScore = 0;
     _hudCombo = 0;
+    _layerCombo = 0;
+    _fanfarePlayed = false;
+    widget.audio.setCombo(0); // yeni bölüm: katmanlar sıfırdan
     _hudTarget = _game.target;
     final got = widget.session.applyCoinStart();
     final surprise = widget.session.currentSurprise;
@@ -131,6 +136,15 @@ class PlayScreenState extends State<PlayScreen>
     final dt = ((elapsed - _last).inMicroseconds / 1e6).clamp(0.0, 0.05);
     _last = elapsed;
     _game.tick(dt);
+    // PB-017: kombo merdiveni — 3/6/10 eşiklerinde katmanlar açılır
+    if (_game.combo != _layerCombo) {
+      _layerCombo = _game.combo;
+      widget.audio.setCombo(_layerCombo);
+      if (_layerCombo == 10 && !_fanfarePlayed) {
+        _fanfarePlayed = true;
+        widget.audio.play(GameSound.fanfare);
+      }
+    }
     if (_game.score != _hudScore ||
         _game.combo != _hudCombo ||
         _game.shieldsLeft != _hudShields ||
@@ -159,6 +173,9 @@ class PlayScreenState extends State<PlayScreen>
       'box' => GameSound.box,
       'shield' => GameSound.shield,
       'start' => GameSound.start,
+      'crit' => GameSound.crit,
+      'fanfare' => GameSound.fanfare,
+      'mystery' => GameSound.mystery,
       _ => GameSound.place,
     };
     widget.audio.play(s, combo: combo);
@@ -210,6 +227,7 @@ class PlayScreenState extends State<PlayScreen>
   }
 
   void _finishLevel() {
+    widget.audio.setCombo(0); // PB-017: bölüm sonu — katmanlar söner
     final r = _game.result();
     if (_won) {
       widget.session.onWin(r.points, r.perfects,

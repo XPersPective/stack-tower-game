@@ -67,6 +67,7 @@ class _FlowOverlaysState extends State<FlowOverlays> {
   void _openBox() {
     final prize = widget.session.openBoxNow();
     widget.audio.play(GameSound.box);
+    widget.audio.play(GameSound.mystery); // PB-017: sandık gizemi
     // juice (PB-016): kutu açılışı üçlü vuruş — başlangıç anları 0/60/120ms
     for (final at in const [0, 60, 120]) {
       if (at == 0) {

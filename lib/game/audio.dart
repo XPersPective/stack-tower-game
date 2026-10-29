@@ -8,7 +8,16 @@ import 'package:flutter/material.dart';
 
 import '../services/storage.dart';
 
-enum GameSound { place, perfect, win, lose, coin, box, shield, start }
+enum GameSound { place, perfect, win, lose, coin, box, shield, start, crit, fanfare, mystery }
+
+/// PB-017: kombo eşiklerine göre aktif ritim katmanları (0..2).
+/// 3+ → kick, 6+ → kick+hat, 10+ → üçü birden; kombo kırılınca boş (fade-out).
+List<int> activeLayersForCombo(int combo) {
+  if (combo >= 10) return const [0, 1, 2];
+  if (combo >= 6) return const [0, 1];
+  if (combo >= 3) return const [0];
+  return const [];
+}
 
 const String kMuteKey = 'stacktower_muted_v1';
 
@@ -24,6 +33,11 @@ class AudioController extends ChangeNotifier {
   bool _ready = false;
 
   final Map<GameSound, AudioPlayer> _players = {};
+  // PB-017: döngüsel ritim katmanları (0..2)
+  final List<AudioPlayer> _layers = [];
+  bool _layersReady = false;
+  List<int> _activeLayers = const [];
+  List<int> get activeLayersForTest => _activeLayers;
 
   Future<void> preload() async {
     if (_ready) return;
@@ -37,6 +51,9 @@ class AudioController extends ChangeNotifier {
       GameSound.box: 'box.wav',
       GameSound.shield: 'shield.wav',
       GameSound.start: 'start.wav',
+      GameSound.crit: 'crit.wav',
+      GameSound.fanfare: 'fanfare.wav',
+      GameSound.mystery: 'mystery.wav',
     };
     for (final e in names.entries) {
       final p = AudioPlayer();
@@ -48,6 +65,66 @@ class AudioController extends ChangeNotifier {
         // Varlık yoksa sessiz mod (çevrimdışı/eksik varlık güvenliği)
       }
     }
+    await _preloadLayers();
+  }
+
+  /// PB-017: katmanlar döngüde çalar; ses seviyesi kombo ile açılır.
+  Future<void> _preloadLayers() async {
+    if (_layersReady) return;
+    _layersReady = true;
+    for (var i = 0; i < 3; i++) {
+      final p = AudioPlayer();
+      try {
+        await p.setReleaseMode(ReleaseMode.loop);
+        await p.setSource(AssetSource('sounds/layer${i + 1}.wav'));
+        await p.setVolume(0);
+      } catch (_) {
+        // eksik varlık güvenli: sessiz katman
+      }
+      _layers.add(p);
+    }
+  }
+
+  /// Kombo değiştiğinde katmanları açar/kapatır (fade-out 220ms).
+  Future<void> setCombo(int combo) async {
+    final want = _muted ? const <int>[] : activeLayersForCombo(combo);
+    if (_sameLayers(want, _activeLayers)) return;
+    _activeLayers = want;
+    for (var i = 0; i < _layers.length; i++) {
+      final p = _layers[i];
+      final on = want.contains(i);
+      try {
+        if (on) {
+          await p.setVolume(0.55);
+          await p.resume();
+        } else {
+          await _fadeOut(p);
+        }
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _fadeOut(AudioPlayer p) async {
+    for (var step = 9; step >= 0; step--) {
+      try {
+        await p.setVolume(0.55 * step / 10);
+      } catch (_) {
+        return;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 22));
+    }
+    try {
+      await p.pause();
+      await p.setVolume(0);
+    } catch (_) {}
+  }
+
+  bool _sameLayers(List<int> a, List<int> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   /// Mükemmel serisi yükselen perde: combo 1..8 → perfectN.wav (tavana düşer).
@@ -75,11 +152,15 @@ class AudioController extends ChangeNotifier {
         GameSound.box => 'box.wav',
         GameSound.shield => 'shield.wav',
         GameSound.start => 'start.wav',
+        GameSound.crit => 'crit.wav',
+        GameSound.fanfare => 'fanfare.wav',
+        GameSound.mystery => 'mystery.wav',
       };
 
   void setMuted(bool m) {
     _muted = m;
     storage?.setString(kMuteKey, m ? '1' : '0');
+    if (m) setCombo(0); // sustur: katmanlar sönsün
     notifyListeners();
   }
 
@@ -88,6 +169,9 @@ class AudioController extends ChangeNotifier {
   @override
   void dispose() {
     for (final p in _players.values) {
+      p.dispose();
+    }
+    for (final p in _layers) {
       p.dispose();
     }
     super.dispose();
