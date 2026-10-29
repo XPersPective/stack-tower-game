@@ -100,6 +100,8 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                       ),
                     ));
                   }
+                } else if (hit == 'market') {
+                  Navigator.pushNamed(context, Routes.market); // PB-018
                 } else {
                   _openDaily();
                 }

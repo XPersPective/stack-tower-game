@@ -3,6 +3,8 @@
 /// Kayıt her önemli olayda anında yazılır (SPEC §5).
 library;
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'gameplay.dart';
@@ -84,6 +86,9 @@ class GameSession extends ChangeNotifier {
     if (!_constructing) notifyListeners();
   }
 
+  /// Kaydı yazar ama dinleyicileri uyarmaz (build sırasında güvenli).
+  void persistQuiet() => prog.save(state, storage);
+
   /* ------------------------- Bölüm başlatma ------------------------- */
 
   /// openIntro + startCurrentLevel karşılığı: sürprizi belirle, motoru hazırla.
@@ -92,7 +97,17 @@ class GameSession extends ChangeNotifier {
     currentSurprise =
         (def.endless || def.daily) ? null : surpriseFor(def.i, prog.dayOf(_clock()));
     doubleCoinsThisLevel = currentSurprise?.effect == 'doubleCoins';
-    final shields = currentSurprise?.effect == 'shieldUp' ? 2 : 1;
+    var shields = currentSurprise?.effect == 'shieldUp' ? 2 : 1;
+    // PB-018 pazar: satın alınan kalkan/çarpan bir sonraki bölümde tüketilir
+    if (state.marketShields > 0) {
+      shields += state.marketShields;
+      state.marketShields = 0;
+    }
+    if (state.marketDouble) {
+      doubleCoinsThisLevel = true;
+      state.marketDouble = false;
+    }
+    persistQuiet(); // initState/build sırasında notify yok
     return LevelStart(hue: activeSkinHue, shields: shields, surprise: currentSurprise);
   }
 
@@ -113,7 +128,12 @@ class GameSession extends ChangeNotifier {
   prog.CompleteResult onWin(int blocks, int perfects,
       {int crits = 0, int goldBlocks = 0}) {
     final def = currentDef!;
-    final stars = starsFor(perfects, def.target);
+    var stars = starsFor(perfects, def.target);
+    // PB-018 pazar jokeri: sonraki kazanılan bölümde +1 yıldız (tavan 3)
+    if (state.marketJoker) {
+      state.marketJoker = false;
+      stars = math.min(3, stars + 1);
+    }
     final rewards = prog.completeLevel(state, def,
         blocks: blocks, perfects: perfects, reached: true, stars: stars);
     if (def.kind == GameKind.stack) {

@@ -116,6 +116,13 @@ class SaveState {
   Map<String, bool> worldsCelebrated;
   Map<String, bool> relics;
   Map<String, bool> boxes;
+  // PB-018 pazar yeri (şema genişletme; eski kayıtlar varsayılanla okunur)
+  int marketDay;
+  Map<String, bool> marketBought;
+  int marketShields;
+  bool marketDouble;
+  bool marketJoker;
+  int relicPieces;
 
   SaveState({
     this.v = 2,
@@ -133,7 +140,14 @@ class SaveState {
     Map<String, bool>? worldsCelebrated,
     Map<String, bool>? relics,
     Map<String, bool>? boxes,
-  })  : completed = completed ?? {},
+    this.marketDay = -1,
+    Map<String, bool>? marketBought,
+    this.marketShields = 0,
+    this.marketDouble = false,
+    this.marketJoker = false,
+    this.relicPieces = 0,
+  })  : marketBought = marketBought ?? {},
+        completed = completed ?? {},
         skins = skins ?? ['default'],
         daily = daily ?? {'day': -1, 'best': 0},
         worldsCelebrated = worldsCelebrated ?? {},
@@ -156,6 +170,12 @@ class SaveState {
         'worldsCelebrated': worldsCelebrated,
         'relics': relics,
         'boxes': boxes,
+        'marketDay': marketDay,
+        'marketBought': marketBought,
+        'marketShields': marketShields,
+        'marketDouble': marketDouble,
+        'marketJoker': marketJoker,
+        'relicPieces': relicPieces,
       };
 
   /// JS şemasıyla aynı JSON (anahtar sırası fark etmez, alan adları aynı).
@@ -195,6 +215,13 @@ class SaveState {
           .map((k, val) => MapEntry(k, val == true)),
       relics: (j['relics'] as Map<String, dynamic>? ?? {}).map((k, val) => MapEntry(k, val == true)),
       boxes: (j['boxes'] as Map<String, dynamic>? ?? {}).map((k, val) => MapEntry(k, val == true)),
+      marketDay: (j['marketDay'] as num?)?.toInt() ?? -1,
+      marketBought: (j['marketBought'] as Map<String, dynamic>? ?? {})
+          .map((k, val) => MapEntry(k, val == true)),
+      marketShields: (j['marketShields'] as num?)?.toInt() ?? 0,
+      marketDouble: j['marketDouble'] == true,
+      marketJoker: j['marketJoker'] == true,
+      relicPieces: (j['relicPieces'] as num?)?.toInt() ?? 0,
     );
   }
 }

@@ -36,6 +36,9 @@ class MapIsland {
   List<MapNode> nodes = [];
   List<MapItem> items = [];
   Offset? center; // ekran izdüşümü (hit-test)
+  Offset? marketScreen; // PB-018: pazar binası ekran izdüşümü (hit-test)
+  double marketR = 0;
+  bool get hasMarket => done >= 3; // 3 bölüm bitince pazar kurulur
 
   MapIsland({
     required this.stage,
@@ -593,6 +596,65 @@ class MapScenePainter extends CustomPainter {
 
     // GÖRÜNÜR İNŞAAT (ADR-009): tamamlanan bölümler yapı yükseltir
     _drawStructures(canvas, isl);
+    // PB-018: pazar yeri binası (3+ bölüm bitmiş adalarda)
+    _drawMarket(canvas, isl);
+  }
+
+  /// PB-018: pazar yeri — ışıklı tezgah, dokunulabilir (hitTest 'market').
+  void _drawMarket(Canvas canvas, MapIsland isl) {
+    if (!isl.hasMarket) {
+      isl.marketScreen = null;
+      return;
+    }
+    // ada merkezinin sağ-alt köşesi (yapıların uzağı)
+    final wx = isl.x + isl.r * 0.52;
+    final wz = isl.z + isl.r * 0.30;
+    final wy = surfY(isl, wx, wz);
+    final p = camera.project(Offset3(wx, wy, wz));
+    if (p == null) {
+      isl.marketScreen = null;
+      return;
+    }
+    final s = p.s;
+    final w = 54 * s, h = 30 * s;
+    final base = Offset(p.x, p.y);
+    isl.marketScreen = base;
+    isl.marketR = math.max(26.0, 34 * s);
+
+    // gölge
+    canvas.drawOval(
+        Rect.fromCenter(center: base, width: w * 1.15, height: h * 0.34),
+        Paint()..color = Colors.black.withValues(alpha: .35));
+    // tezgah gövdesi
+    canvas.drawRect(Rect.fromLTWH(base.dx - w / 2, base.dy - h, w, h),
+        Paint()..color = hslColor(isl.theme.glow, 40, 22));
+    // çizgili tente
+    const stripes = 4;
+    for (var i = 0; i < stripes; i++) {
+      final sx = base.dx - w / 2 + (w / stripes) * i;
+      canvas.drawRect(
+          Rect.fromLTWH(sx, base.dy - h - 9 * s, w / stripes, 9 * s),
+          Paint()
+            ..color = i.isEven
+                ? hslColor(isl.theme.glow, 90, 62)
+                : const Color(0xFFEFE7D2));
+    }
+    // sıcak fener
+    canvas.drawCircle(
+        Offset(base.dx, base.dy - h - 13 * s),
+        7 * s,
+        Paint()
+          ..color = const Color(0xFFFFD98A).withValues(alpha: .5)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(2.0, 8 * s)));
+    canvas.drawCircle(Offset(base.dx, base.dy - h - 13 * s), 2.6 * s,
+        Paint()..color = const Color(0xFFFFE9A8));
+    // "PAZAR" işareti (metin yerine üç nokta — font maliyeti yok)
+    for (var i = 0; i < 3; i++) {
+      canvas.drawCircle(
+          Offset(base.dx - 6 * s + i * 6 * s, base.dy - h * 0.55),
+          1.5 * s,
+          Paint()..color = hslColor(isl.theme.glow, 95, 78));
+    }
   }
 
   void _drawStructures(Canvas canvas, MapIsland isl) {
@@ -794,6 +856,12 @@ class MapScenePainter extends CustomPainter {
 
 /// Dokunma testi (map.js hit birebir): düğümler → günlük → ada.
 String? hitTest(MapScene scene, Offset px) {
+  // PB-018: pazar binası düğümlerden önce denenir
+  final isl = scene.islands.isEmpty ? null : scene.islands[scene.focusStage];
+  final mk = isl?.marketScreen;
+  if (isl != null && mk != null && (px - mk).distance <= isl.marketR) {
+    return 'market';
+  }
   MapNode? best;
   var bestD = double.infinity;
   for (final nd in scene.nodes) {

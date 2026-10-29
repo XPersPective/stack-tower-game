@@ -8,6 +8,7 @@ import '../game/audio.dart';
 import '../game/game_session.dart';
 import '../game/levels.dart';
 import 'map_screen.dart';
+import 'market_screen.dart';
 import 'menu_screen.dart';
 import 'play_screen.dart';
 import 'preview_screen.dart';
@@ -21,6 +22,7 @@ class Routes {
   static const play = '/play';
   static const playEndless = '/play-endless';
   static const shop = '/shop';
+  static const market = '/market';
   static const missions = '/missions';
   static const settings = '/settings';
 }
@@ -31,6 +33,8 @@ Widget routeFor(RouteSettings settings) {
       return const MapScreen();
     case Routes.shop:
       return const ShopScreen();
+    case Routes.market:
+      return const MarketScreen();
     case Routes.missions:
       return const MissionsScreen();
     case Routes.settings:
