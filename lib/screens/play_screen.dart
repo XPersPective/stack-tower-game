@@ -3,6 +3,8 @@
 /// kazanma/kaybetme zinciri (kutu → tören → tahta → sonuç → harita).
 library;
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -85,6 +87,10 @@ class PlayScreenState extends State<PlayScreen>
   bool _fanfarePlayed = false;
   bool _overlayOpen = false;
   bool _won = false;
+  // PB-033: sahne repaint köprüsü — her tik sonrası bildirir; CustomPaint'in
+  // `repaint` dinleyicisi bunu RenderObject'e bağlar (kamera inişi/blok süzülmesi
+  // ARTIK her karede çizilir; PB-022'de kopan bağın onarımı).
+  final _SceneRepaint _sceneRepaint = _SceneRepaint();
 
   @override
   void initState() {
@@ -108,11 +114,14 @@ class PlayScreenState extends State<PlayScreen>
     _fanfarePlayed = false;
     widget.audio.setCombo(0); // yeni bölüm: katmanlar sıfırdan
     _hudTarget = _game.target;
-    final got = widget.session.applyCoinStart();
     final surprise = widget.session.currentSurprise;
     if (surprise != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
+        // coinStart para uygulaması ilk kare SONRASINA ertelendi:
+        // applyCoinStart → persist → notifyListeners zinciri build fazında
+        // tetiklenemez (flow_test "markNeedsBuild during build" kuralı).
+        final got = widget.session.applyCoinStart();
         ToastHost.show(
             context,
             got > 0
@@ -133,9 +142,17 @@ class PlayScreenState extends State<PlayScreen>
   }
 
   void _onTick(Duration elapsed) {
-    final dt = ((elapsed - _last).inMicroseconds / 1e6).clamp(0.0, 0.05);
+    final raw = ((elapsed - _last).inMicroseconds / 1e6).clamp(0.0, 0.05);
     _last = elapsed;
-    _game.tick(dt);
+    // PB-033: sabit alt-adım — büyük dt (takılma/GC) 1/60'lık parçalara bölünür;
+    // motor matematiği (C-002) aynı toplam dt ile akar, 50 ms'lik tek sıçrama
+    // görünmez olur. Tavan 3 alt-adım (50 ms → 3×16.7 ms).
+    final steps = math.min(3, math.max(1, (raw / (1 / 60)).ceil()));
+    for (var i = 0; i < steps; i++) {
+      _game.tick(raw / steps);
+    }
+    // PB-033: her tik sahneyi yeniden boyar (repaint köprüsü)
+    _sceneRepaint.notify();
     // PB-017: kombo merdiveni — 3/6/10 eşiklerinde katmanlar açılır
     if (_game.combo != _layerCombo) {
       _layerCombo = _game.combo;
@@ -273,6 +290,7 @@ class PlayScreenState extends State<PlayScreen>
   void dispose() {
     _ticker.dispose();
     _game.stop();
+    _sceneRepaint.dispose();
     super.dispose();
   }
 
@@ -315,82 +333,67 @@ class PlayScreenState extends State<PlayScreen>
                 onTapCancel: () {
                   if (_game is HoldGame) (_game as HoldGame).onHoldCancel();
                 },
-                child: CustomPaint(
-                  painter: _MiniGamePainter(_game),
-                  size: Size.infinite,
+                child: RepaintBoundary(
+                  // PB-033: oyun sahnesi kendi katmanında — HUD/overlay
+                  // yeniden kurulumları sahnenin tam yeniden boyanmasını tetiklemez
+                  child: CustomPaint(
+                    painter: _MiniGamePainter(_game, repaint: _sceneRepaint),
+                    size: Size.infinite,
+                  ),
                 ),
               ),
               SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.md, vertical: AppSpace.sm),
                   child: Column(
                     children: [
                       Row(
                         children: [
-                          _hudButton(Icons.arrow_back, 'ÇIK', _exit),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              color: Colors.white.withValues(alpha: .08),
-                              border: Border.all(
-                                  color: Colors.white.withValues(alpha: .18)),
+                          _hudButton(Icons.arrow_back_rounded, 'ÇIK', _exit),
+                          const SizedBox(width: AppSpace.sm),
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.pill),
+                                color: Colors.white.withValues(alpha: .08),
+                                border: Border.all(
+                                    color: Colors.white.withValues(alpha: .18)),
+                              ),
+                              child: Text('${spec.icon} ${spec.name}',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium),
                             ),
-                            child: Text('${spec.icon} ${spec.name}',
-                                style: Theme.of(context).textTheme.bodyMedium),
                           ),
                           const Spacer(),
-                          Text(
-                            _hudTarget > 0 ? '$_hudScore/$_hudTarget' : '$_hudScore',
-                            style: Theme.of(context).textTheme.headlineMedium,
-                          ),
+                          _buildHudScore(),
                           const Spacer(),
                           _hudButton(
                             widget.audio.muted
-                                ? Icons.volume_off
-                                : Icons.volume_up,
+                                ? Icons.volume_off_rounded
+                                : Icons.volume_up_rounded,
                             '',
                             () => setState(() => widget.audio.toggleMute()),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      if (_hudTarget > 0)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: LinearProgressIndicator(
-                            value: (_hudScore / _hudTarget).clamp(0.0, 1.0),
-                            minHeight: 6,
-                            backgroundColor: Colors.white.withValues(alpha: .12),
-                            valueColor:
-                                const AlwaysStoppedAnimation(NeonPalette.cyan),
-                          ),
+                      if (_hudTarget > 0) ...[
+                        const SizedBox(height: AppSpace.sm),
+                        _HudProgress(
+                          value: (_hudScore / _hudTarget).clamp(0.0, 1.0),
                         ),
-                      const SizedBox(height: 4),
+                      ],
+                      const SizedBox(height: AppSpace.sm),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            _hudCombo >= 2 ? '×$_hudCombo' : '',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineMedium
-                                ?.copyWith(
-                                    color: NeonPalette.amber,
-                                    shadows: [
-                                      Shadow(
-                                          color: NeonPalette.amber
-                                              .withValues(alpha: .6),
-                                          blurRadius: 18)
-                                    ]),
-                          ),
-                          Opacity(
-                            opacity: _hudShields > 0 ? 1 : 0.3,
-                            child: Text('🛡 ×$_hudShields',
-                                style: Theme.of(context).textTheme.titleLarge),
-                          ),
+                          _HudCombo(combo: _hudCombo),
+                          _HudShields(count: _hudShields),
                         ],
                       ),
                     ],
@@ -437,16 +440,190 @@ class PlayScreenState extends State<PlayScreen>
         child: Container(
           constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
           alignment: Alignment.center,
-          child: Icon(icon, color: NeonPalette.text, size: 26),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.black.withValues(alpha: .22),
+            border: Border.all(color: Colors.white.withValues(alpha: .12)),
+          ),
+          child: Icon(icon, color: NeonPalette.text, size: 24),
         ),
+      ),
+    );
+  }
+
+  /// HUD skoru — metin birebir korunur (testler '0'/'1' bekler), üstünde
+  /// yalnızca görsel "pop" animasyonu vardır.
+  Widget _buildHudScore() {
+    return _PopText(
+      text: _hudTarget > 0 ? '$_hudScore/$_hudTarget' : '$_hudScore',
+      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            shadows: [
+              Shadow(
+                  color: NeonPalette.cyan.withValues(alpha: .45), blurRadius: 16),
+            ],
+          ),
+    );
+  }
+}
+
+/// HUD skoru — değiştiğinde ölçek "pop" yapar (metin değişmez).
+class _PopText extends StatefulWidget {
+  const _PopText({required this.text, this.style});
+  final String text;
+  final TextStyle? style;
+
+  @override
+  State<_PopText> createState() => _PopTextState();
+}
+
+class _PopTextState extends State<_PopText> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 320),
+  );
+  String _last = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _last = widget.text;
+  }
+
+  @override
+  void didUpdateWidget(covariant _PopText old) {
+    super.didUpdateWidget(old);
+    if (widget.text != _last) {
+      _last = widget.text;
+      _c.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, child) {
+        final t = Curves.easeOutBack.transform(_c.value.clamp(0.0, 1.0));
+        return Transform.scale(scale: 1.0 + 0.18 * t, child: child);
+      },
+      child: Text(widget.text, style: widget.style),
+    );
+  }
+}
+
+/// HUD ilerleme çubuğu — hedefe yaklaşırken parlar.
+class _HudProgress extends StatelessWidget {
+  const _HudProgress({required this.value});
+  final double value;
+
+  @override
+  Widget build(BuildContext context) {
+    final near = (value - 0.75).clamp(0.0, 1.0) / 0.25;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.pill),
+      child: Stack(
+        children: [
+          Container(
+            height: 8,
+            color: Colors.black.withValues(alpha: .28),
+          ),
+          FractionallySizedBox(
+            widthFactor: value.clamp(0.0, 1.0),
+            child: Container(
+              height: 8,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    NeonPalette.cyan,
+                    Color.lerp(NeonPalette.cyan, NeonPalette.magenta, near)!,
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: NeonPalette.cyan.withValues(alpha: .35 + near * .3),
+                    blurRadius: 10 + near * 8,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// HUD kombo rozeti — arttığında altın renge döner ve parlar.
+class _HudCombo extends StatelessWidget {
+  const _HudCombo({required this.combo});
+  final int combo;
+
+  @override
+  Widget build(BuildContext context) {
+    if (combo < 2) return const SizedBox.shrink();
+    final hot = combo >= 6;
+    final color = hot ? NeonPalette.magenta : NeonPalette.amber;
+    return AnimatedContainer(
+      duration: AppDurations.normal,
+      curve: appCurve,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        color: color.withValues(alpha: .14),
+        border: Border.all(color: color.withValues(alpha: .65)),
+        boxShadow: [
+          BoxShadow(color: color.withValues(alpha: .30), blurRadius: 16),
+        ],
+      ),
+      child: Text(
+        '×$combo',
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: color,
+              shadows: [Shadow(color: color.withValues(alpha: .7), blurRadius: 14)],
+            ),
+      ),
+    );
+  }
+}
+
+/// HUD kalkan göstergesi — kalkan yoksa soluk ve çarpı.
+class _HudShields extends StatelessWidget {
+  const _HudShields({required this.count});
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = count > 0;
+    return AnimatedOpacity(
+      duration: AppDurations.normal,
+      opacity: active ? 1 : 0.32,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.shield_rounded,
+              size: 19, color: active ? NeonPalette.mint : NeonPalette.textDim),
+          const SizedBox(width: 5),
+          Text('×$count',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: active ? NeonPalette.mint : NeonPalette.textDim,
+                  )),
+        ],
       ),
     );
   }
 }
 
 /// MiniGame.render'ı her karede çağıran painter.
+/// PB-033: `repaint` dinleyicisi RenderCustomPaint'e bağlanır — tik başına
+/// yeniden boyama (d76a61c davranışı; PB-022'de yanlışlıkla kopmuştu).
 class _MiniGamePainter extends CustomPainter {
-  _MiniGamePainter(this.game);
+  _MiniGamePainter(this.game, {required Listenable repaint}) : super(repaint: repaint);
   final MiniGame game;
 
   @override
@@ -454,4 +631,29 @@ class _MiniGamePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _MiniGamePainter oldDelegate) => true;
+}
+
+/// PB-033: sahne repaint sinyali — tik başına tek bildirim, kendisi dispose
+/// edilebilir (CustomPaint'in `repaint` dinleyicisi olarak bağlanır).
+class _SceneRepaint implements Listenable {
+  final Set<VoidCallback> _listeners = {};
+  bool _disposed = false;
+
+  @override
+  void addListener(VoidCallback listener) => _listeners.add(listener);
+
+  @override
+  void removeListener(VoidCallback listener) => _listeners.remove(listener);
+
+  void notify() {
+    if (_disposed) return;
+    for (final l in List.of(_listeners)) {
+      l();
+    }
+  }
+
+  void dispose() {
+    _disposed = true;
+    _listeners.clear();
+  }
 }

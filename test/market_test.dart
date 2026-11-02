@@ -186,7 +186,11 @@ void main() {
     });
 
     test('kalkan ve çarpan bir sonraki bölümde tüketilir', () {
-      final session = GameSession(MemoryStorage());
+      // PB-032: saat SABİT — aksi halde test, günün sürpriz döngüsüne bağlı
+      // olur ve her 4 günde bir kendiliğinden kırılır (tarihe bağlı test ✗).
+      // 20001 günü: (0 + 20001) % 4 != 0 → bölüm 0'a sürpriz düşmez.
+      final session = GameSession(MemoryStorage(),
+          clock: () => DateTime.fromMillisecondsSinceEpoch(86400000 * 20001));
       session.state.marketShields = 1;
       session.state.marketDouble = true;
       final start = session.prepareLevel(levelDef(0));

@@ -109,4 +109,35 @@ void main() {
     expect(d.tol, 6);
     expect(d.i, -1);
   });
+
+  test('levelSignature deterministik ve aralıkta (PB-033)', () {
+    final a = levelSignature(7);
+    final b = levelSignature(7);
+    expect(a.hueShift, b.hueShift);
+    expect(a.skyPhase, b.skyPhase);
+    expect(a.silVariant, b.silVariant);
+    expect(a.hueShift, inInclusiveRange(-13, 13));
+    expect(a.skyPhase, inInclusiveRange(0, 3));
+    expect(a.silVariant, inInclusiveRange(0, 2));
+  });
+
+  test('ardışık bölümlerin imzaları birebir aynı değil (PB-033)', () {
+    for (var i = 0; i < kLevelCount - 1; i++) {
+      final a = levelSignature(i);
+      final b = levelSignature(i + 1);
+      final same = a.hueShift == b.hueShift &&
+          a.skyPhase == b.skyPhase &&
+          a.silVariant == b.silVariant;
+      expect(same, isFalse, reason: 'bölüm $i ile ${i + 1} imzası çakıştı');
+    }
+  });
+
+  test('finaleFor: ardışık aynı final yok, 4 stil de döner (PB-033 B1)', () {
+    for (var i = 0; i < kLevelCount - 1; i++) {
+      expect(finaleFor(i + 1), isNot(finaleFor(i)),
+          reason: 'bölüm $i ile ${i + 1} finali aynı');
+    }
+    final seen = {for (var i = 0; i < 4; i++) finaleFor(i)};
+    expect(seen.length, 4);
+  });
 }

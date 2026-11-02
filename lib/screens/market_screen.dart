@@ -13,7 +13,8 @@ import '../game/market.dart';
 import '../game/progress.dart' as prog;
 import '../game/scene_painter.dart' show hslColor;
 import '../theme/tokens.dart';
-import 'flow_overlays.dart' show NeonButton;
+import '../ui/aurora_background.dart';
+import '../ui/premium_kit.dart';
 
 class MarketScreen extends StatefulWidget {
   const MarketScreen({super.key, this.rand});
@@ -52,61 +53,92 @@ class _MarketScreenState extends State<MarketScreen> {
     final stock = dailyStock(day);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('PAZAR YERİ'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Center(
-                child: Text('🪙 ${session.state.coins}',
-                    style: Theme.of(context).textTheme.titleLarge)),
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(14),
-        children: [
-          Text('BUGÜNÜN TEZGAHI · GÜN ${day % 1000}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(letterSpacing: 2)),
-          const SizedBox(height: 4),
-          Text('Her üründen tek adet. Gece yarısı tezgah tazelenir.',
-              style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: 12),
-          for (final e in stock) ...[
-            _EntryCard(
-              entry: e,
-              soldOut: soldOut(session.state, e),
-              owned: e.kind == MarketKind.skin &&
-                  e.skinId != null &&
-                  session.state.skins.contains(e.skinId),
-              affordable: session.state.coins >= e.price,
-              onBuy: () => _buy(session, e, day),
-            ),
-            const SizedBox(height: 10),
-          ],
-          if (_lastMessage != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text(
-                _lastMessage!,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: _lastOk ? NeonPalette.cyan : NeonPalette.gold,
-                      letterSpacing: 1.2,
-                    ),
+      body: AuroraBackground(
+        hue: 35,
+        accentHue: 20,
+        intensity: 0.85,
+        showPlanet: false,
+        child: SafeArea(
+          child: Column(
+            children: [
+              PremiumHeader(
+                title: 'PAZAR YERİ',
+                subtitle: 'Her üründen tek adet · tezgah gece yarısı tazelenir',
+                onBack: () => Navigator.pop(context),
+                trailing: ResourceChip(coins: session.state.coins),
               ),
-            ),
-          const SizedBox(height: 18),
-          Text('PAZAR NASIL ÇALIŞIR?',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(letterSpacing: 2)),
-          const SizedBox(height: 6),
-          Text(
-            'Kalkan ve çarpan bir sonraki bölümde kullanılır. Joker, kazanılan '
-            'bölüme +1 yıldız ekler. Sandık değişken oranlıdır: para, görünüm '
-            'veya kalıntı parçası (3 parça = 1 kalıntı).',
-            style: Theme.of(context).textTheme.bodySmall,
+              const SizedBox(height: AppSpace.md),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSpace.lg, 0, AppSpace.lg, AppSpace.lg),
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.storefront_rounded,
+                            size: 16, color: NeonPalette.amber),
+                        const SizedBox(width: 8),
+                        Text('BUGÜNÜN TEZGAHI · GÜN ${day % 1000}',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(letterSpacing: 1.6)),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpace.md),
+                    for (final e in stock) ...[
+                      _EntryCard(
+                        entry: e,
+                        soldOut: soldOut(session.state, e),
+                        owned: e.kind == MarketKind.skin &&
+                            e.skinId != null &&
+                            session.state.skins.contains(e.skinId),
+                        affordable: session.state.coins >= e.price,
+                        onBuy: () => _buy(session, e, day),
+                      ),
+                      const SizedBox(height: AppSpace.md),
+                    ],
+                    if (_lastMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppSpace.sm),
+                        child: _MarketMessage(message: _lastMessage!, ok: _lastOk),
+                      ),
+                    const SizedBox(height: AppSpace.lg),
+                    GlassPanel(
+                      padding: const EdgeInsets.all(AppSpace.lg),
+                      radius: AppRadius.md,
+                      glow: false,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.help_outline_rounded,
+                                  size: 16, color: NeonPalette.textDim),
+                              const SizedBox(width: 8),
+                              Text('PAZAR NASIL ÇALIŞIR?',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(letterSpacing: 1.4)),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpace.sm),
+                          Text(
+                            'Kalkan ve çarpan bir sonraki bölümde kullanılır. Joker, '
+                            'kazanılan bölüme +1 yıldız ekler. Sandık değişken oranlıdır: '
+                            'para, görünüm veya kalıntı parçası (3 parça = 1 kalıntı).',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -116,8 +148,9 @@ class _MarketScreenState extends State<MarketScreen> {
     if (res.ok) {
       session.persist();
       _audio(context).play(e.isChest ? GameSound.mystery : GameSound.coin);
+      if (e.isChest) _audio(context).play(GameSound.reward);
     } else {
-      _audio(context).play(GameSound.lose);
+      _audio(context).play(GameSound.error);
     }
     setState(() {
       _lastOk = res.ok;
@@ -151,18 +184,28 @@ class _EntryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = hslColor(entry.hue, 92, 68);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xCC0a0a1e),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: soldOut ? Colors.white12 : accent.withValues(alpha: .55)),
-      ),
+    return GlassPanel(
+      padding: const EdgeInsets.all(AppSpace.lg),
+      radius: AppRadius.lg,
+      glow: !soldOut,
+      glowColor: accent,
+      borderColor: soldOut ? Colors.white12 : accent.withValues(alpha: .55),
+      tint: soldOut ? const Color(0xD90C0C1C) : const Color(0xE6141430),
       child: Row(
         children: [
-          Text(entry.icon, style: const TextStyle(fontSize: 30)),
-          const SizedBox(width: 12),
+          Container(
+            width: 52,
+            height: 52,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: accent.withValues(alpha: soldOut ? .06 : .14),
+              border: Border.all(
+                  color: accent.withValues(alpha: soldOut ? .18 : .45)),
+            ),
+            child: Text(entry.icon, style: const TextStyle(fontSize: 26)),
+          ),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,29 +213,82 @@ class _EntryCard extends StatelessWidget {
                 Text(entry.name,
                     style: Theme.of(context)
                         .textTheme
-                        .titleLarge
+                        .titleMedium
                         ?.copyWith(color: soldOut ? Colors.white38 : accent)),
                 const SizedBox(height: 2),
-                Text(entry.hint, style: Theme.of(context).textTheme.bodySmall),
+                Text(entry.hint,
+                    style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpace.sm),
           Column(
             children: [
-              Text('${entry.price} 🪙',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: affordable ? NeonPalette.star : Colors.white38)),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CoinGlyph(size: 13),
+                  const SizedBox(width: 5),
+                  Text('${entry.price}',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: affordable ? NeonPalette.star : Colors.white38,
+                            fontWeight: FontWeight.w800,
+                          )),
+                ],
+              ),
               const SizedBox(height: 6),
               SizedBox(
-                width: 92,
-                child: NeonButton(
-                  soldOut ? 'TÜKENDİ' : (owned ? 'SAHİPSİN' : 'AL'),
-                  onBuy,
+                width: 104,
+                child: GradientButton(
+                  label: soldOut ? 'TÜKENDİ' : (owned ? 'SAHİPSİN' : 'AL'),
+                  compact: true,
+                  height: 40,
                   enabled: !soldOut && !owned && affordable,
+                  colors: [accent.withValues(alpha: .45), accent.withValues(alpha: .18)],
+                  onTap: onBuy,
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Satın alma sonrası mesaj şeridi.
+class _MarketMessage extends StatelessWidget {
+  const _MarketMessage({required this.message, required this.ok});
+
+  final String message;
+  final bool ok;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = ok ? NeonPalette.cyan : NeonPalette.gold;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.lg, vertical: AppSpace.md),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        color: color.withValues(alpha: .10),
+        border: Border.all(color: color.withValues(alpha: .45)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(ok ? Icons.check_circle_rounded : Icons.info_rounded,
+              size: 16, color: color),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleSmall
+                  ?.copyWith(color: color, letterSpacing: 1.0),
+            ),
           ),
         ],
       ),

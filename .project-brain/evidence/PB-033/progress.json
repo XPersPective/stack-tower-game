@@ -1,0 +1,14 @@
+{
+  "protocol": 1,
+  "next": "Tick proven criteria, verify remaining behavior, then review and accept",
+  "failing": "",
+  "dirty": "lib/game/gameplay.dart, lib/game/levels.dart, lib/game/scene_painter.dart, lib/preview/preview_painter.dart, lib/screens/menu_screen.dart; inspect git status for the complete dirty set",
+  "strategy": "check",
+  "attempt": "1878d318badd257b",
+  "repeats": 0,
+  "contract": "5a59964aebce62be",
+  "usage": {
+    "checks": 2,
+    "seconds": 126.298
+  }
+}

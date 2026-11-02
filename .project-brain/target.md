@@ -26,6 +26,10 @@ gerekiyor... bir pazar araştırması yap... sağlam bir rapor oluştur. Bunu pr
 entegre edeceksin ama yapılacakları ondan sonra uygulayacaksın." (user, 2026-10-25 — yön
 değişikliği: RESEARCH-market.md §4 tasarım kararları + PB-015..021)
 
+"Kapsamlı şekilde iOS ve premium düzeyde bitir; zevkli görseller, harika efektler,
+test etme/emülatörde test etme, üretim düzeyini bitir." (user, 2026-10-29/30 —
+.workbuddy-ai memory'de kayıtlı; PB-031 premium kapanışının yetki kaynağı)
+
 ## Target State
 ### game-core (saf mantık — birebir port)
 - `lib/game/levels.dart`, `progress.dart`, `drop_core.dart`: reference/www JS ile
@@ -63,7 +67,8 @@ değişikliği: RESEARCH-market.md §4 tasarım kararları + PB-015..021)
 
 ## Non-Goals
 - Reklam/analitik/3. parti veri paylaşımı yok; Flame/fizik motoru yok (ADR-002);
-  yatay mod yok (dikey kilitli); görsel yeniden keşif yok (estetik sadakat);
+  yatay mod yok (dikey kilitli); görsel yeniden keşif yalnız premium katmanla sınırlı
+  (C-009 revizyonu + 2026-10-29/30 yönü; çekirdek JS paritesi bozulmaz);
   R2/görsel CDN yok; mağazaya yükleme bu repoda yapılmaz (release skill).
 
 ## Open Decisions

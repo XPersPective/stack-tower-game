@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:stack_tower_game/game/drop_core.dart';
 import 'package:stack_tower_game/game/gameplay.dart';
 import 'package:stack_tower_game/game/levels.dart';
 import 'package:stack_tower_game/game/twists.dart';
@@ -198,15 +199,18 @@ void main() {
     expect(e.camShift, greaterThan(0));
   });
 
-  test('resize: ölçek değişince kule çarpanla taşınır', () {
+  test('resize: ölçek değişince göreli kule düzeni korunur, taban merkezde kalır', () {
     final e = engineFor(levelDef(0));
     dropPerfect(e);
-    final x1 = e.blocks.last.x;
+    final rel1 = e.blocks.last.x - e.blocks.first.x; // tabana göre göreli ofset
     final w1 = e.blocks.last.w;
     e.resize(700, 1100); // scale büyür
     final f = e.baseW / 230; // yeni baseW / eski baseW
     expect(e.blocks.last.w, closeTo(w1 * f, 1e-6));
-    expect(e.blocks.last.x, closeTo(x1 * f, 1e-6));
+    expect(e.blocks.last.x - e.blocks.first.x, closeTo(rel1 * f, 1e-6),
+        reason: 'göreli geometri (denge/movingBounds) değişmez — C-002');
+    expect(e.blocks.first.x, closeTo((e.w - e.baseW) / 2, 0.5),
+        reason: 'taban blok yatayda merkezde kalır (oynanabilirlik)');
   });
 
   test('blockHue: ALTIN bölümde altın paleti', () {
@@ -306,6 +310,97 @@ void main() {
       e.onHaptic = ms.add;
       dropPerfect(e);
       expect(ms, [10]);
+    });
+  });
+
+  group('PB-033 sunum: ateş modu, zoom, parlak halka, final rotasyonu', () {
+    test('ateş modu: combo<3 kapalı, combo>=3 açık ve kor üretir (A2)', () {
+      final e = engineFor(endlessDef());
+      expect(e.fireMode, isFalse);
+      dropPerfect(e);
+      dropPerfect(e);
+      expect(e.combo, 2);
+      expect(e.fireMode, isFalse);
+      dropPerfect(e);
+      expect(e.combo, 3);
+      expect(e.fireMode, isTrue);
+      final before = e.particles.length;
+      e.tick(1 / 60);
+      expect(e.particles.length, greaterThan(before), reason: 'kor emisyonu');
+      // kor parçacığı işaretli
+      expect(e.particles.any((p) => p.ember), isTrue);
+    });
+
+    test('zoom: 8+ blokta 0.92 hedefe iner (A4)', () {
+      final e = engineFor(endlessDef());
+      for (var i = 0; i < 9; i++) {
+        dropPerfect(e);
+      }
+      expect(e.blocks.length, 10);
+      for (var i = 0; i < 120; i++) {
+        e.tick(1 / 60);
+      }
+      expect(e.zoomT, GamePlay.kZoomWide);
+      expect(e.zoom, closeTo(GamePlay.kZoomWide, 0.02));
+    });
+
+    test('zoom: kazanınca kısa kule için hedef 1.0 kalır (A4)', () {
+      final e = engineFor(levelDef(0)); // hedef 8
+      for (var i = 0; i < 8; i++) {
+        dropPerfect(e);
+      }
+      expect(e.state, EngineState.won);
+      expect(e.zoomT, 1.0);
+    });
+
+    test('mükemmelde parlak dış halka eklenir (A1)', () {
+      final e = engineFor(endlessDef());
+      dropPerfect(e);
+      expect(e.rings.any((r) => r.bright), isTrue);
+      expect(e.rings.length, greaterThanOrEqualTo(2));
+    });
+
+    test('resize: w=0 ile kurulan dünyayı yatayda merkeze taşır (oynanabilirlik)', () {
+      // play_screen akışı: initState'te startLevel (w=0), gerçek boyut ilk
+      // kare SONRASI LayoutBuilder resize'ıyla gelir. resize tabanı merkeze
+      // sabitlemeli — aksi halde kule sol kenarda yarı kesik doğar.
+      final e = GamePlay();
+      e.startLevel(endlessDef());
+      e.resize(358, 873); // emülatör mantıksal boyutu
+      final base = e.blocks.first;
+      expect(base.x, closeTo((e.w - base.w) / 2, 0.5),
+          reason: 'taban blok yatayda merkezde olmalı');
+      final top = e.blocks.last;
+      final b = movingBounds(top);
+      expect(e.moving!.x, inInclusiveRange(b.minX, b.maxX),
+          reason: 'süzülen blok hareket sınırları içinde olmalı');
+    });
+
+    test('final stilleri: meteor izleri, kuş sürüsü, aurora sekansı (B1)', () {
+      // finaleFor(1) = meteor
+      var e = engineFor(levelDef(1));
+      for (var i = 0; i < levelDef(1).target; i++) {
+        dropPerfect(e);
+      }
+      expect(e.state, EngineState.won);
+      expect(e.finale, FinaleStyle.meteor);
+      expect(e.particles.any((p) => p.streak), isTrue);
+
+      // finaleFor(2) = kuş
+      e = engineFor(levelDef(2));
+      for (var i = 0; i < levelDef(2).target; i++) {
+        dropPerfect(e);
+      }
+      expect(e.finale, FinaleStyle.kus);
+      expect(e.birds.length, greaterThan(0));
+
+      // finaleFor(3) = aurora — sekans saati açılır
+      e = engineFor(levelDef(3));
+      for (var i = 0; i < levelDef(3).target; i++) {
+        dropPerfect(e);
+      }
+      expect(e.finale, FinaleStyle.aurora);
+      expect(e.finaleT, greaterThan(0));
     });
   });
 }

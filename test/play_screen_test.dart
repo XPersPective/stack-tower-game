@@ -10,7 +10,10 @@ import 'package:stack_tower_game/screens/play_screen.dart';
 import 'package:stack_tower_game/services/storage.dart';
 
 void main() {
-  Future<GameSession> makeSession() async => GameSession(MemoryStorage());
+  // Tarih-duyarlı sürpriz döngüsünü sabitle (market_test kalıbı):
+  // 20001. gün → levelDef(2) için (2+20001)%4 = 3 ≠ 0 → sürpriz yok.
+  Future<GameSession> makeSession() async => GameSession(MemoryStorage(),
+      clock: () => DateTime.fromMillisecondsSinceEpoch(86400000 * 20001));
 
   Widget host(GameSession session, LevelDef def, {VoidCallback? onExit, VoidCallback? onFlowDone}) {
     return MultiProvider(
@@ -105,7 +108,7 @@ void main() {
     }
 
     expect(e.state, EngineState.lost);
-    expect(find.text('BİTİYORDU!'), findsOneWidget);
+    expect(find.text('NEREDEYSE!'), findsOneWidget); // PB-033 C5: kayıp başlığı
     expect(session.state.coins, before + 2);
     for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 100));
@@ -195,7 +198,7 @@ void main() {
     for (var i = 0; i < 14; i++) {
       await tester.pump(const Duration(milliseconds: 60));
     }
-    expect(find.text('BİTİYORDU!'), findsOneWidget);
+    expect(find.text('NEREDEYSE!'), findsOneWidget); // PB-033 C5: kayıp başlığı
 
     await tester.tap(find.text('TEKRAR'));
     await tester.pump();
@@ -216,13 +219,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 120));
 
     // İlk dokunuş: yalnız silahlanır — yanlışlıkla çıkış yok
-    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.pump();
     expect(exits, 0);
     expect(find.text('Çıkmak için tekrar dokun'), findsOneWidget);
 
     // İkinci dokunuş: onaylanmış çıkış
-    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.pump();
     expect(exits, 1);
 

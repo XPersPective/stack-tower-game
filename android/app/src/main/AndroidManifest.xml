@@ -1,8 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- PB-032: ÜRETIM DÜZELTME — INTERNET izni debug/profile manifestlerinde
+         YALNIZCA vardı; release (APK/AAB) derlemesinde ağ izni olmadığı için
+         Google/Apple girişi ve bulut skor tahtası üretimde sessizce ölü kalıyordu.
+         Oyun çevrimdışı tam oynanabilir (C-005) ama isteğe bağlı bulut özellikleri
+         bu izne bağlıdır. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Mağaza/bağlantı durumu bildirimi (isteğe bağlı, kullanıcı reddedebilir) -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <application
         android:label="Stack Tower Game"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:hasFragileUserData="false"
+        android:enableOnBackInvokedCallback="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"

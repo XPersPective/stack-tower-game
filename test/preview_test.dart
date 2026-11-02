@@ -86,7 +86,8 @@ void main() {
     expect(
         find.text('${def.target} blok · ${def.coins} 🪙${def.box ? ' + 🎁' : ''}'),
         findsOneWidget);
-    expect(find.text('★'), findsNWidgets(3)); // önceki yıldız yok → hepsi sönük
+    // Premium geçiş: yıldızlar artık özgün ikon (StarGlyph yerine star_rounded)
+    expect(find.byIcon(Icons.star_rounded), findsNWidgets(3)); // önceki yıldız yok → hepsi sönük
   });
 
   testWidgets('günlük bölümde kart günlük metinleri taşır', (tester) async {
@@ -122,17 +123,21 @@ void main() {
     await tester.pumpWidget(host(PreviewScreen(def: def)));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600)); // sinematik ortası
-    // BAŞLA fade'i Interval(0.6, 0.9) → t≈0.23'te henüz sıfır opaklıkta
-    final startFade =
-        tester.widget<FadeTransition>(find.byType(FadeTransition).last);
-    expect(startFade.opacity.value, lessThan(0.05));
+    // BAŞLA fade'i Interval(0.6, 0.9) → t≈0.23'te henüz sıfır opaklıkta.
+    // (GradientButton'ın AnimatedOpacity'si de FadeTransition ürettiği için
+    // hedef fade sabit bir anahtarla bulunur.)
+    final startFadeFinder =
+        find.byKey(const ValueKey('preview-start-fade'));
+    expect(
+        tester.widget<FadeTransition>(startFadeFinder).opacity.value,
+        lessThan(0.05));
     await tester.tap(find.byType(GestureDetector).first);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     // tap denetleyiciyi %99'a atlattı → fade tamamlanmış olmalı
-    final afterTap =
-        tester.widget<FadeTransition>(find.byType(FadeTransition).last);
-    expect(afterTap.opacity.value, greaterThan(0.99));
+    expect(
+        tester.widget<FadeTransition>(startFadeFinder).opacity.value,
+        greaterThan(0.99));
     expect(find.text('BAŞLA ▶'), findsOneWidget);
   });
 
@@ -163,7 +168,7 @@ void main() {
     // MapScreen'de de ok ikonu var → yalnız önizlemedekini hedefle
     await tester.tap(find.descendant(
         of: find.byType(PreviewScreen),
-        matching: find.byIcon(Icons.arrow_back)));
+        matching: find.byIcon(Icons.arrow_back_rounded)));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
     // pop çıkış animasyonu + imhası için ek kare (BAŞLA testiyle aynı neden)

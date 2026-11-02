@@ -127,6 +127,24 @@ Mevcut sürümün standartlarıdır; aşağısına düşülmeyecek:
 - Ses: her olay için ses (bırakma, mükemmel seri, ödül, kutu, tören) + sessize alma (ADR-003)
 - Dikey mod her iki platformda kilitli
 
+### 3.1 Premium Arayüz Katmanı (PB-032)
+Oyun sahnesinin kalitesi, çevreleyen arayüzle de eşleşmelidir:
+- **Canlı arka plan:** her menü-ekranında `AuroraBackground` — çok katmanlı aurora
+  şeritleri, paralaks yıldız alanı, ışınlı uzak gezegen, vinyet; tema hue'suna göre
+  renklenir (`lib/ui/aurora_background.dart`)
+- **Cam paneller:** `GlassPanel` — bulanık zemin + ışık kenarı + dış glow
+- **Gradyan butonlar:** `GradientButton` — gradyan dolgu, ışık kenarı, basınca
+  ölçek tepkisi, tek seferlik parlama süpürmesi, dokunsal geri bildirim
+- **Kademeli giriş:** `FadeSlideIn` — yukarı kayarak belirme (gecikme
+  `AnimationController`+`Interval` ile; `Timer`/`Future.delayed` YASAK)
+- **Özgün ikonografi:** para ve yıldız çizilen simgeler (`CoinGlyph`, `StarGlyph`)
+- **Sayfa geçişi:** `_FadeScalePageRoute` — yumuşak fade+ölçek (oyun ekranı hızlı)
+- **Arayüz sesleri:** tap / whoosh / reward / unlock / error / pop (27 WAV toplam)
+
+**Ortam animasyonu kapısı:** sürekli akan arka plan animasyonları
+`AmbientMotion` kapısına bağlıdır — üretimde açık, widget testinde kapalı
+(`pumpAndSettle` sonsuz döngüde takılır).
+
 ## 4. Flutter Mimarisi
 ```text
 lib/

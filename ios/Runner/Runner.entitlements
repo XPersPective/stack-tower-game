@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- PB-031/PB-032: Sign in with Apple yeteneği.
+	     Bu dosya Xcode'da "Signing & Capabilities → + Capability → Sign in with Apple"
+	     ile otomatik üretilir; elle de bu içerikle eşdeğerdir.
+	     Developer hesabında "Sign in with Apple" yeteneği ETKİN olmalıdır. -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+</dict>
+</plist>

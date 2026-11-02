@@ -3,6 +3,8 @@
 /// 150 bölüm + günlük meydan okuma + serbest mod. Matematik değiştirilmez.
 library;
 
+import 'dart:math' as math;
+
 import '../theme/tokens.dart' show WorldTheme, kThemes;
 
 const int kStageCount = 10;
@@ -252,6 +254,42 @@ Surprise? surpriseFor(int i, [int day = 0]) {
   final d = day;
   if ((i + d) % 4 != 0) return null;
   return _surprisePool[(i + d) % _surprisePool.length];
+}
+
+/* ================= BÖLÜM İMZASI (PB-033 — sunum çeşitliliği) ================= */
+
+/// Bölümün görsel imzası: aynı dünya içindeki 15 bölümün paleti/gökyüzü/silueti
+/// birbirinden farklı görünsün diye deterministik sunum sapmaları. Oyun
+/// matematiğine (C-002) dokunmaz — yalnız render parametreleridir.
+class LevelSignature {
+  final double hueShift; // tema renginde kayma (derece, ±13)
+  final int skyPhase; // gökyüzü/paralaks fazı 0..3
+  final int silVariant; // siluet dizilim varyantı 0..2
+  const LevelSignature({
+    required this.hueShift,
+    required this.skyPhase,
+    required this.silVariant,
+  });
+}
+
+/// [i] indeksli bölümün imzası — tohumlu ve deterministik (aynı bölüm her
+/// açılışta aynı görsel deneyimi verir; kayıt şemasına dokunulmaz).
+LevelSignature levelSignature(int i) {
+  final r = math.Random(0x51A6 + i * 7919);
+  return LevelSignature(
+    hueShift: (r.nextDouble() - 0.5) * 26,
+    skyPhase: r.nextInt(4),
+    silVariant: r.nextInt(3),
+  );
+}
+
+/// Bölüm sonu şöleni stilleri (DNA raporu B1 — imza final rotasyonu).
+enum FinaleStyle { konfeti, meteor, kus, aurora }
+
+/// 4 final tipinin rotasyonu: ardışık bölümlerde aynı final tekrarlanmaz.
+FinaleStyle finaleFor(int i) {
+  const order = FinaleStyle.values;
+  return order[i % order.length];
 }
 
 /* ===================== ANTLOJİ: oyun türleri (ADR-008) ===================== */

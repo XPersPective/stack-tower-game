@@ -1,20 +1,33 @@
-/// Stack Tower Game — oturum servisi (PB-011, SPEC §7.2/§7.5).
+/// Stack Tower Game — oturum servisi (PB-011 + PB-031, SPEC §7.2/§7.5).
 /// Kimlik = sağlayıcı `sub`; e-posta HİÇBİR yerde saklanmaz/gösterilmez.
-/// Belirteç yalnız [SecureStore]'da tutulur, loglara yazılmaz.
+/// Belirteç yalnız [SecureStore]'da (native: keychain/keystore) tutulur,
+/// loglara yazılmaz.
 library;
 
+import 'dart:async';
 import 'dart:convert';
+
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import 'leaderboard_service.dart';
 import 'storage.dart';
 
-/// Güvenli saklama soyutlaması. Üretimde platform keychain/keystore
-/// (flutter_secure_storage) bağlanır; bu repoda bağımlılıksız varsayılan
-/// [PrefsSecureStore] kullanılır ve PB-031'de native katman bağlanacak.
+/// Güvenli saklama soyutlaması.
+/// - Varsayılan/Web: [PrefsSecureStore] (SharedPreferences).
+/// - Test: [MemorySecureStore].
+/// - Üretim (native): [FlutterSecureStore] → keychain (iOS) / keystore (Android).
+///
+/// [hydrate] async başlangıç yüküdür; senkron [read] bellek yansımasından okur,
+/// böylece oturum durumu UI'da senkron erişilebilir kalır (C-013 anında yazım).
 abstract class SecureStore {
   String? read(String key);
   void write(String key, String value);
   void delete(String key);
+
+  /// Async: dayanıklı depoyu belleğe yükle. Varsayılan no-op.
+  Future<void> hydrate() async {}
 }
 
 class PrefsSecureStore implements SecureStore {
@@ -26,28 +39,117 @@ class PrefsSecureStore implements SecureStore {
   void write(String key, String value) => storage.setString(key, value);
   @override
   void delete(String key) => storage.setString(key, '');
+  @override
+  Future<void> hydrate() async {}
 }
 
 class MemorySecureStore implements SecureStore {
+  MemorySecureStore([this._initial]);
+  final Map<String, String>? _initial;
   final Map<String, String> _m = {};
   @override
-  String? read(String key) => _m[key];
+  String? read(String key) => _m[key] ?? _initial?[key];
   @override
   void write(String key, String value) => _m[key] = value;
   @override
   void delete(String key) => _m.remove(key);
+  @override
+  Future<void> hydrate() async {}
+}
+
+/// Üretim güvenli deposu: flutter_secure_storage (keychain/keystore).
+/// Yazma = eşzamanlı bellek yansıması + arka planda kalıcı yazım.
+class FlutterSecureStore implements SecureStore {
+  FlutterSecureStore([FlutterSecureStorage? box]) : _box = box ?? const FlutterSecureStorage();
+
+  final FlutterSecureStorage _box;
+  final Map<String, String> _cache = {};
+
+  @override
+  Future<void> hydrate() async {
+    try {
+      final all = await _box.readAll();
+      _cache.clear();
+      _cache.addAll(all);
+    } catch (_) {
+      // İlk çalıştırma / erişim reddi → boş oturum.
+    }
+  }
+
+  @override
+  String? read(String key) => _cache[key];
+
+  @override
+  void write(String key, String value) {
+    _cache[key] = value;
+    unawaited(_box.write(key: key, value: value));
+  }
+
+  @override
+  void delete(String key) {
+    _cache.remove(key);
+    unawaited(_box.delete(key: key));
+  }
 }
 
 /// Sağlayıcı kimlik belirteci üreticisi (Google/Apple SDK'ları).
-/// Native SDK bağlanana kadar [NoopAuthProvider] kullanılır.
 abstract class AuthProvider {
+  /// idToken döner; kullanıcı iptal ederse/erişilemezse null.
   Future<String?> idToken();
 }
 
+/// Hiçbir native bağlama olmadan (yalnız yerel / test).
 class NoopAuthProvider implements AuthProvider {
   const NoopAuthProvider();
   @override
   Future<String?> idToken() async => null;
+}
+
+/// Google Sign-In → idToken (RS256, workers JWKS ile doğrulanır).
+/// google_sign_in v7: singleton + tek seferlik [initialize] + [authenticate].
+class GoogleAuthProvider implements AuthProvider {
+  const GoogleAuthProvider({this.serverClientId});
+
+  /// iOS/Android yapılandırmasında kullanılan web client id (sunucu akışı).
+  /// Boş bırakılırsa platform varsayılan OAuth yapılandırması kullanılır.
+  final String? serverClientId;
+
+  static bool _initialized = false;
+
+  @override
+  Future<String?> idToken() async {
+    try {
+      final google = GoogleSignIn.instance;
+      if (!_initialized) {
+        await google.initialize(serverClientId: serverClientId);
+        _initialized = true;
+      }
+      final account = await google.authenticate();
+      return account.authentication.idToken;
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+/// Sign in with Apple → identityToken.
+/// iOS 13+ gerektirir; diğer platformlarda try/catch ile null döner.
+class AppleAuthProvider implements AuthProvider {
+  const AppleAuthProvider();
+
+  @override
+  Future<String?> idToken() async {
+    try {
+      // Kapsam istenmez (C-014 veri minimizasyonu): isim/e-posta kullanılmıyor;
+      // Apple'ın paylaşım istemi çıkmaz, yalnız kimlik doğrulama olur.
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [],
+      );
+      return credential.identityToken;
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 class SessionService {
@@ -58,6 +160,9 @@ class SessionService {
 
   final SecureStore store;
   final HttpTransport transport;
+
+  /// runApp öncesi: kalıcı oturumu belleğe yükle (C-013 anında erişim).
+  Future<void> init() => store.hydrate();
 
   String? get token => store.read(kTokenKey);
   bool get signedIn => (token ?? '').isNotEmpty;

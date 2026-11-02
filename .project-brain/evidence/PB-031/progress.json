@@ -1,0 +1,14 @@
+{
+  "protocol": 1,
+  "next": "Tick proven criteria, verify remaining behavior, then review and accept",
+  "failing": "",
+  "dirty": "android/app/build.gradle.kts, android/app/proguard-rules.pro, android/app/src/main/AndroidManifest.xml, android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml, android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png; inspect git status for the complete dirty set",
+  "strategy": "check",
+  "attempt": "0f6fcc2c59763a49",
+  "repeats": 0,
+  "contract": "4096f6185ca86318",
+  "usage": {
+    "checks": 3,
+    "seconds": 141.764
+  }
+}

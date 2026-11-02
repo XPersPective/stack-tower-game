@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "execution": {
+    "source": "native"
+  },
+  "review": {
+    "source": "native"
+  },
+  "scheduling": {
+    "mode": "parallel",
+    "max_parallel": 3
+  },
+  "quota_recovery": {
+    "enabled": false,
+    "threshold_percent": 10
+  },
+  "note": "Kullanıcı 2026-11-02: 'kendi kendini sadece kendini alt ajan olarak kullanıp paralel çalıştırabilirsiniz' → ESP=native, REV=native, SP=parallel(3), QRP kapalı. C-024 uyumlu (CAP yok)."
+}

@@ -17,6 +17,8 @@ avcısı, halka, fırlat, birleştir, tek çizgi, sırala, denge, savun ve ritim
 10 farklı oyun türü sırayla gelir, ilk beş bölümde beş farklı deneyim.
 
 • 150 el yapımı bölüm, 10 dünya, her dünyanın patronu ve atmosferi
+• Canlı neon atmosfer: aurora gökyüzü, ışıklı silüetler, gökyüzünde yansıyan yıldızlar
+• Her dokunuşta tepki: ışık patlaması, konfeti, yıldız izi ve katmanlı kombo müziği
 • Günlük meydan okuma ve haftalık rekor yayı
 • Görünür inşaat: bitirdiğin bölüm adada yapı yükseltir, dünya sonunda anıt
 • Pazar yeri: günlük tezgah, gizli sandık, kalkan/çarpan/joker

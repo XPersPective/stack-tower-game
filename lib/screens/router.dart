@@ -51,6 +51,43 @@ Widget routeFor(RouteSettings settings) {
   }
 }
 
+/// Premium sayfa geçişi — hafif ölçek + fade, yumuşak easing.
+///
+/// Oyun ekranı (play) hızlı geçiş kullanır (tekrar oynatmada bekletmez);
+/// diğer ekranlar sinematik geçiş kullanır.
+class _FadeScalePageRoute<T> extends PageRouteBuilder<T> {
+  _FadeScalePageRoute({required Widget page, this.duration = const Duration(milliseconds: 320)})
+      : super(
+          transitionDuration: duration,
+          reverseTransitionDuration: const Duration(milliseconds: 220),
+          pageBuilder: (_, _, _) => page,
+          transitionsBuilder: (_, animation, _, child) {
+            final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+            return FadeTransition(
+              opacity: curved,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.96, end: 1.0).animate(curved),
+                child: child,
+              ),
+            );
+          },
+        );
+
+  final Duration duration;
+}
+
+/// Rotayı üretir: oyun ekranı hızlı, diğerleri sinematik geçiş kullanır.
+Route<dynamic> buildRoute(RouteSettings settings) {
+  final page = routeFor(settings);
+  final fast = settings.name == Routes.play || settings.name == Routes.playEndless;
+  return _FadeScalePageRoute(
+    page: page,
+    duration: fast
+        ? const Duration(milliseconds: 200)
+        : const Duration(milliseconds: 340),
+  );
+}
+
 /// play ekranı argümanıyla: haritaya dönüş akışını router'da yönetir.
 class PlayRoute extends StatelessWidget {
   const PlayRoute({super.key, required this.def});

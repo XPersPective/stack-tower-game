@@ -8,7 +8,26 @@ import 'package:flutter/material.dart';
 
 import '../services/storage.dart';
 
-enum GameSound { place, perfect, win, lose, coin, box, shield, start, crit, fanfare, mystery }
+enum GameSound {
+  place,
+  perfect,
+  win,
+  lose,
+  coin,
+  box,
+  shield,
+  start,
+  crit,
+  fanfare,
+  mystery,
+  // PB-032: arayüz sesleri
+  tap,
+  whoosh,
+  reward,
+  unlock,
+  error,
+  pop,
+}
 
 /// PB-017: kombo eşiklerine göre aktif ritim katmanları (0..2).
 /// 3+ → kick, 6+ → kick+hat, 10+ → üçü birden; kombo kırılınca boş (fade-out).
@@ -39,6 +58,36 @@ class AudioController extends ChangeNotifier {
   List<int> _activeLayers = const [];
   List<int> get activeLayersForTest => _activeLayers;
 
+  // PB-033/034: arka plan müzik döngüsü (music_loop.wav — dikişsiz 8 bar)
+  AudioPlayer? _music;
+  bool _musicWanted = false;
+  static const double kMusicVolume = 0.38;
+
+  /// Arka plan müziğini başlat (idempotent). Sessiz modda istek hatırlanır,
+  /// ses açılınca kaldığı yerden devam eder.
+  Future<void> ensureMusic() async {
+    _musicWanted = true;
+    if (_muted) return;
+    final m = _music;
+    if (m != null) {
+      try {
+        await m.resume();
+      } catch (_) {}
+      return;
+    }
+    final p = AudioPlayer();
+    try {
+      await p.setReleaseMode(ReleaseMode.loop);
+      await p.setSource(AssetSource('sounds/music_loop.wav'));
+      await p.setVolume(0);
+      await p.resume();
+      await p.setVolume(kMusicVolume);
+      _music = p;
+    } catch (_) {
+      // eksik varlık: sessizce yoksay (oyun asla kırılmaz)
+    }
+  }
+
   Future<void> preload() async {
     if (_ready) return;
     _ready = true;
@@ -54,6 +103,13 @@ class AudioController extends ChangeNotifier {
       GameSound.crit: 'crit.wav',
       GameSound.fanfare: 'fanfare.wav',
       GameSound.mystery: 'mystery.wav',
+      // PB-032: arayüz sesleri
+      GameSound.tap: 'tap.wav',
+      GameSound.whoosh: 'whoosh.wav',
+      GameSound.reward: 'reward.wav',
+      GameSound.unlock: 'unlock.wav',
+      GameSound.error: 'error.wav',
+      GameSound.pop: 'pop.wav',
     };
     for (final e in names.entries) {
       final p = AudioPlayer();
@@ -155,12 +211,26 @@ class AudioController extends ChangeNotifier {
         GameSound.crit => 'crit.wav',
         GameSound.fanfare => 'fanfare.wav',
         GameSound.mystery => 'mystery.wav',
+        // PB-032: arayüz sesleri
+        GameSound.tap => 'tap.wav',
+        GameSound.whoosh => 'whoosh.wav',
+        GameSound.reward => 'reward.wav',
+        GameSound.unlock => 'unlock.wav',
+        GameSound.error => 'error.wav',
+        GameSound.pop => 'pop.wav',
       };
 
   void setMuted(bool m) {
     _muted = m;
     storage?.setString(kMuteKey, m ? '1' : '0');
-    if (m) setCombo(0); // sustur: katmanlar sönsün
+    if (m) {
+      setCombo(0); // sustur: katmanlar sönsün
+      try {
+        _music?.pause();
+      } catch (_) {}
+    } else if (_musicWanted) {
+      ensureMusic(); // ses açıldı: müzik kaldığı yerden devam
+    }
     notifyListeners();
   }
 
@@ -174,6 +244,9 @@ class AudioController extends ChangeNotifier {
     for (final p in _layers) {
       p.dispose();
     }
+    try {
+      _music?.dispose();
+    } catch (_) {}
     super.dispose();
   }
 }

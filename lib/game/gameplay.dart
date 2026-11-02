@@ -52,15 +52,25 @@ class Particle {
   int hue;
   bool coin;
   bool star; // PB-016 juice: yıldız izi parıltısı (yerçekimsiz, yıldız biçimli)
+  bool ember; // PB-033 ateş modu: yuvarlak kor parçacığı (yuvarlak + dış hale)
+  bool streak; // PB-033 meteor finali: hız yönünde uzayan parlak iz
   Particle(this.x, this.y, this.vx, this.vy, this.max, this.size, this.hue, {this.coin = false})
       : life = 0,
-        star = false;
+        star = false,
+        ember = false,
+        streak = false;
 }
 
 class Ring {
   double x, y, r, life, max;
   int hue;
-  Ring(this.x, this.y, this.r, this.max, this.hue) : life = 0;
+  bool bright; // PB-033 A1: parlak dış halka (düşük doygunluk, yüksek parlaklık)
+  Ring(this.x, this.y, this.r, this.max, this.hue, {this.bright = false}) : life = 0;
+}
+
+class Bird {
+  double x, y, vx, ph, size;
+  Bird(this.x, this.y, this.vx, this.size) : ph = 0;
 }
 
 class Popup {
@@ -155,6 +165,19 @@ class GamePlay {
   double spawnTilt = 0; // ruzgargulu görsel açı (±15°)
   Moving? ghost; // GÖLGE BLOK: hayalet ikiz — farklı hızda, hiçbir kuralı etkilemez
 
+  // --- PB-033 sunum katmanı: imza + kamera + şölen + ateş modu ---
+  LevelSignature sig =
+      const LevelSignature(hueShift: 0, skyPhase: 0, silVariant: 0); // bölüm görsel imzası
+  double zoom = 1; // A4: kamera geri çekilme (1.0 → 0.92; kazanınca kule kadraja)
+  double zoomT = 1; // zoom hedefi
+  FinaleStyle finale = FinaleStyle.konfeti; // B1: imza final rotasyonu
+  double finaleT = 0; // final sekans saati (0 = kapalı)
+  List<Bird> birds = []; // kuş sürüsü finali
+  static const double kZoomWide = 0.92; // 8+ blokta kadraj
+
+  /// A2 ateş modu: 3+ mükemmel serisinde süzülen blok kor oluşturur.
+  bool get fireMode => combo >= 3 && state == EngineState.playing && moving != null;
+
   final List<Debris> debris = [];
   final List<Particle> particles = [];
   final List<Ring> rings = [];
@@ -215,6 +238,21 @@ class GamePlay {
       if (moving != null) {
         moving!.x *= f;
         moving!.w *= f;
+      }
+    }
+    // Oynanabilirlik düzeltmesi: dünya w=0 iken kurulduysa (play_screen
+    // initState akışı — ilk LayoutBuilder resize'ı ilk kare SONRASI gelir)
+    // taban blok sol kenara taşar. Tabanı yatayda merkeze sabitle, tüm kuleyi
+    // aynı deltayla taşı: göreli geometri (movingBounds/denge) değişmez — C-002.
+    if (blocks.isNotEmpty) {
+      final target = (w - blocks.first.w) / 2;
+      final dx = target - blocks.first.x;
+      if (dx.abs() > 0.01) {
+        for (final b in blocks) {
+          b.x += dx;
+        }
+        moving?.x += dx;
+        ghost?.x += dx;
       }
     }
     makeAmbience();
@@ -396,6 +434,13 @@ class GamePlay {
     shieldsLeft = shields;
     slowTimer = 0;
     twist = twistType ?? ((d.daily || d.endless) ? null : twistFor(d.i));
+    // PB-033: bölüm görsel imzası + final stili + kamera sıfırı
+    sig = levelSignature(d.i);
+    finale = finaleFor(d.i);
+    finaleT = 0;
+    zoom = 1;
+    zoomT = 1;
+    birds = [];
     _zitFlip = false;
     crits = 0;
     goldBlocks = 0;
@@ -500,6 +545,8 @@ class GamePlay {
       _confettiBurst(x2 + w2 / 2, y, 12, hue); // juice (PB-016): mükemmel konfetisi
       _starTrail(x2 + w2 / 2, y, hue); // juice (PB-016): yıldız izi
       rings.add(Ring(x2 + w2 / 2, y + bh / 2, w2 * 0.3, 0.5, hue));
+      // juice (PB-033 A1): ikinci genişleyen PARLAK dış halka — dilim hissi
+      rings.add(Ring(x2 + w2 / 2, y + bh / 2, w2 * 0.12, 0.7, hue, bright: true));
       popupText(combo > 1 ? 'MÜKEMMEL ×$combo' : 'MÜKEMMEL', x2 + w2 / 2, y - 12 * scale, hue);
       if (def?.modifier == 'altin') {
         coinBurst(x2 + w2 / 2, y, 4 + math.min(8, combo));
@@ -580,8 +627,30 @@ class GamePlay {
 
   /* --------------------------- Efektler --------------------------- */
 
+  /// B1 (PB-033): kazanma şöleni — final stiline göre dağıtılır. Her stil
+  /// sunumdur; skor/ödül matematiği (C-002) değişmez.
   void celebration() {
-    for (var i = 0; i < 120; i++) {
+    finaleT = 0.001; // final sekansını aç (painter aurora/hava durumunu okur)
+    switch (finale) {
+      case FinaleStyle.konfeti:
+        // klasik: yoğun konfeti yağmuru
+        _confettiRain(120);
+      case FinaleStyle.meteor:
+        // meteor yağmuru: çapraz akan parlak izler + konfeti alt katmanı
+        _meteorShower();
+        _confettiRain(50);
+      case FinaleStyle.kus:
+        // kuş sürüsü: 3 sıra halinde kanat çırpan siluetler + konfeti
+        _birdFlock();
+        _confettiRain(60);
+      case FinaleStyle.aurora:
+        // aurora patlaması: painter finaleT ile bandı çizer; konfeti hafif
+        _confettiRain(40);
+    }
+  }
+
+  void _confettiRain(int count) {
+    for (var i = 0; i < count; i++) {
       confetti.add(Confetti(
         _rnd.nextDouble() * w,
         -20 - _rnd.nextDouble() * h * 0.3,
@@ -594,6 +663,35 @@ class GamePlay {
         1.8 + _rnd.nextDouble(),
         rot: _rnd.nextDouble() * 6.28,
       ));
+    }
+  }
+
+  void _meteorShower() {
+    for (var i = 0; i < 26; i++) {
+      final x = _rnd.nextDouble() * w * 1.4 - w * 0.2;
+      particles.add(Particle(
+        x,
+        -30 - _rnd.nextDouble() * h * 0.5,
+        -(90 + _rnd.nextDouble() * 130),
+        420 + _rnd.nextDouble() * 260,
+        1.4 + _rnd.nextDouble() * 0.6,
+        (6 + _rnd.nextDouble() * 8) * scale,
+        40 + _rnd.nextInt(16),
+      )..streak = true);
+    }
+  }
+
+  void _birdFlock() {
+    for (var f = 0; f < 3; f++) {
+      final baseY = h * (0.18 + 0.09 * f);
+      for (var b = 0; b < 7; b++) {
+        birds.add(Bird(
+          -30 - b * (26 + _rnd.nextDouble() * 14) - f * 60,
+          baseY + (b % 2) * 14 * scale + _rnd.nextDouble() * 8,
+          150 + _rnd.nextDouble() * 50,
+          (5 + _rnd.nextDouble() * 4) * scale,
+        ));
+      }
     }
   }
 
@@ -706,6 +804,47 @@ class GamePlay {
 
     final camTarget = math.max(0, topLimit - groundY + blocks.length * bh);
     camShift += (camTarget - camShift) * math.min(1, dt * 10);
+
+    // PB-033 A4: kamera geri çekilme — 8+ blokta kadraj genişler; kazanınca
+    // tüm kule kadraja girer (Stack DNA'sı). Yalnız sunum; dengeye dokunmaz.
+    var zTarget = 1.0;
+    if (state == EngineState.won) {
+      final towerH = (blocks.length + 1) * bh;
+      zTarget = math.min(1.0, (groundY - h * 0.06) / math.max(1.0, towerH));
+    } else if (blocks.length >= 8) {
+      zTarget = kZoomWide;
+    }
+    zoomT = zTarget;
+    zoom += (zoomT - zoom) * math.min(1, dt * 2.5);
+
+    // PB-033 B1: final sekans saati (painter aurora patlamasını bununla çizer)
+    if (finaleT > 0) finaleT += fxDt;
+
+    // PB-033 A2: ateş modu kor izi — süzülen bloğun arka kenarında yükselen
+    // korlar; kombo derinleştikçe yoğunlaşır (sunum RNG'si _fxRnd — C-002)
+    if (fireMode) {
+      final n = combo >= 6 ? 3 : 2;
+      final my = movingY();
+      for (var i = 0; i < n; i++) {
+        particles.add(Particle(
+          moving!.x + _fxRnd.nextDouble() * moving!.w,
+          my + bh * (0.3 + _fxRnd.nextDouble() * 0.6),
+          -moving!.dir * (30 + _fxRnd.nextDouble() * 60),
+          -(20 + _fxRnd.nextDouble() * 80),
+          0.4 + _fxRnd.nextDouble() * 0.3,
+          (2.5 + _fxRnd.nextDouble() * 3) * scale,
+          18 + _fxRnd.nextInt(32),
+        )..ember = true);
+      }
+    }
+
+    // PB-033 B1: kuş sürüsü finali adımı
+    for (var i = birds.length - 1; i >= 0; i--) {
+      final b = birds[i];
+      b.x += b.vx * fxDt;
+      b.ph += fxDt * 9;
+      if (b.x > w + 40) birds.removeAt(i);
+    }
 
     if (moving != null && state == EngineState.playing) {
       final top = blocks[blocks.length - 1];

@@ -15,6 +15,7 @@ import '../game/scene_painter.dart' show hslColor;
 import '../map/construction.dart';
 import '../map/map3d.dart';
 import '../theme/tokens.dart';
+import '../ui/premium_kit.dart';
 import 'flow_overlays.dart';
 import 'router.dart';
 
@@ -155,21 +156,23 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
               ),
             ),
             SafeArea(
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back, color: NeonPalette.text, size: 28),
-                  ),
-                  const Spacer(),
-                  Text('🪙 ${session.state.coins}',
-                      style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(width: 14),
-                  Text('★ ${session.totalStars}',
-                      style: Theme.of(context).textTheme.titleLarge
-                          ?.copyWith(color: NeonPalette.star)),
-                  const SizedBox(width: 8),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.md, vertical: AppSpace.sm),
+                child: Row(
+                  children: [
+                    _MapIconButton(
+                      icon: Icons.arrow_back_rounded,
+                      onTap: () => Navigator.pop(context),
+                    ),
+                    const Spacer(),
+                    ResourceChip(
+                      coins: session.state.coins,
+                      stars: session.totalStars,
+                    ),
+                    const SizedBox(width: AppSpace.sm),
+                  ],
+                ),
               ),
             ),
             Positioned(
@@ -177,20 +180,22 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
               right: 0,
               bottom: 96,
               child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xCC0a0a1e),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                        color: hslColor(isl.theme.glow, 90, 62).withValues(alpha: .5)),
-                  ),
+                child: GlassPanel(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.xl, vertical: AppSpace.lg),
+                  radius: AppRadius.xl,
+                  blur: 10,
+                  glowColor: hslColor(isl.theme.glow, 90, 62),
+                  borderColor:
+                      hslColor(isl.theme.glow, 90, 62).withValues(alpha: .45),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text('DÜNYA ${isl.stage + 1}',
                           style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: hslColor(isl.theme.glow, 90, 70), letterSpacing: 2)),
+                              ?.copyWith(
+                                  color: hslColor(isl.theme.glow, 90, 70),
+                                  letterSpacing: 2)),
                       Text(isl.open ? isl.theme.name : '🔒 ???',
                           style: Theme.of(context).textTheme.displayMedium),
                       Text(
@@ -217,7 +222,18 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
               left: 24,
               right: 24,
               bottom: 20,
-              child: NeonButton('🌍 GÜNLÜK MEYDAN OKUMA', _openDaily),
+              child: GradientButton(
+                label: 'GÜNLÜK MEYDAN OKUMA',
+                icon: Icons.public_rounded,
+                expand: true,
+                height: 54,
+                colors: const [
+                  Color(0xFF2E1E86),
+                  Color(0xFF12407E),
+                  Color(0xFF451C7A),
+                ],
+                onTap: _openDaily,
+              ),
             ),
           ],
         );
@@ -265,4 +281,34 @@ class _Drag {
   double moved = 0;
   double dy = 0;
   _Drag({required this.start, required this.yaw});
+}
+
+/// Harita köşe düğmesi (geri).
+class _MapIconButton extends StatelessWidget {
+  const _MapIconButton({required this.icon, required this.onTap});
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Geri',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        child: Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.black.withValues(alpha: .28),
+            border: Border.all(color: Colors.white.withValues(alpha: .14)),
+          ),
+          child: Icon(icon, color: NeonPalette.text, size: 24),
+        ),
+      ),
+    );
+  }
 }

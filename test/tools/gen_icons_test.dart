@@ -7,6 +7,7 @@
 library;
 
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -16,6 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 const String kSource = 'reference/assets/icon-1024.png';
 const String kAndroidRes = 'android/app/src/main/res';
 const String kIosIcons = 'ios/Runner/Assets.xcassets/AppIcon.appiconset';
+const String kIosLaunch = 'ios/Runner/Assets.xcassets/LaunchImage.imageset';
 
 Future<ui.Image> _decode(List<int> bytes) async {
   final codec = await ui.instantiateImageCodec(Uint8List.fromList(bytes));
@@ -51,6 +53,44 @@ Future<ui.Image> _resize(ui.Image src, int w, int h, {double inset = 0}) async {
 Future<List<int>> _png(ui.Image img) async {
   final data = await img.toByteData(format: ui.ImageByteFormat.png);
   return data!.buffer.asUint8List();
+}
+
+/// iOS açılış görseli: koyu zemin (#0A0A1E) + ortada ikon (%66 güvenli alan).
+Future<ui.Image> _launchImage(ui.Image src, int w, int h) async {
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+  canvas.drawRect(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()),
+      Paint()..color = const Color(0xFF0A0A1E));
+  final side = math.min(w, h) * 0.66;
+  canvas.drawImageRect(
+      src,
+      Rect.fromLTWH(0, 0, src.width.toDouble(), src.height.toDouble()),
+      Rect.fromCenter(
+          center: Offset(w / 2, h / 2), width: side, height: side),
+      Paint()..filterQuality = FilterQuality.high);
+  final pic = recorder.endRecording();
+  return pic.toImage(w, h);
+}
+
+/// Yuvarlak ikon (PB-032): kare kaynak daire maskesiyle kırpılır.
+/// Android'in `android:roundIcon` referansı karşılanır.
+Future<ui.Image> _roundIcon(ui.Image src, int w, int h) async {
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+  // daire maskesi
+  canvas.save();
+  canvas.clipPath(
+    Path()..addOval(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble())),
+  );
+  canvas.drawImageRect(
+    src,
+    Rect.fromLTWH(0, 0, src.width.toDouble(), src.height.toDouble()),
+    Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()),
+    Paint()..filterQuality = FilterQuality.high,
+  );
+  canvas.restore();
+  final pic = recorder.endRecording();
+  return pic.toImage(w, h);
 }
 
 void main() {
@@ -102,9 +142,32 @@ void main() {
       count++;
     }
 
+    // PB-032: yuvarlak (round) ikon varyantı — manifest'teki android:roundIcon
+    // referansı karşılanmalı; aksi halde release derlemesi AAPT hatası verir.
+    // Kaynak kare görsel, daire maskesiyle kırpılır.
+    for (final dir in Directory(kAndroidRes).listSync().whereType<Directory>()) {
+      if (!dir.path.contains('mipmap')) continue;
+      final launcher = File('${dir.path}/ic_launcher.png');
+      if (!launcher.existsSync()) continue;
+      final old = await _decode(launcher.readAsBytesSync());
+      final w = old.width, h = old.height;
+      old.dispose();
+      final img = await _roundIcon(src, w, h);
+      File('${dir.path}/ic_launcher_round.png').writeAsBytesSync(await _png(img));
+      img.dispose();
+      count++;
+    }
+
     // Adaptive icon tanımı + arka plan rengi
     final anydpi = Directory('$kAndroidRes/mipmap-anydpi-v26')..createSync(recursive: true);
     File('${anydpi.path}/ic_launcher.xml').writeAsStringSync('''<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>
+''');
+    // PB-032: yuvarlak adaptive ikon (Android 8+ launcher'lar yuvarlak ister).
+    File('${anydpi.path}/ic_launcher_round.xml').writeAsStringSync('''<?xml version="1.0" encoding="utf-8"?>
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@color/ic_launcher_background" />
     <foreground android:drawable="@mipmap/ic_launcher_foreground" />
@@ -116,7 +179,20 @@ void main() {
     <color name="ic_launcher_background">#0A0A1E</color>
   </resources>
 ''');
-    count += 2;
+    count += 3;
+
+    // iOS LaunchImage seti: koyu zemin + ortada ikon
+    const launchSizes = {
+      'LaunchImage.png': [168, 185],
+      'LaunchImage@2x.png': [336, 370],
+      'LaunchImage@3x.png': [504, 555],
+    };
+    for (final e in launchSizes.entries) {
+      final img = await _launchImage(src, e.value[0], e.value[1]);
+      File('$kIosLaunch/${e.key}').writeAsBytesSync(await _png(img));
+      img.dispose();
+      count++;
+    }
 
     expect(count, greaterThan(20), reason: 'ikon dosyaları üretilmeli');
     // ignore: avoid_print

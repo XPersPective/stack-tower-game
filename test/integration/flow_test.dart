@@ -29,7 +29,9 @@ Widget _routedHost(Widget home, GameSession session) => MultiProvider(
 
 void main() {
   testWidgets('akış: önizleme → BAŞLA → oyun başlar (HUD hazır)', (tester) async {
-    final session = GameSession(MemoryStorage());
+    // Saat sabit (20001. gün) — tarih-duyarlı sürpriz döngüsü testi bozmasın.
+    final session = GameSession(MemoryStorage(),
+        clock: () => DateTime.fromMillisecondsSinceEpoch(86400000 * 20001));
     // i=2 → STACK (engineForTest yalnız stack türünde motor döndürür);
     // bölümün kilidi açık olsun diye ilk iki bölüm tamamlanır
     for (var i = 0; i < 2; i++) {

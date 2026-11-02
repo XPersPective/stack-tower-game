@@ -11,6 +11,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import 'gameplay.dart';
+import 'levels.dart' show FinaleStyle;
 import 'twists.dart';
 
 /* ---------------- renk yardımcıları (game.js birebir) ---------------- */
@@ -72,6 +73,10 @@ const _defaultGlow = 268;
 
 /* ------------------------------ Painter ------------------------------ */
 
+/// PB-033 (F1): kare-başı yeniden kurulan ScenePainter'lar arasında PAYLAŞILAN
+/// popup Picture önbelleği — TextPainter.layout kare-başı maliyeti kalkar.
+final Map<String, (ui.Picture, double, double)> _popupPictureCache = {};
+
 class ScenePainter extends CustomPainter {
   ScenePainter(this.g) : super(repaint: g);
 
@@ -110,6 +115,13 @@ class ScenePainter extends CustomPainter {
     canvas.save();
     if (e.shake > 0.2) {
       canvas.translate((_shakeRnd.nextDouble() - 0.5) * e.shake, (_shakeRnd.nextDouble() - 0.5) * e.shake);
+    }
+    // PB-033 A4: kamera geri çekilme — pivot alt-merkez; zemin yerinde kalır
+    canvas.save();
+    if (e.zoom < 0.999) {
+      canvas.translate(e.w / 2, e.h);
+      canvas.scale(e.zoom);
+      canvas.translate(-e.w / 2, -e.h);
     }
 
     _drawGround(canvas, e, glow);
@@ -158,6 +170,28 @@ class ScenePainter extends CustomPainter {
         final sp = Paint()..color = hsla(p.hue, 100, 85, a);
         canvas.drawRect(Rect.fromLTWH(-p.size / 2, -p.size / 2, p.size, p.size), sp);
         canvas.restore();
+      } else if (p.ember) {
+        // PB-033 A2 ateş modu: kor — dış hale + sıcak çekirdek
+        final halo = Paint()..color = hsla(p.hue, 100, 55, a * 0.30);
+        canvas.drawCircle(Offset(p.x, p.y), p.size * 1.7, halo);
+        final core = Paint()..color = hsla(p.hue, 100, 66, a);
+        canvas.drawCircle(Offset(p.x, p.y), p.size * 0.7, core);
+      } else if (p.streak) {
+        // PB-033 B1 meteor finali: hız yönünde uzayan parlak iz + sıcak baş
+        canvas.save();
+        canvas.translate(p.x, p.y);
+        canvas.rotate(math.atan2(p.vy, p.vx));
+        final tail = Paint()
+          ..shader = ui.Gradient.linear(
+            Offset(-p.size * 4.5, 0),
+            Offset(p.size, 0),
+            [hsla(p.hue, 100, 80, 0), hsla(p.hue, 100, 85, a)],
+          );
+        canvas.drawRect(
+            Rect.fromLTWH(-p.size * 4.5, -p.size * 0.32, p.size * 5.5, p.size * 0.64), tail);
+        final head = Paint()..color = hsla(p.hue, 100, 92, a);
+        canvas.drawCircle(Offset(p.size * 0.7, 0), p.size * 0.55, head);
+        canvas.restore();
       } else {
         final pp = Paint()..color = hsla(p.hue, 95, 72, a);
         canvas.drawRect(Rect.fromLTWH(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size), pp);
@@ -166,9 +200,10 @@ class ScenePainter extends CustomPainter {
     for (final r in e.rings) {
       final ra = (1 - r.life / r.max).clamp(0.0, 1.0);
       final p = Paint()
-        ..color = hsla(r.hue, 95, 75, ra * 0.8)
+        // PB-033 A1: parlak dış halka — düşük doygunluk, yüksek parlaklık
+        ..color = r.bright ? hsla(r.hue, 38, 92, ra * 0.9) : hsla(r.hue, 95, 75, ra * 0.8)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3 * e.scale * ra;
+        ..strokeWidth = (r.bright ? 2.2 : 3.0) * e.scale * ra;
       canvas.drawCircle(Offset(r.x, r.y), r.r, p);
     }
     // popup'lar konfetiden ÖNCE (game.js: rings → popups → konfeti)
@@ -184,7 +219,50 @@ class ScenePainter extends CustomPainter {
       canvas.drawRect(Rect.fromLTWH(-cf.w / 2, -cf.h / 2, cf.w, cf.h), p);
       canvas.restore();
     }
+    // PB-033 B1: kuş sürüsü finali — kanat çırpan siluetler
+    for (final b in e.birds) {
+      final flap = math.sin(b.ph) * 0.6;
+      final bp = Paint()
+        ..color = const Color(0xE60D0D16)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = math.max(1.4, b.size * 0.26)
+        ..strokeCap = StrokeCap.round;
+      final wing = Path()
+        ..moveTo(-b.size, -flap * b.size * 0.6)
+        ..quadraticBezierTo(-b.size * 0.4, flap * b.size * 0.4, 0, 0)
+        ..quadraticBezierTo(b.size * 0.4, flap * b.size * 0.4, b.size, -flap * b.size * 0.6);
+      canvas.drawPath(wing, bp);
+    }
+    canvas.restore(); // PB-033: zoom katmanı sonu
     canvas.restore();
+
+    // PB-033 B1: aurora patlaması finali — plus-karışımlı yükselen bantlar
+    if (e.finale == FinaleStyle.aurora && e.finaleT > 0) {
+      final rise = math.min(1.0, e.finaleT / 0.9);
+      final fade = 1.0 - rise * 0.55;
+      canvas.saveLayer(Offset.zero & size, Paint()..blendMode = BlendMode.plus);
+      for (var i = 0; i < 4; i++) {
+        final bandY = e.h * (0.92 - rise * 0.55) - i * e.h * 0.09;
+        final path = Path()
+          ..moveTo(-40, bandY)
+          ..cubicTo(e.w * 0.3, bandY - 60 - i * 8, e.w * 0.7, bandY + 50, e.w + 40, bandY - 20 - i * 6);
+        final p = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 60 + i * 26.0
+          ..shader = ui.Gradient.linear(
+            Offset(0, bandY - 90),
+            Offset(0, bandY + 90),
+            [
+              hsla(glow, 92, 62, 0),
+              hsla(glow, 92, 64, 0.11 * fade),
+              hsla(glow, 92, 62, 0),
+            ],
+            const [0, 0.5, 1],
+          );
+        canvas.drawPath(path, p);
+      }
+      canvas.restore();
+    }
 
     // juice (PB-016): tam-ekran flaş — mükemmel tema-glow 0.18 / kritik beyaz 0.35, 90ms fade
     if (e.flashT > 0) {
@@ -754,36 +832,65 @@ class ScenePainter extends CustomPainter {
     }
   }
 
+  // PB-033 çizim bütçesi: popup metinleri Picture önbelleği (KÜTÜPHANE düzeyinde —
+  // inceleme F1: ScenePainter her karede yeniden kurulur (stack_game.render),
+  // örnek alanı olsaydı önbellek hiç ısınamazdı). Anahtar: metin|ölçek|hue|alfa
+  // dilimi; alfa 12 adıma kuantalanır. Tavan aşıldığında eski kayıtlar dispose.
+
   void _drawPopup(Canvas canvas, GamePlay e, Popup q) {
     final qt = q.life / q.max;
     final a = qt < 0.15 ? qt / 0.15 : math.max(0.0, 1 - (qt - 0.15) / 0.85);
+    final key = '${q.text}|${(e.scale * 20).round()}|${q.hue}|${(a * 12).round().clamp(0, 12)}';
+    var entry = _popupPictureCache[key];
+    if (entry == null) {
+      if (_popupPictureCache.length > 240) {
+        final stale = _popupPictureCache.keys.take(120).toList();
+        for (final k in stale) {
+          _popupPictureCache.remove(k)?.$1.dispose();
+        }
+      }
+      final rec = ui.PictureRecorder();
+      final c = Canvas(rec);
+      final size = _paintPopupText(c, q.text, e.scale, q.hue, (a * 12).round() / 12);
+      entry = (rec.endRecording(), size.$1, size.$2);
+      _popupPictureCache[key] = entry;
+    }
+    canvas.save();
+    canvas.translate(q.x - entry.$2 / 2, q.y - entry.$3 / 2);
+    canvas.drawPicture(entry.$1);
+    canvas.restore();
+  }
+
+  /// Popup metnini (gölge konturu + dolgu) orijine çizer; (w,h) döner.
+  (double, double) _paintPopupText(Canvas c, String text, double scale, int hue, double a) {
     final style = TextStyle(
       fontFamily: 'Inter',
-      fontSize: 20 * e.scale,
+      fontSize: 20 * scale,
       fontWeight: FontWeight.w900,
-      color: hslToColor(q.hue, 100, 82, a),
+      color: hslToColor(hue, 100, 82, a),
     );
     final tp = TextPainter(
-      text: TextSpan(text: q.text, style: style),
+      text: TextSpan(text: text, style: style),
       textAlign: TextAlign.center,
       textDirection: TextDirection.ltr,
     )..layout();
     // gölge konturu
     final stroke = TextPainter(
       text: TextSpan(
-        text: q.text,
+        text: text,
         style: style.copyWith(
           foreground: Paint()
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 5 * e.scale
+            ..strokeWidth = 5 * scale
             ..color = const Color(0x8C000000),
         ),
       ),
       textAlign: TextAlign.center,
       textDirection: TextDirection.ltr,
     )..layout();
-    stroke.paint(canvas, Offset(q.x - tp.width / 2, q.y - tp.height / 2));
-    tp.paint(canvas, Offset(q.x - tp.width / 2, q.y - tp.height / 2));
+    stroke.paint(c, Offset.zero);
+    tp.paint(c, Offset.zero);
+    return (tp.width, tp.height);
   }
 
   void _drawVignette(Canvas canvas, GamePlay e) {
@@ -823,10 +930,18 @@ class ScenePainter extends CustomPainter {
     final t = e.def?.theme;
     // WorldTheme Color olarak tutar; hex'e geri çevir
     if (t == null) return (bg1Hex: _defaultBg1, bg2Hex: _defaultBg2, glow: _defaultGlow);
+    // PB-033 bölüm imzası + A3 yavaş hue döngüsü (60 sn periyot, ±4°): aynı
+    // dünyadaki 15 bölüm artık farklı palet fazlarında akar — sunum kayması,
+    // kThemes verisi (parite testi) değişmez.
+    final drift = e.sig.hueShift + math.sin(e.time * 2 * math.pi / 60) * 4;
+    Color shift(Color c) {
+      final hsl = HSLColor.fromColor(c);
+      return hsl.withHue((hsl.hue + drift) % 360).toColor();
+    }
     return (
-      bg1Hex: _colorToHex(t.bg1),
-      bg2Hex: _colorToHex(t.bg2),
-      glow: t.glow,
+      bg1Hex: _colorToHex(shift(t.bg1)),
+      bg2Hex: _colorToHex(shift(t.bg2)),
+      glow: ((t.glow + drift.round()) % 360 + 360) % 360,
     );
   }
 

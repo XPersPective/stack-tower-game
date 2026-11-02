@@ -11,6 +11,7 @@ import 'gameplay.dart';
 import 'levels.dart';
 import 'progress.dart' as prog;
 import '../map/construction.dart';
+import '../services/leaderboard_service.dart';
 import '../services/storage.dart';
 import 'market.dart' show addRelicPiece;
 
@@ -53,7 +54,6 @@ class GameSession extends ChangeNotifier {
       }
     }
     persist();
-    _constructing = false;
   }
 
   final KeyValueStorage storage;
@@ -73,7 +73,13 @@ class GameSession extends ChangeNotifier {
   WorldCeremony? lastCeremony;
   List<BoardRow> boardRows = [];
   int boardDay = 0;
+
+  /// Tahtada gösterilen satırlar bulut görünümü mü? (yoksa yerel rakipler)
+  bool boardIsCloud = false;
   bool muted = false;
+
+  /// Bulut skor tahtası servisi (PB-031). null → yalnız yerel rakipler.
+  LeaderboardService? leaderboard;
 
   /// Son bölümün inşaat katkısı (ADR-009: görünür amaç).
   ConstructionEvent? lastConstruction;
@@ -81,15 +87,13 @@ class GameSession extends ChangeNotifier {
   final List<FlowStep> _chain = [];
   FlowStep? get nextStep => _chain.isEmpty ? null : _chain.first;
 
-  bool _constructing = true;
-
   int get totalStars => prog.totalStars(state);
   String get activeSkinId => state.activeSkin;
   int get activeSkinHue => prog.skinById(state.activeSkin).hue;
 
   void persist() {
     prog.save(state, storage);
-    if (!_constructing) notifyListeners();
+    notifyListeners();
   }
 
   /// Kaydı yazar ama dinleyicileri uyarmaz (build sırasında güvenli).
@@ -178,7 +182,7 @@ class GameSession extends ChangeNotifier {
       pendingMarketDiscovery = true;
     }
 
-    if (def.daily) prog.recordDaily(state, prog.dayOf(_clock()), blocks);
+    if (def.daily) _recordDailyScore(blocks);
 
     int? worldBonusCoins;
     final lastOfWorld =
@@ -246,7 +250,7 @@ class GameSession extends ChangeNotifier {
       rw.coins += extra;
       state.coins += extra;
     }
-    if (def.daily) prog.recordDaily(state, prog.dayOf(_clock()), blocks);
+    if (def.daily) _recordDailyScore(blocks);
     persist();
 
     pendingResult = LevelResult(blocks, perfects, false);
@@ -267,15 +271,49 @@ class GameSession extends ChangeNotifier {
 
   /* ------------------------- Günlük tahta ------------------------- */
 
-  /// boardStep: yerel deterministik rakipler + SEN.
+  /// Günlük skoru kaydeder (yerel + bulut kuyruğu). "Skor asla kaybolmaz":
+  /// gönderim başarısızsa [LeaderboardService] kuyrukta tutar (C-005).
+  void _recordDailyScore(int blocks) {
+    final day = prog.dayOf(_clock());
+    prog.recordDaily(state, day, blocks);
+    final lb = leaderboard;
+    if (lb != null) {
+      lb.enqueue('daily', day, blocks);
+      // Bölüm sonu: oturum varsa tek eşzamanlı flush denemesi (PB-031).
+      if (lb.sessionToken != null) lb.flush();
+    }
+  }
+
+  /// boardStep: yerel deterministik rakipler + SEN (anında gösterim),
+  /// oturum varsa arka planda bulut tahtasıyla yenilenir.
   void buildBoard() {
     final day = prog.dayOf(_clock());
     boardDay = day;
+    _buildLocalBoard(day);
+    final lb = leaderboard;
+    if (lb != null && lb.sessionToken != null) {
+      _refreshCloudBoard(lb, day);
+    }
+  }
+
+  void _buildLocalBoard(int day) {
     final blocks = pendingResult?.blocks ?? state.daily['best'] ?? 0;
     final rows = prog.rivalsFor(day, blocks).map((r) => BoardRow(r.name, r.score)).toList();
     rows.add(BoardRow('SEN', blocks, me: true));
     rows.sort((a, b) => b.score.compareTo(a.score));
     boardRows = rows;
+    boardIsCloud = false;
+  }
+
+  Future<void> _refreshCloudBoard(LeaderboardService lb, int day) async {
+    final view = await lb.fetchBoard('daily', day: day);
+    if (view == null || view.rows.isEmpty) return;
+    if (day != boardDay) return; // gecikmiş eski-gün yanıtı bugünün tahtasını ezmesin
+    boardRows = view.rows
+        .map((r) => BoardRow(r.name, r.score, me: r.me))
+        .toList();
+    boardIsCloud = true;
+    notifyListeners();
   }
 
   /* --------------------------- Kutu --------------------------- */

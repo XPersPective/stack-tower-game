@@ -52,5 +52,13 @@ android/app/build/
 android/build/
 build/
 
+# PB-032: Üretim imza anahtarı — repoya GİRMEZ (gizli değer).
+android/key.properties
+*.jks
+*.keystore
+
 # Project Brain run logs / scratch
 .cache/
+
+# Yabancı ajan aracı oturum notları (workbuddy-ai) — repo izlemesine girmez
+.workbuddy-ai/

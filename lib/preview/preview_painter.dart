@@ -7,6 +7,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../game/levels.dart' show levelSignature;
 import '../theme/tokens.dart';
 
 /// JS rnd(): seed = seed*1664525+1013904223 mod 2^32 (preview.js:107).
@@ -87,9 +88,16 @@ class PreviewPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     final theme = scene.theme;
-    final c0 = theme.bg1, c1 = theme.bg2;
+    // PB-033 bölüm imzası: palet/glow kayması — her bölüm önizlemesi kendi
+    // renk fazında açılır (görsel çeşitlilik; parça sayıları değişmez).
+    final sig = levelSignature(scene.levelI);
+    Color shiftC(Color c) {
+      final hsl = HSLColor.fromColor(c);
+      return hsl.withHue((hsl.hue + sig.hueShift) % 360).toColor();
+    }
+    final c0 = shiftC(theme.bg1), c1 = shiftC(theme.bg2);
     final deep = const Color.fromARGB(255, 3, 3, 12);
-    final glow = _hsl(theme.glow, 92, 62);
+    final glow = _hsl((theme.glow + sig.hueShift.round()) % 360, 92, 62);
 
     /* gökyüzü — 4 durak (preview.js:141-147) */
     canvas.drawRect(
@@ -225,9 +233,9 @@ class PreviewPainter extends CustomPainter {
     /* gizem geçidi (preview.js:231) */
     _drawGate(canvas, size, w * 0.17 + drift, h * 0.5, glow);
 
-    /* oynanacak kule (preview.js:234) */
+    /* oynanacak kule (preview.js:234) — imza kaymasıyla uyumlu glow */
     _drawTower(canvas, w * 0.73 + drift * 1.4, h * 0.80,
-        math.min(w, h) / 420 * 2.1, theme.glow);
+        math.min(w, h) / 420 * 2.1, (theme.glow + sig.hueShift.round()) % 360);
 
     /* hava parçacıkları (preview.js:237) */
     _drawWeather(canvas, size, theme.weather);

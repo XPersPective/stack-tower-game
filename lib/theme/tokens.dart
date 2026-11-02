@@ -3,7 +3,9 @@
 /// birebir taşınmıştır (SPEC §3; görsel yeniden keşif yasak).
 library;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// 10 dünya teması: palet, arka plan, glow tonu, hava efekti, siluet türü.
 class WorldTheme {
@@ -53,7 +55,44 @@ class NeonPalette {
   static const textDim = Color(0xFFaab4d8);
   static const gold = Color(0xFFFFD24A);
   static const star = Color(0xFFFFDE6A);
+  static const violet = Color(0xFF9d7bff);
+  static const mint = Color(0xFF7CFFB2);
+  static const danger = Color(0xFFFF5A6E);
+  static const glass = Color(0xB3101024); // cam panel zemini
+  static const glassBorder = Color(0x2E9FB4FF); // cam panel kenarı
 }
+
+/// Boşluk ölçeği — 4 tabanlı (premium ölçü tutarlılığı).
+class AppSpace {
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 24;
+  static const double xxl = 32;
+  static const double huge = 48;
+}
+
+/// Köşe yarıçapı ölçeği.
+class AppRadius {
+  static const double sm = 10;
+  static const double md = 14;
+  static const double lg = 20;
+  static const double xl = 28;
+  static const double pill = 999;
+}
+
+/// Süre ölçeği — animasyonlar bu değerleri kullanır (tutarlı tempo).
+class AppDurations {
+  static const Duration fast = Duration(milliseconds: 140);
+  static const Duration normal = Duration(milliseconds: 260);
+  static const Duration slow = Duration(milliseconds: 460);
+  static const Duration epic = Duration(milliseconds: 900);
+}
+
+/// Yumuşak yay (easeOutBack) — premium "pop" hissi.
+const Curve appCurve = Curves.easeOutCubic;
+const Curve appCurveBack = Curves.easeOutBack;
 
 /// Inter değişken font ağırlık yardımcısı (wght ekseni 100-900).
 FontVariation interVariation(FontWeight w) => FontVariation('wght', w.value.toDouble());
@@ -81,6 +120,20 @@ class AppTheme {
         bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: NeonPalette.text),
         bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: NeonPalette.textDim),
         labelLarge: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 1.2, color: NeonPalette.text),
+      ),
+      // premium his: iOS'ta Cupertino kaydırma, Android'de zoom geçişi
+      pageTransitionsTheme: const PageTransitionsTheme(builders: {
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.android: ZoomPageTransitionsBuilder(),
+      }),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarBrightness: Brightness.dark,
+          statusBarIconBrightness: Brightness.light,
+        ),
       ),
       snackBarTheme: const SnackBarThemeData(
         backgroundColor: Color(0xEE141430),

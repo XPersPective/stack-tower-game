@@ -606,6 +606,72 @@ class MapScenePainter extends CustomPainter {
       } else {
         _drawIslandLife(canvas, isl, center, rScreen);
       }
+      // Tamamlanan dünya: haritada ışık köprülü anıt (dünya anıtı töreni)
+      if (isl.done >= kLevelsPerStage) _drawMonument(canvas, isl, center, rScreen);
+    }
+  }
+
+  /// Tamamlanan dünyanın harita işareti: merkezde yükselen neon anıt +
+  /// komşu ada düğümlerine nabız atan ışık köprüleri (PB-031 sonrası polish).
+  void _drawMonument(Canvas canvas, MapIsland isl, Offset c, double r) {
+    final glow = hslColor(isl.theme.glow, 90, 68);
+    final accent = hslColor(
+        isl.theme.hues.isNotEmpty ? isl.theme.hues[0] : isl.theme.glow, 85, 64);
+    final h = r * 0.5;
+    final baseW = r * 0.10;
+
+    // hale
+    canvas.drawCircle(
+      Offset(c.dx, c.dy - h * 0.6),
+      h * 0.45,
+      Paint()
+        ..color = glow.withValues(alpha: 0.18)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(2.0, r * 0.3)),
+    );
+
+    // obelisk gövdesi
+    final body = Path()
+      ..moveTo(c.dx - baseW / 2, c.dy)
+      ..lineTo(c.dx - baseW * 0.18, c.dy - h)
+      ..lineTo(c.dx + baseW * 0.18, c.dy - h)
+      ..lineTo(c.dx + baseW / 2, c.dy)
+      ..close();
+    canvas.drawPath(
+      body,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [glow.withValues(alpha: 0.95), accent.withValues(alpha: 0.7)],
+        ).createShader(Rect.fromLTRB(c.dx - baseW, c.dy - h, c.dx + baseW, c.dy)),
+    );
+    // tepede ışık kristali
+    canvas.drawCircle(
+      Offset(c.dx, c.dy - h),
+      math.max(1.5, r * 0.03),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.85)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 6),
+    );
+
+    // ışık köprüleri (2 komşu ada düğümüne)
+    for (var i = 0; i < 2; i++) {
+      final a = -math.pi / 2 + (i - 0.5) * 0.9 + isl.seed;
+      final p = Offset(c.dx + math.cos(a) * r * 0.82, c.dy + math.sin(a) * r * 0.42);
+      final pulse = 0.22 + 0.2 * math.sin(time * 1.4 + i);
+      canvas.drawLine(
+        Offset(c.dx, c.dy - h * 0.7),
+        p,
+        Paint()
+          ..color = accent.withValues(alpha: pulse)
+          ..strokeWidth = math.max(1.0, r * 0.012)
+          ..style = PaintingStyle.stroke,
+      );
+      canvas.drawCircle(
+        p,
+        math.max(1.5, r * 0.025),
+        Paint()..color = accent.withValues(alpha: 0.2 + 0.6 * pulse),
+      );
     }
   }
 

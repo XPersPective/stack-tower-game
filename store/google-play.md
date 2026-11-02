@@ -13,11 +13,14 @@ bırak, kombo yap, kritik vuruşları yakala — ama her bölüm aynı değil.
 • 10 farklı oyun türü: kule, yıldız avcısı, halka, fırlat, birleştir, tek çizgi,
   sırala, denge, savun, ritim.
 • 150 el yapımı bölüm, 10 dünya; her dünyanın kendi atmosferi ve patronu.
+• Canlı neon atmosfer: her dünyanın aurora gökyüzü, ışıklı silüetleri ve
+  gökyüzünde yansıyan yıldız toplamın var.
+• Her dokunuşta tepki: mükemmel bırakışlar ışık patlaması, konfeti ve yıldız izi
+  bırakır; kombolar katmanlı bir müzik merdiveni açar.
 • Günlük meydan okuma: herkes aynı bölümü oynar, tahtada yarışır.
 • Görünür inşaat: bitirdiğin her bölüm adada bir yapı parçası yükseltir;
   birkaç bölümde yapı tamamlanır, dünya sonunda anıt dikilir.
 • Pazar yeri: her gün tazelenen tezgah, gizli sandık, kalkan/çarpan/joker.
-• Kombo merdiveni: 3/6/10 kombo eşiklerinde müzik katmanları açılır.
 • Tamamen çevrimdışı oynanır. Reklam yok, analitik yok, üçüncü taraf veri paylaşımı yok.
 
 İsteğe bağlı hesap: yalnızca skor tahtası için. E-posta saklanmaz; kimlik sağlayıcı
