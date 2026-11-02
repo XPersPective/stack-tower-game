@@ -5,6 +5,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../game/audio.dart';
 import '../game/game_session.dart';
 import '../game/progress.dart' as prog;
 import '../game/scene_painter.dart';
@@ -44,6 +45,16 @@ class _PreviewScreenState extends State<PreviewScreen>
   );
 
   void _skip() => _c.forward(from: _c.value < .99 ? .99 : 1);
+
+  @override
+  void initState() {
+    super.initState();
+    // PB-035 D8: dünyanın jingle'ı — önizleme açılışında bir kez (kısa arpej)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<AudioController>().playWorldJingle(widget.def.stage);
+    });
+  }
 
   @override
   void dispose() {

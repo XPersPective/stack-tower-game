@@ -249,6 +249,8 @@ class SortGame implements MiniGame {
     // imza anı (PB-035 B8): sütun TAMAMLANINCA katmanlı pop — ikinci ses
     // katmanı + bir tık daha güçlü sarsıntı (dökülme hissi); akış aynen sürer
     if (run == capacity && target.every((e) => e == ball)) {
+      // PB-035 A6: ASMR dökülme + katmanlı pop
+      _host?.playSound('sort_flow');
       _host?.playSound('pop', combo: _combo);
       shake = 7;
       _host?.haptic(16);

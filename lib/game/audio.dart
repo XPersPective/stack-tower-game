@@ -183,6 +183,26 @@ class AudioController extends ChangeNotifier {
     return true;
   }
 
+  /// PB-035 D8: dünya jingle'ı — önizleme ekranında dünyanın 3'lü arpeji.
+  /// [stage] 0..9 → jingle1..10.wav. Dosya yoksa sessizce yoksayılır.
+  Future<void> playWorldJingle(int stage) async {
+    if (_muted || !_ready) return;
+    try {
+      final p = AudioPlayer();
+      await p.setSource(AssetSource('sounds/jingle${(stage + 1).clamp(1, 10)}.wav'));
+      await p.setReleaseMode(ReleaseMode.stop);
+      await p.resume();
+      _jinglePlayers.add(p);
+      // 4 sn sonra temizle (kısa arpej; player havuzu sızmasın)
+      Future<void>.delayed(const Duration(seconds: 4), () {
+        _jinglePlayers.remove(p);
+        p.dispose();
+      });
+    } catch (_) {}
+  }
+
+  final List<AudioPlayer> _jinglePlayers = [];
+
   /// Mükemmel serisi yükselen perde: combo 1..8 → perfectN.wav (tavana düşer).
   Future<void> play(GameSound sound, {int combo = 1}) async {
     if (_muted || !_ready) return;
@@ -247,6 +267,9 @@ class AudioController extends ChangeNotifier {
     try {
       _music?.dispose();
     } catch (_) {}
+    for (final p in _jinglePlayers) {
+      p.dispose();
+    }
     super.dispose();
   }
 }

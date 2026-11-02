@@ -1,9 +1,13 @@
-/// Stack Tower Game — DİKEY YOL HARİTASI (saga map, PB-035 tur 5).
+/// Stack Tower Game — DİKEY YOL HARİTASI (saga map, PB-035 tur 5+6).
 ///
 /// Premium casual standardı (Royal Match / Candy Crush modeli): kıvrımlı bir
 /// yol, üzerinde bölüm düğümleri, dünyalar arasında anıtsal KAPILAR, her
-/// dünyada değişen tema renkleri/dekorları. 3B takımada denemesi kaldırıldı
-/// (kullanıcı 2026-11-02: "gezegen mezegen olmamış").
+/// dünyada değişen tema renkleri/dekorları.
+///
+/// YÖN (kullanıcı tur 6): yolculuk YUKARI — oyuncu altta (kendi aşaması önde),
+/// kilitli aşamalar İLERİDE/ufukta; ilerledikçe uzaya doğru tırmanış hissi.
+/// Düğümlerde ışıltılı isimler (ALTIN HAZİNE, PATRON, SÜRPRİZ SANDIK…),
+/// yol kenarında parıltılı hediye/gizem süsleri.
 library;
 
 import 'dart:math' as math;
@@ -13,8 +17,8 @@ import 'package:flutter/material.dart';
 import '../game/game_session.dart';
 import '../game/levels.dart';
 import '../game/progress.dart' as prog;
-import 'construction.dart';
 import '../game/scene_painter.dart' show hslColor;
+import 'construction.dart';
 import '../theme/tokens.dart';
 
 /// Dünya dikey yüksekliği (mantıksal px) — 15 bölüm + kapı bandı.
@@ -22,11 +26,21 @@ const double kWorldH = 1560;
 const double kNodeSpacing = 86;
 const double kNodeR = 27;
 
+/// Dünya [stage] düğümlerinin TABAN y'si (harita-uzayı; büyük y = oyuncuya yakın).
+double worldBaseY(int stage) =>
+    journeyHeight() - 240 - stage * kWorldH;
+
+/// Toplam harita yüksekliği.
+double journeyHeight() => kStageCount * kWorldH + 300;
+
+/// Dünya [stage]'e giriş kapısının y merkezi (giriş, düğümlerin ALTINDAN).
+double gateY(int stage) => worldBaseY(stage) + 130;
+
 /// Yol üzerindeki bölüm düğümü (yerleşim saf matematik — test dostu).
 class JourneyNode {
   final int i;
   final LevelDef def;
-  final Offset pos; // yol-uzayında (y: 0 = dünya 0 üstü)
+  final Offset pos; // yol-uzayında
   final bool done;
   final bool unlocked;
   final int stars;
@@ -39,9 +53,25 @@ class JourneyNode {
     required this.unlocked,
     required this.stars,
   });
+
+  /// Düğümün ışıltılı etiketi (kullanıcı tur 6: isimler + görevler).
+  String get label {
+    if (def.modifier == 'patron') return '♛ PATRON';
+    if (def.box) return '🎁 SÜRPRİZ';
+    if (def.modifier == 'altin') return '★ ALTIN HAZİNE';
+    if (def.modifier == 'karanlik') return '◐ GİZEMLİ';
+    return 'BÖLÜM ${def.num}';
+  }
+
+  bool get isSpecial =>
+      def.modifier == 'patron' ||
+      def.box ||
+      def.modifier == 'altin' ||
+      def.modifier == 'karanlik';
 }
 
 /// [width] genişlikte 150 düğümün kıvrımlı yol yerleşimi — deterministik.
+/// YÖN: düğüm 0 ALTTA (oyuncu), 149 UYUKTA (ufuk) — macera yukarı akar.
 List<JourneyNode> journeyLayout(GameSession session, double width) {
   final save = session.state;
   final nodes = <JourneyNode>[];
@@ -50,7 +80,7 @@ List<JourneyNode> journeyLayout(GameSession session, double width) {
     final def = levelDef(i);
     final stage = def.stage;
     final idx = def.idx;
-    final y = stage * kWorldH + 220 + idx * kNodeSpacing;
+    final y = worldBaseY(stage) - idx * kNodeSpacing;
     // kıvrım: dünya başına fazla kaymış sinüs — düz hat asla olmaz
     final sway = math.sin(stage * 1.7 + idx * 0.62) * w * 0.24 +
         math.sin(stage * 0.6 + idx * 0.21) * w * 0.08;
@@ -66,18 +96,12 @@ List<JourneyNode> journeyLayout(GameSession session, double width) {
   return nodes;
 }
 
-/// [stage] dünyasının kapı bandının y merkezı.
-double gateY(int stage) => stage * kWorldH + 60;
-
-/// Toplam harita yüksekliği.
-double journeyHeight() => kStageCount * kWorldH + 260;
-
 /// Yol hit-test: dokunuş yol-uzayı koordinatında düğüm / pazar tezgahı.
 /// Dönen: 'node:<i>' | 'market' | null
 String? journeyHitTest(List<JourneyNode> nodes, Offset mapPos,
     {required bool marketOpen}) {
   if (marketOpen) {
-    // pazar tezgahı: dünya 0'ın 3. düğümünün sağına sabit
+    // pazar tezgahı: 3. düğümün sağına sabit (dünya 1 segmenti)
     final stall = Offset(nodes[2].pos.dx + 96, nodes[2].pos.dy + 8);
     if ((mapPos - stall).distance <= 40) return 'market';
   }
@@ -106,7 +130,7 @@ Path starPath(Offset c, double r) {
   return p..close();
 }
 
-/// Dikey yol haritası painter'ı. [scroll] = üstten kaydırma, [time] sn.
+/// Dikey yol haritası painter'ı. [scroll] = alttan kaydırma (0 = başlangıç).
 class JourneyPainter extends CustomPainter {
   JourneyPainter({
     required this.session,
@@ -132,6 +156,7 @@ class JourneyPainter extends CustomPainter {
 
     _paintBackground(canvas, size, scroll);
     _paintSilhouettes(canvas, size, scroll);
+    _paintHorizon(canvas, size);
     _paintPath(canvas, size, scroll);
     _paintGates(canvas, size, scroll);
     _paintDecor(canvas, size, scroll);
@@ -140,7 +165,7 @@ class JourneyPainter extends CustomPainter {
     for (final n in nodes) {
       final p = n.pos - Offset(0, scroll);
       n.screen = p;
-      if (p.dy < -80 || p.dy > size.height + 80) continue;
+      if (p.dy < -90 || p.dy > size.height + 90) continue;
       _paintNode(canvas, n, p, w, n.i == currentIdx);
     }
   }
@@ -155,59 +180,95 @@ class JourneyPainter extends CustomPainter {
   /* ------------------------------ katmanlar ------------------------------ */
 
   void _paintBackground(Canvas canvas, Size size, double sc) {
-    // dünya dilimlerinin dikey gradyanları, sınırda çapraz karışım
+    // dünya dilimlerinin dikey gradyanları (büyük y = dünya 1, küçük y = dünya 10)
     for (var s = 0; s < kStageCount; s++) {
-      final top = s * kWorldH - sc;
-      if (top > size.height || top + kWorldH < 0) continue;
+      final bottom = journeyHeight() - s * kWorldH - sc;
+      final top = bottom - kWorldH;
+      if (top > size.height || bottom < 0) continue;
       final th = kThemes[s];
       final band = Rect.fromLTWH(0, top, size.width, kWorldH);
       canvas.drawRect(
         band,
         Paint()
           ..shader = LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [th.bg1, th.bg2],
+            begin: Alignment.topCenter, // uzak (ufuk) — koyu/hazy
+            end: Alignment.bottomCenter, // yakın — tema rengi
+            colors: [
+              Color.lerp(th.bg1, const Color(0xFF04040F), 0.45)!,
+              th.bg1,
+              th.bg2,
+            ],
+            stops: const [0, 0.45, 1],
           ).createShader(band.inflate(2)),
       );
       // dünya sınırlarında yumuşak geçiş perdesi
       if (s > 0) {
         canvas.drawRect(
-          Rect.fromLTWH(0, top - 90, size.width, 180),
+          Rect.fromLTWH(0, bottom - 90, size.width, 180),
           Paint()
             ..shader = LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                kThemes[s - 1].bg2.withValues(alpha: 1),
                 kThemes[s - 1].bg2.withValues(alpha: 0),
+                kThemes[s - 1].bg2.withValues(alpha: 1),
               ],
-            ).createShader(Rect.fromLTWH(0, top - 90, size.width, 90)),
+            ).createShader(Rect.fromLTWH(0, bottom, size.width, 90)),
         );
       }
     }
-    // paralaks yıldızlar (yavaş katman)
+    // paralaks yıldızlar
     final rnd = math.Random(77);
-    for (var i = 0; i < 70; i++) {
+    for (var i = 0; i < 90; i++) {
       final sx = rnd.nextDouble() * size.width;
-      final sy = (rnd.nextDouble() * journeyHeight() * 0.5 - sc * 0.5) % size.height;
+      final sy = (rnd.nextDouble() * journeyHeight() * 0.6 - sc * 0.55) % size.height;
       final yy = sy < 0 ? sy + size.height : sy;
       final tw = 0.3 + 0.5 * (0.5 + 0.5 * math.sin(time * (0.4 + rnd.nextDouble()) + i));
       canvas.drawCircle(
         Offset(sx, yy),
-        0.5 + rnd.nextDouble() * 1.4,
-        Paint()..color = Colors.white.withValues(alpha: tw * 0.5),
+        0.5 + rnd.nextDouble() * 1.5,
+        Paint()..color = Colors.white.withValues(alpha: tw * 0.55),
+      );
+    }
+  }
+
+  /// Ufuk: ekranın üst bandında uzay derinliği parıltısı (her zaman görünür —
+  /// ilerledikçe "yukarıda bir şey var" hissi; kullanıcı tur 6).
+  void _paintHorizon(Canvas canvas, Size size) {
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height * 0.30);
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            hslColor(268, 70, 24).withValues(alpha: 0.30),
+            hslColor(268, 70, 24).withValues(alpha: 0),
+          ],
+        ).createShader(rect),
+    );
+    // uzak gökada silüeti (sabit, çok soluk)
+    final rnd = math.Random(2029);
+    for (var i = 0; i < 14; i++) {
+      final sx = rnd.nextDouble() * size.width;
+      final sy = size.height * (0.02 + rnd.nextDouble() * 0.16);
+      final r = 1.0 + rnd.nextDouble() * 2.2;
+      canvas.drawCircle(
+        Offset(sx, sy),
+        r,
+        Paint()..color = Colors.white.withValues(alpha: 0.10 + rnd.nextDouble() * 0.10),
       );
     }
   }
 
   void _paintSilhouettes(Canvas canvas, Size size, double sc) {
-    // her dünyanın üst kenarında uzak silüet şeridi (paralaks 0.85)
+    // her dünya segmentinin ÜST kenarında (ileride) silüet şeridi — ufuk çizgisi
     for (var s = 0; s < kStageCount; s++) {
-      final top = s * kWorldH - sc * 0.85;
+      final top = journeyHeight() - (s + 1) * kWorldH - sc;
       if (top > size.height + 60 || top + 140 < -60) continue;
       final th = kThemes[s];
-      final col = hslColor(th.glow, 30, 12).withValues(alpha: 0.85);
+      final col = hslColor(th.glow, 30, 13).withValues(alpha: 0.85);
       final path = Path()..moveTo(-20, top + 130);
       if (th.silhouette == 'city') {
         for (var k = 0; k < 14; k++) {
@@ -232,18 +293,17 @@ class JourneyPainter extends CustomPainter {
 
   void _paintPath(Canvas canvas, Size size, double sc) {
     if (nodes.isEmpty) return;
-    // yumuşak spline: ardışık düğümler arası orta-nokta kuadratikleri
-    final pts = [for (final n in nodes) n.pos];
-    final path = Path()..moveTo(pts[0].dx, pts[0].dy - sc);
+    final pts = [for (final n in nodes) Offset(n.pos.dx, n.pos.dy - sc)];
+    final path = Path()..moveTo(pts[0].dx, pts[0].dy);
     for (var k = 1; k < pts.length; k++) {
       final a = pts[k - 1], b = pts[k];
       final mid = Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2);
-      path.quadraticBezierTo(a.dx, a.dy - sc, mid.dx, mid.dy - sc);
+      path.quadraticBezierTo(a.dx, a.dy, mid.dx, mid.dy);
     }
     final last = pts.last;
-    path.lineTo(last.dx, last.dy - sc);
+    path.lineTo(last.dx, last.dy);
 
-    // geniş koyu taban + tema glow iç çizgi
+    // geniş koyu taban + iç ışık
     canvas.drawPath(
       path,
       Paint()
@@ -260,7 +320,7 @@ class JourneyPainter extends CustomPainter {
         ..strokeWidth = 9
         ..strokeCap = StrokeCap.round,
     );
-    // akan kesikli ışık (yol canlı — zamanla kayar)
+    // akan kesikli ışık — yukarı akar (macera yönü)
     canvas.drawPath(
       path,
       Paint()
@@ -274,14 +334,13 @@ class JourneyPainter extends CustomPainter {
 
   void _paintGates(Canvas canvas, Size size, double sc) {
     final save = session.state;
-    for (var s = 0; s < kStageCount; s++) {
+    for (var s = 1; s < kStageCount; s++) {
       final gy = gateY(s) - sc;
       if (gy < -140 || gy > size.height + 140) continue;
       final th = kThemes[s];
-      final open = s == 0 || prog.totalStars(save) >= requiredStarsFor(s);
+      final open = prog.totalStars(save) >= requiredStars(s);
       final glow = hslColor(th.glow, 90, 62);
       final cx = size.width / 2;
-      // anıtsal kemer
       final arch = Path()
         ..moveTo(cx - 120, gy + 60)
         ..lineTo(cx - 120, gy - 20)
@@ -295,22 +354,23 @@ class JourneyPainter extends CustomPainter {
           ..strokeWidth = 7
           ..strokeCap = StrokeCap.round,
       );
-      // dünya adı + kilit durumu
       final tp = TextPainter(
         text: TextSpan(
-          text: open ? 'DÜNYA ${s + 1} · ${th.name}' : '🔒 ${requiredStarsFor(s)} ★',
+          text: open ? 'DÜNYA ${s + 1} · ${th.name}' : '🔒 DÜNYA ${s + 1} · ${requiredStars(s)} ★',
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 15,
             fontWeight: FontWeight.w800,
             letterSpacing: 2,
             color: open ? glow : Colors.white38,
+            shadows: open
+                ? [Shadow(color: glow.withValues(alpha: .6), blurRadius: 12)]
+                : null,
           ),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, Offset(cx - tp.width / 2, gy + 4));
-      // kemer ayaklarında fenerler
       for (final fx in const [-120.0, 120.0]) {
         canvas.drawCircle(
           Offset(cx + fx, gy + 60),
@@ -322,50 +382,87 @@ class JourneyPainter extends CustomPainter {
   }
 
   void _paintDecor(Canvas canvas, Size size, double sc) {
-    // yol kenarı dekorları: tema hava tipine göre ağaç/kristal/fener
+    // yol kenarı süsleri: parıltılı küreler + sürpriz hediyeler + gizem orbs
+    // (kullanıcı tur 6: dikdörtgen çubuklar KALDIRILDI — şeffaf/parıltılı)
     for (var s = 0; s < kStageCount; s++) {
-      final base = s * kWorldH - sc;
-      if (base > size.height + 100 || base + kWorldH < -100) continue;
       final th = kThemes[s];
-      final col = hslColor(th.hues.isNotEmpty ? th.hues[0] : th.glow, 70, 45);
+      final baseBottom = journeyHeight() - s * kWorldH - sc;
+      final baseTop = baseBottom - kWorldH;
+      if (baseTop > size.height + 100 || baseBottom < -100) continue;
+      final hue = th.hues.isNotEmpty ? th.hues[0] : th.glow;
       final rnd = math.Random(500 + s);
-      for (var k = 0; k < 7; k++) {
+      for (var k = 0; k < 8; k++) {
         final side = k.isEven ? -1 : 1;
-        final dx = size.width * 0.5 + side * (size.width * 0.30 + rnd.nextDouble() * size.width * 0.14);
-        final dy = base + 240 + rnd.nextDouble() * (kWorldH - 320);
-        final h = 18 + rnd.nextDouble() * 22;
-        if (th.weather == 'stars' || th.weather == 'snow') {
-          // kristal kümesi
-          canvas.save();
-          canvas.translate(dx, dy);
-          canvas.rotate(0.4);
-          canvas.drawRect(
-            Rect.fromLTWH(-h * 0.18, -h, h * 0.36, h),
-            Paint()..color = col.withValues(alpha: 0.65),
-          );
-          canvas.restore();
-        } else {
-          // fener/ağaç silüeti
-          canvas.drawCircle(Offset(dx, dy - h), h * 0.34,
-              Paint()..color = col.withValues(alpha: 0.55));
-          canvas.drawLine(
+        final dx = size.width * 0.5 +
+            side * (size.width * 0.28 + rnd.nextDouble() * size.width * 0.16);
+        final dy = baseTop + 200 + rnd.nextDouble() * (kWorldH - 340);
+        final kind = rnd.nextInt(3);
+        if (kind == 0) {
+          // parıltılı küre — şeffaf, nabızlı (çubuk DEĞİL)
+          final pulse = 0.5 + 0.5 * math.sin(time * 1.1 + k * 2.1 + s);
+          final r = 5 + rnd.nextDouble() * 7;
+          canvas.drawCircle(
             Offset(dx, dy),
-            Offset(dx, dy - h),
+            r * 2.6,
             Paint()
-              ..color = col.withValues(alpha: 0.7)
-              ..strokeWidth = 2.4,
+              ..color = hslColor(hue, 90, 70).withValues(alpha: 0.10 + 0.08 * pulse)
+              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
           );
+          canvas.drawCircle(
+            Offset(dx, dy),
+            r,
+            Paint()..color = Colors.white.withValues(alpha: 0.35 + 0.3 * pulse),
+          );
+        } else if (kind == 1) {
+          // sürpriz hediye — küçük, sallanan, parıltılı 🎁
+          final bob = math.sin(time * 1.6 + k) * 3;
+          final tp = TextPainter(
+            text: TextSpan(
+              text: '🎁',
+              style: TextStyle(
+                fontSize: 16 + rnd.nextDouble() * 6,
+                shadows: [
+                  Shadow(
+                      color: hslColor(35, 95, 60).withValues(alpha: 0.55),
+                      blurRadius: 10),
+                ],
+              ),
+            ),
+            textDirection: TextDirection.ltr,
+          )..layout();
+          tp.paint(canvas, Offset(dx - tp.width / 2, dy - tp.height / 2 + bob));
+        } else {
+          // gizem küresi — içinde '?' parıldayan
+          final pulse = 0.6 + 0.4 * math.sin(time * 0.9 + k * 1.3 + s);
+          canvas.drawCircle(
+            Offset(dx, dy),
+            14,
+            Paint()
+              ..color = hslColor(268, 80, 40).withValues(alpha: 0.35 * pulse),
+          );
+          final tp = TextPainter(
+            text: TextSpan(
+              text: '?',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                color: Colors.white.withValues(alpha: 0.55 + 0.25 * pulse),
+              ),
+            ),
+            textDirection: TextDirection.ltr,
+          )..layout();
+          tp.paint(canvas, Offset(dx - tp.width / 2, dy - tp.height / 2));
         }
       }
     }
   }
 
-  /// C-021 görünür inşaat (PB-035 taşıma): dünya segmentinin altında mini
-  /// yapı kulesi — tamamlanan parçalar dolu + neon kontur; bitince tepe ışığı.
+  /// C-021 görünür inşaat: dünya segmentinin altında mini yapı kulesi.
   void _paintConstruction(Canvas canvas, Size size, double sc) {
     final save = session.state;
     for (var s = 0; s < kStageCount; s++) {
-      final baseY = (s + 1) * kWorldH - 150 - sc;
+      final baseY = worldBaseY(s) - 15 * kNodeSpacing - 60 - sc;
       if (baseY < -160 || baseY > size.height + 160) continue;
       final th = kThemes[s];
       final glow = hslColor(th.glow, 90, 62);
@@ -374,10 +471,9 @@ class JourneyPainter extends CustomPainter {
         built += piecesBuilt(save, s, si);
         total += kWorldStructures[si].pieces.length;
       }
-      final dx = size.width * 0.5;
-      final unit = 13.0;
+      final dx = size.width * 0.5 + 150;
+      const unit = 13.0;
       final hAll = total * unit;
-      // iskelet (hedef) + dolu parçalar
       canvas.drawRRect(
         RRect.fromRectAndRadius(
             Rect.fromLTWH(dx - 16, baseY - hAll, 32, hAll), const Radius.circular(3)),
@@ -417,14 +513,14 @@ class JourneyPainter extends CustomPainter {
   void _paintMarket(Canvas canvas, Size size, double sc) {
     if (!marketOpen || nodes.length < 3) return;
     final p = Offset(nodes[2].pos.dx + 96, nodes[2].pos.dy + 8) - Offset(0, sc);
-    final th = kThemes[0];
-    // tezgah: çadır + parlak şerit
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: p, width: 44, height: 30), const Radius.circular(6)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: p, width: 44, height: 30),
+          const Radius.circular(6)),
       Paint()..color = hslColor(35, 85, 45),
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: p, width: 52, height: 12), const Radius.circular(6)),
+      RRect.fromRectAndRadius(Rect.fromCenter(center: p, width: 52, height: 12),
+          const Radius.circular(6)),
       Paint()..color = hslColor(35, 95, 62),
     );
     final tp = TextPainter(
@@ -435,7 +531,8 @@ class JourneyPainter extends CustomPainter {
           fontSize: 10,
           fontWeight: FontWeight.w800,
           letterSpacing: 1.5,
-          color: hslColor(th.glow, 90, 78),
+          color: hslColor(35, 90, 78),
+          shadows: [Shadow(color: hslColor(35, 95, 60).withValues(alpha: .6), blurRadius: 8)],
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -446,28 +543,71 @@ class JourneyPainter extends CustomPainter {
   void _paintNode(Canvas canvas, JourneyNode n, Offset p, double w, bool current) {
     final th = n.def.theme;
     final glow = hslColor(th.glow, 90, 62);
+    // derinlik: ufka (küçük harita-y) doğru düğümler hafif küçülür — yolculuk hissi
+    final depth = (n.pos.dy / journeyHeight()).clamp(0.0, 1.0);
+    final r = kNodeR * (0.80 + 0.20 * depth);
+
+    // ışıltılı İSİM etiketi — düğümün altında (kullanıcı tur 6)
+    final label = TextPainter(
+      text: TextSpan(
+        text: n.label,
+        style: TextStyle(
+          fontFamily: 'Inter',
+          fontSize: n.isSpecial ? 11.5 : 10.5,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.8,
+          color: n.isSpecial
+              ? (n.def.modifier == 'patron'
+                  ? NeonPalette.magenta
+                  : n.def.box
+                      ? NeonPalette.gold
+                      : NeonPalette.amber)
+              : Colors.white.withValues(alpha: n.done ? 0.75 : 0.55),
+          shadows: [
+            Shadow(
+                color: n.isSpecial
+                    ? hslColor(45, 95, 60).withValues(alpha: .7)
+                    : glow.withValues(alpha: .5),
+                blurRadius: 8),
+          ],
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    label.paint(canvas, Offset(p.dx - label.width / 2, p.dy + r + 4));
 
     if (n.done) {
-      // tamamlanan: dolu madalyon + yıldız(lar)
-      canvas.drawCircle(p, kNodeR, Paint()..color = glow.withValues(alpha: 0.24));
-      canvas.drawCircle(p, kNodeR * 0.82, Paint()..color = glow);
-      canvas.drawPath(starPath(p, kNodeR * 0.5), Paint()..color = const Color(0xFFFFF3C4));
+      canvas.drawCircle(p, r, Paint()..color = glow.withValues(alpha: 0.24));
+      canvas.drawCircle(p, r * 0.82, Paint()..color = glow);
+      canvas.drawPath(starPath(p, r * 0.5), Paint()..color = const Color(0xFFFFF3C4));
     } else if (n.unlocked) {
-      // açık sıradaki: çift halka + GİZEMLİ tür glifi (tam görünmez)
       if (current) {
         final pulse = 1 + 0.14 * math.sin(time * 3);
         canvas.drawCircle(
           p,
-          kNodeR * 1.5 * pulse,
+          r * 1.5 * pulse,
           Paint()
             ..color = NeonPalette.cyan.withValues(alpha: 0.22)
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
         );
+        // oyuncu işareti: güncel düğümde kuyruklu kuyrukluyıldız (sen buradasın)
+        final tail = Path()
+          ..moveTo(p.dx - r * 1.9, p.dy + r * 1.9)
+          ..quadraticBezierTo(p.dx - r * 0.6, p.dy + r * 0.9, p.dx, p.dy);
+        canvas.drawPath(
+          tail,
+          Paint()
+            ..color = NeonPalette.cyan.withValues(alpha: 0.5)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.2
+            ..strokeCap = StrokeCap.round
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+        );
       }
-      canvas.drawCircle(p, kNodeR, Paint()..color = const Color(0xE60E0E1C));
+      canvas.drawCircle(p, r, Paint()..color = const Color(0xE60E0E1C));
       canvas.drawCircle(
         p,
-        kNodeR,
+        r,
         Paint()
           ..color = glow
           ..style = PaintingStyle.stroke
@@ -475,11 +615,10 @@ class JourneyPainter extends CustomPainter {
       );
       _paintKindGlyph(canvas, n.def.kind, p, glow);
     } else {
-      // kilitli: loş disk + asma kilit
-      canvas.drawCircle(p, kNodeR * 0.9, Paint()..color = const Color(0xCC0B0B16));
+      canvas.drawCircle(p, r * 0.9, Paint()..color = const Color(0xB80B0B16));
       canvas.drawCircle(
         p,
-        kNodeR * 0.9,
+        r * 0.9,
         Paint()
           ..color = Colors.white.withValues(alpha: 0.14)
           ..style = PaintingStyle.stroke
@@ -492,15 +631,20 @@ class JourneyPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round;
       canvas.drawRRect(
         RRect.fromRectAndRadius(
-            Rect.fromCenter(center: p + const Offset(0, 2), width: 14, height: 11), const Radius.circular(3)),
+            Rect.fromCenter(center: p + const Offset(0, 2), width: 14, height: 11),
+            const Radius.circular(3)),
         lk,
       );
-      canvas.drawArc(Rect.fromCircle(center: p + const Offset(0, -4), radius: 5), math.pi, math.pi, false, lk);
+      canvas.drawArc(
+          Rect.fromCircle(center: p + const Offset(0, -4), radius: 5),
+          math.pi,
+          math.pi,
+          false,
+          lk);
     }
-    // kutu düğümü rozeti
     if (n.def.box && session.state.boxes[n.i.toString()] != true) {
       canvas.drawCircle(
-        p + Offset(kNodeR * 0.8, -kNodeR * 0.8),
+        p + Offset(r * 0.8, -r * 0.8),
         7,
         Paint()..color = NeonPalette.gold,
       );

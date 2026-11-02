@@ -42,7 +42,7 @@ void main() {
       expect(g.gridForTest.where((c) => c != null).length, 2);
       expect(g.score, 1);
       expect(g.selectedForTest, isNull);
-      expect(host.sounds, contains('place'));
+      expect(host.sounds, contains('merge_pop')); // PB-035 A6: birleşme imza sesi
     });
 
     test('eşit olmayan parçalar birleşmez, seçim taşınır', () {

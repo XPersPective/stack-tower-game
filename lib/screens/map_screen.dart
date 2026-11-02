@@ -85,13 +85,15 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   void _snapToCurrent() {
     final nodes = _nodes;
     if (nodes == null) return;
+    // YÖN (tur 6): yolculuk YUKARI — güncel düğüm ekranın alt-orta bandında,
+    // kilitli aşamalar yukarıda/ufukta; ilerledikçe harita aşağı akar.
     for (final n in nodes) {
       if (n.unlocked && !n.done) {
-        _scroll = (n.pos.dy - _viewH * 0.62).clamp(0.0, journeyHeight() - _viewH);
+        _scroll = (n.pos.dy - _viewH * 0.68).clamp(0.0, journeyHeight() - _viewH);
         return;
       }
     }
-    _scroll = (nodes.last.pos.dy - _viewH * 0.62)
+    _scroll = (nodes.last.pos.dy - _viewH * 0.68)
         .clamp(0.0, journeyHeight() - _viewH);
   }
 
@@ -110,13 +112,12 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
         final stamp = session.state.levelsDone * 1000 + session.totalStars;
         var nodes = _nodes;
         if (nodes == null || stamp != _layoutStamp) {
-          final first = nodes == null;
           nodes = journeyLayout(session, constraints.maxWidth);
           _nodes = nodes;
           _layoutStamp = stamp;
-          if (first) {
-            _snapToCurrent();
-          }
+          // İLK açılış VE bölüm sonrası dönüş: güncel düğüme otur —
+          // "haritaya git dediğimde gitmiyor" hatasının düzeltmesi
+          _snapToCurrent();
         }
         final list = nodes; // kapama içlerinde güvenli yerel kopya
         final marketOpen = _marketOpen(session);
@@ -152,12 +153,13 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
               },
               onVerticalDragStart: (_) => _vel = 0,
               onVerticalDragUpdate: (d) {
+                // tur 6: yolculuk yukarı — yukarı sürükle ileri götürür
                 _scroll =
-                    (_scroll - d.delta.dy).clamp(0.0, journeyHeight() - _viewH);
+                    (_scroll + d.delta.dy).clamp(0.0, journeyHeight() - _viewH);
                 _repaint.notify();
               },
               onVerticalDragEnd: (d) {
-                _vel = -d.velocity.pixelsPerSecond.dy * 0.55;
+                _vel = d.velocity.pixelsPerSecond.dy * 0.55;
               },
               child: CustomPaint(
                 painter: JourneyPainter(

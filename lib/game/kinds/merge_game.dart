@@ -168,7 +168,9 @@ class MergeGame implements MiniGame {
     pops.add(MergePop(to));
     shake = math.min(10, 3 + level * 0.9);
     flash = level >= 4 ? 0.22 : 0.08;
-    _host?.playSound(level >= 4 ? 'perfect' : 'place', combo: _combo);
+    // PB-035 A6/D8: birleşme imza sesi — merge_pop + büyükse perfect katmanı
+    _host?.playSound('merge_pop');
+    if (level >= 4) _host?.playSound('perfect', combo: _combo);
     _host?.haptic(level >= 4 ? 22 : 10);
     _spawn();
     if (_def.target > 0 && _score >= _def.target) {

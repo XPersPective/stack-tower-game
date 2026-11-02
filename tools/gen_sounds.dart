@@ -314,6 +314,29 @@ void main(List<String> args) {
 
   // PB-033/034: arka plan müzik döngüsü (dikişsiz, 22050 Hz mono)
   writeWav('music_loop.wav', musicLoop(), rate: 22050);
+
+  // PB-035 D8: dünya jingle'arı — 10 dünya, temasına göre 3'lü arpej;
+  // perde ailesi = 262'den pentatonik tırmanış (dünya ilerledikçe yükselir)
+  for (var w = 0; w < 10; w++) {
+    final base = 262.0 * math.pow(2, w / 10); // dünya ilerledikçe parlaklaşır
+    final third = base * 1.25; // minör üçlü — neon gece tonu
+    final fifth = base * 1.5;
+    writeWav('jingle${w + 1}.wav', mix([
+      tone(freq: base, dur: 0.22, type: 'sine', vol: 0.18),
+      toneDelayed(0.10, tone(freq: third, dur: 0.22, type: 'sine', vol: 0.16)),
+      toneDelayed(0.20, tone(freq: fifth, dur: 0.34, type: 'triangle', vol: 0.18)),
+    ]));
+  }
+
+  // PB-035 A6/D8: ASMR akış sesleri — SORT dökülme (hışırtı) + MERGE pop
+  writeWav('sort_flow.wav', mix([
+    tone(freq: 900, endFreq: 300, dur: 0.28, type: 'noise', vol: 0.05),
+    toneDelayed(0.02, tone(freq: 500, endFreq: 180, dur: 0.22, type: 'triangle', vol: 0.06)),
+  ]));
+  writeWav('merge_pop.wav', mix([
+    tone(freq: 620, endFreq: 940, dur: 0.09, type: 'sine', vol: 0.16),
+    toneDelayed(0.05, tone(freq: 1240, dur: 0.10, type: 'sine', vol: 0.08)),
+  ]));
 }
 
 /// Loop uzunluğunu tam örnek sayısına sabitle (sondaki kuyruk kırpılır).
@@ -454,4 +477,9 @@ const List<String> _expected = [
   'tap.wav', 'whoosh.wav', 'reward.wav', 'unlock.wav', 'error.wav', 'pop.wav',
   // PB-033/034: arka plan müzik döngüsü
   'music_loop.wav',
+  // PB-035 D8: dünya jingle'ları (10) + ASMR akış sesleri
+  'jingle1.wav', 'jingle2.wav', 'jingle3.wav', 'jingle4.wav', 'jingle5.wav',
+  'jingle6.wav', 'jingle7.wav', 'jingle8.wav', 'jingle9.wav', 'jingle10.wav',
+  'sort_flow.wav',
+  'merge_pop.wav',
 ];

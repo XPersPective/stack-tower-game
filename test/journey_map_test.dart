@@ -34,10 +34,12 @@ void main() {
     final s = GameSession(MemoryStorage());
     final nodes = journeyLayout(s, 420);
     expect(nodes.length, kLevelCount);
+    // YÖN (tur 6): yolculuk YUKARI — düğüm 0 altta (büyük y), 149 ufukta
     for (var i = 1; i < nodes.length; i++) {
-      expect(nodes[i].pos.dy, greaterThan(nodes[i - 1].pos.dy),
-          reason: 'y sıralı olmalı (i=$i)');
+      expect(nodes[i].pos.dy, lessThan(nodes[i - 1].pos.dy),
+          reason: 'y azalan olmalı — ileri YUKARI (i=$i)');
     }
+    expect(nodes[0].pos.dy, greaterThan(nodes[149].pos.dy));
     for (final n in nodes) {
       expect(n.pos.dx, inInclusiveRange(20, 400),
           reason: 'düğüm yol-kenarında: ${n.pos.dx}');
@@ -88,10 +90,28 @@ void main() {
     expect(a, isNot(equals(b)));
   });
 
+  test('tur 6: düğüm etiketleri — özel isimler parıltılı', () {
+    final s = GameSession(MemoryStorage());
+    final nodes = journeyLayout(s, 420);
+    expect(nodes[4].label, '★ ALTIN HAZİNE'); // idx4 = altin
+    expect(nodes[9].label, '★ ALTIN HAZİNE'); // idx9 = altin
+    expect(nodes[14].label, '♛ PATRON'); // idx14 = patron
+    // kutu kuralı: (i+1)%7==0 → i=6 ilk kutu düğümü
+    expect(nodes[6].def.box, isTrue);
+    expect(nodes[6].label, '🎁 SÜRPRİZ');
+    // normal düğüm: kutu-olmayan ilk bölüm num'lu etiket taşır
+    final normal = nodes
+        .firstWhere((n) => !n.def.box && n.def.modifier == 'normal');
+    expect(normal.label, contains('BÖLÜM'));
+    // YÖN (tur 6): özel düğümler isSpecial işaretli (parıltı ölçüsü)
+    expect(nodes[4].isSpecial, isTrue);
+    expect(normal.isSpecial, isFalse);
+  });
+
   test('kapı: journeyHeight 10 dünyayı kapsar', () {
     final s = GameSession(MemoryStorage());
     final nodes = journeyLayout(s, 420);
     expect(journeyHeight(), greaterThan(nodes.last.pos.dy));
-    expect(gateY(3), 3 * kWorldH + 60);
+    expect(gateY(3), worldBaseY(3) + 130);
   });
 }
