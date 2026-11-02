@@ -107,7 +107,13 @@ class RingGame implements MiniGame {
       _combo++;
       if (perfect) _perfects++;
       fxs.add(RingHitFx(true));
-      hitStop = perfect ? 0.07 : 0.045;
+      // imza anı (PB-035 B8): tam merkez geçiş → 120 ms zaman donması + halka şöleni
+      hitStop = perfect ? 0.12 : 0.045;
+      if (perfect) {
+        for (var k = 1; k <= 2; k++) {
+          fxs.add(RingHitFx(true)..life = -0.08 * k); // gecikmeli iç içe halkalar
+        }
+      }
       shake = perfect ? 9 : 5;
       _host?.playSound(perfect ? 'perfect' : 'place', combo: _combo);
       _host?.haptic(perfect ? 16 : 9);
@@ -239,9 +245,9 @@ class RingGame implements MiniGame {
       ..color = const Color(0x6646E6FF)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8));
 
-    // isabet efektleri
+    // isabet efektleri (gecikmeli şölen halkaları: negatif life → t 0'da bekler)
     for (final fx in fxs) {
-      final t = fx.life / 0.5;
+      final t = (fx.life / 0.5).clamp(0.0, 1.0);
       final col = fx.good ? const Color(0xFF7CFFB2) : const Color(0xFFFF5A5A);
       canvas.drawCircle(c, R * (1 + t * 0.6), Paint()
         ..color = col.withValues(alpha: (1 - t) * 0.8)

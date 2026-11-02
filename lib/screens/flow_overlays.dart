@@ -416,6 +416,10 @@ class _FlowOverlaysState extends State<FlowOverlays> {
         : null;
     final starCount = r.reached && !endless ? starsFor(r.perfects, def.target) : 0;
     final hasNext = r.reached && !endless && !daily && def.i + 1 < kLevelCount;
+    // A7 (PB-035) yenilgi yumuşatma: normal bölüm kaybında ('NEREDEYSE!') hızlı
+    // yeniden deneme BİRİNCİL eylemdir — TEKRAR, HARİTA'dan büyük/parlak çizilir
+    // (D5: yenilgi → hızlı tekrar). Kazanma ekranında SONRAKİ BÖLÜM birincil kalır.
+    final lostNormal = !endless && !daily && !r.reached;
 
     return _sheet(
       celebrate: r.reached,
@@ -500,8 +504,10 @@ class _FlowOverlaysState extends State<FlowOverlays> {
               label: 'TEKRAR',
               icon: Icons.refresh_rounded,
               expand: true,
-              height: 50,
-              colors: const [Color(0xFF243A78), Color(0xFF182A52)],
+              height: lostNormal ? 54 : 50,
+              colors: lostNormal
+                  ? const [Color(0xFF2E1E86), Color(0xFF12407E), Color(0xFF451C7A)]
+                  : const [Color(0xFF243A78), Color(0xFF182A52)],
               onTap: widget.onRetry,
             ),
           const SizedBox(height: AppSpace.sm),

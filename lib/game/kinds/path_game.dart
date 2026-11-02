@@ -273,6 +273,10 @@ class PathGame implements MiniGame {
     _over = true;
     _reached = true;
     _host?.playSound('win');
+    // imza anı (PB-035 B8): yol tamamlanınca bitiş patlaması — fanfare
+    // katmanı + güçlü perde (mevcut 'flash' alanı render'da çizilir)
+    _host?.playSound('fanfare');
+    flash = 0.55;
     _host?.haptic(30);
     _host?.onEvent('win', data: {'points': _score});
   }

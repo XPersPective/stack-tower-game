@@ -246,6 +246,13 @@ class SortGame implements MiniGame {
         combo: _combo);
     _host?.haptic(10);
     shake = 3;
+    // imza anı (PB-035 B8): sütun TAMAMLANINCA katmanlı pop — ikinci ses
+    // katmanı + bir tık daha güçlü sarsıntı (dökülme hissi); akış aynen sürer
+    if (run == capacity && target.every((e) => e == ball)) {
+      _host?.playSound('pop', combo: _combo);
+      shake = 7;
+      _host?.haptic(16);
+    }
 
     // sütun tamamlandı mı? (tek renk + dolu)
     if (target.length == capacity && target.every((e) => e == ball)) {

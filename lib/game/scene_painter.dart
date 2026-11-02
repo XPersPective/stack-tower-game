@@ -134,7 +134,8 @@ class ScenePainter extends CustomPainter {
         Rect.fromLTWH(e.blocks[i].x, e.groundY - i * e.bh + e.camShift, e.blocks[i].w, e.bh),
         i == e.squashIdx ? e.squashT : 0,
       );
-      _drawBlock(canvas, e, r.left, r.top, r.width, r.height, e.blockHue(i));
+      _drawBlock(canvas, e, r.left, r.top, r.width, r.height, e.blockHue(i),
+          bossTop: e.def?.modifier == 'patron' && i == e.blocks.length - 1);
     }
     if (e.state == EngineState.playing) _drawMoving(canvas, e);
 
@@ -147,7 +148,11 @@ class ScenePainter extends CustomPainter {
       canvas.rotate(d.rot);
       final a = (1 - d.life * 0.5).clamp(0.0, 1.0);
       final p = Paint()
-        ..color = hsla(d.hue, 86, 52, a)
+        // A7 (PB-035) yenilgi yumuşatma: kayıp anındaki molozlar blok hue'su
+        // yerine nötr beyaza çekilir — çöküş sakin bir son olarak okunur
+        ..color = (e.state == EngineState.lost && e.endEvent == EngineEvent.lose)
+            ? Colors.white.withValues(alpha: a * 0.7)
+            : hsla(d.hue, 86, 52, a)
         ..isAntiAlias = true;
       _roundRectPath(canvas, p, -d.w / 2, -d.h / 2, d.w, d.h, math.min(4 * e.scale, d.h / 3), radiusOnly: true);
       canvas.restore();
@@ -262,6 +267,12 @@ class ScenePainter extends CustomPainter {
         canvas.drawPath(path, p);
       }
       canvas.restore();
+    }
+
+    // PB-035 B2: patron bölüm çerçevesi — köşe braketleri flash'ın ALTINDA
+    // kalır (mükemmel anında flaş çerçeveyi örter). Yalnız sunum.
+    if (e.def?.modifier == 'patron') {
+      _drawBossFrame(canvas, e, glow);
     }
 
     // juice (PB-016): tam-ekran flaş — mükemmel tema-glow 0.18 / kritik beyaz 0.35, 90ms fade
@@ -713,7 +724,8 @@ class ScenePainter extends CustomPainter {
     canvas.restore();
   }
 
-  void _drawBlock(Canvas canvas, GamePlay e, double x, double y, double w, double h, int hue) {
+  void _drawBlock(Canvas canvas, GamePlay e, double x, double y, double w, double h, int hue,
+      {bool bossTop = false}) {
     if (y > e.h + h || y + h + e.depthY < -h) return;
     final r = math.min(5 * e.scale, h / 3);
 
@@ -759,6 +771,16 @@ class ScenePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = math.max(0.8, 1.1 * e.scale);
     _roundRectStroke(canvas, border, x + 0.5, y + 0.5, w - 1, h - 1, r);
+
+    // PB-035 B2: patron görsel varyantı — en üst yerleşik blokta birincil
+    // konturun 3px dışında düşük alfalı ikinci ince kontur (yalnız sunum).
+    if (bossTop) {
+      final outer = Paint()
+        ..color = hsla(hue, 100, 82, 0.18)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = math.max(0.8, 1.1 * e.scale);
+      _roundRectStroke(canvas, outer, x - 3, y - 3, w + 6, h + 6, r + 3);
+    }
 
     // üst yüz
     final topG = Paint()
@@ -891,6 +913,31 @@ class ScenePainter extends CustomPainter {
     stroke.paint(c, Offset.zero);
     tp.paint(c, Offset.zero);
     return (tp.width, tp.height);
+  }
+
+  /// PB-035 B2: patron bölüm çerçevesi — 4 köşede L biçimli braketler (24px
+  /// uzunluk, 3px kalınlık, kenardan 14px içeride). Tema glow rengiyle
+  /// nabız atar (0.5 ± 0.2 · sin(t·2)). Ekran uzayında çizilir — kamera/
+  /// sarsıntı/zoom katmanlarının dışında, oyun matematiğine dokunmaz.
+  void _drawBossFrame(Canvas canvas, GamePlay e, int glow) {
+    final a = 0.5 + 0.2 * math.sin(e.time * 2);
+    final p = Paint()
+      ..color = hsla(glow, 95, 75, a.clamp(0.0, 1.0))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
+    const inset = 14.0, len = 24.0;
+    final corners = [
+      (Offset(inset, inset), 1.0, 1.0), // sol üst
+      (Offset(e.w - inset, inset), -1.0, 1.0), // sağ üst
+      (Offset(inset, e.h - inset), 1.0, -1.0), // sol alt
+      (Offset(e.w - inset, e.h - inset), -1.0, -1.0), // sağ alt
+    ];
+    for (final (o, sx, sy) in corners) {
+      canvas.drawLine(o, Offset(o.dx + sx * len, o.dy), p);
+      canvas.drawLine(o, Offset(o.dx, o.dy + sy * len), p);
+    }
   }
 
   void _drawVignette(Canvas canvas, GamePlay e) {

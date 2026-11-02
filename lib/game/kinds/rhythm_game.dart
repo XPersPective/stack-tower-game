@@ -161,6 +161,9 @@ class RhythmGame implements MiniGame {
     _over = true;
     _reached = true;
     _host?.playSound('win');
+    // imza anı (PB-035 B8): final akoru — fanfare + pop üst katmanları
+    _host?.playSound('fanfare');
+    _host?.playSound('pop');
     _host?.haptic(30);
     _host?.onEvent('win', data: {'points': hits});
   }

@@ -8,11 +8,11 @@
   },
   "scheduling": {
     "mode": "parallel",
-    "max_parallel": 3
+    "max_parallel": 10
   },
   "quota_recovery": {
     "enabled": false,
     "threshold_percent": 10
   },
-  "note": "Kullanıcı 2026-11-02: 'kendi kendini sadece kendini alt ajan olarak kullanıp paralel çalıştırabilirsiniz' → ESP=native, REV=native, SP=parallel(3), QRP kapalı. C-024 uyumlu (CAP yok)."
+  "note": "Kullanicinin 4. tur yonergesi: maksimum paralel (10 eszamanli anahtar; dalga dalga atis, toplam alt ajan siniri yok), yurutucu=flash sinifi yerel alt ajanlar, lead=koordinator, hiz odakli."
 }

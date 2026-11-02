@@ -36,6 +36,7 @@ class DefendGame implements MiniGame {
   int blocked = 0, needed = 8;
   double shieldT = 0, cd = 0, spawnT = 0.8, time = 0, spin = 0;
   double shake = 0, flash = 0, shieldFlash = 0;
+  double edgeGlow = 0; // imza anı (PB-035 B8): son dalga kenar parıltısı
   int _combo = 0, _perfects = 0, _shields = 1;
   bool _over = false, _reached = false;
   final math.Random _rnd = math.Random();
@@ -126,8 +127,12 @@ class DefendGame implements MiniGame {
 
     // dalga pacing'i: kesilecek sayı hedefe yetecek kadar üretir
     spawnT -= dt;
+    // imza anı (PB-035 B8): SON DALGA — kalan ≤ 1 iken yeni dalga doğarsa
+    // kenar parıltısı 2 sn açılır (final savunması hissi)
+    edgeGlow = math.max(0, edgeGlow - dt);
     if (spawnT <= 0) {
       _spawnWave();
+      if (needed - blocked <= 1) edgeGlow = 2.0;
       final base = (0.95 - _def.speed * 0.09).clamp(0.5, 1.1);
       spawnT = base * (0.75 + _rnd.nextDouble() * 0.5);
     }
@@ -222,6 +227,37 @@ class DefendGame implements MiniGame {
       final y = ((i * 53.7 + time * 18) % h);
       canvas.drawCircle(
           Offset(x, y), 1.1, Paint()..color = Colors.white.withValues(alpha: .2));
+    }
+    // imza anı: son dalga kenar parıltısı — dört kenardan nabız
+    if (edgeGlow > 0) {
+      final a = (edgeGlow / 2.0) * (0.55 + 0.45 * math.sin(time * 6)) * 0.4;
+      for (final edge in const [0, 1, 2, 3]) {
+        final rect = edge == 0
+            ? Rect.fromLTWH(0, 0, w, h * 0.16)
+            : edge == 1
+                ? Rect.fromLTWH(0, h * 0.84, w, h * 0.16)
+                : edge == 2
+                    ? Rect.fromLTWH(0, 0, w * 0.12, h)
+                    : Rect.fromLTWH(w * 0.88, 0, w * 0.12, h);
+        canvas.drawRect(
+          rect,
+          Paint()
+            ..shader = LinearGradient(
+              begin: Alignment.center,
+              end: edge == 0
+                  ? Alignment.topCenter
+                  : edge == 1
+                      ? Alignment.bottomCenter
+                      : edge == 2
+                          ? Alignment.centerLeft
+                          : Alignment.centerRight,
+              colors: [
+                const Color(0xFFFF5A6E).withValues(alpha: 0),
+                Color(0xFFFF5A6E).withValues(alpha: a.clamp(0.0, 1.0)),
+              ],
+            ).createShader(rect),
+        );
+      }
     }
 
     canvas.save();

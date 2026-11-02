@@ -283,18 +283,34 @@ class _PreviewScreenState extends State<PreviewScreen>
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              Text(
-                                                'BU BÖLÜM: ${def.kindSpec.name}',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleMedium
-                                                    ?.copyWith(
-                                                      color: hslColor(
-                                                        def.kindSpec.accentHue,
-                                                        95,
-                                                        78,
-                                                      ),
+                                              Row(
+                                                children: [
+                                                  Flexible(
+                                                    child: Text(
+                                                      'BU BÖLÜM: ${def.kindSpec.name}',
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .titleMedium
+                                                          ?.copyWith(
+                                                            color: hslColor(
+                                                              def
+                                                                  .kindSpec
+                                                                  .accentHue,
+                                                              95,
+                                                              78,
+                                                            ),
+                                                          ),
                                                     ),
+                                                  ),
+                                                  // PB-035 B2: patron rozeti
+                                                  if (def.modifier ==
+                                                      'patron') ...[
+                                                    const SizedBox(
+                                                      width: AppSpace.sm,
+                                                    ),
+                                                    const _PatronBadge(),
+                                                  ],
+                                                ],
                                               ),
                                               Text(
                                                 def.kindSpec.hint,
@@ -431,5 +447,58 @@ class _StartButton extends StatelessWidget {
     if (session.state.completed[def.i - 1] == null) return false;
     return session.totalStars >= requiredStars(def.stage) ||
         def.stage == stageOf(def.i - 1);
+  }
+}
+
+/// PB-035 B2: patron (boss) bölüm rozeti — tür kartı başlığının yanında küçük
+/// dolgulu çip; amber→magenta gradyan kenar + alev ikonu (yalnız sunum).
+class _PatronBadge extends StatelessWidget {
+  const _PatronBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'PATRON bölümü rozeti',
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.all(1.5),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [NeonPalette.amber, NeonPalette.magenta],
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.xs + 2,
+            vertical: 2.5,
+          ),
+          decoration: BoxDecoration(
+            color: NeonPalette.glass,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.local_fire_department,
+                size: 12,
+                color: NeonPalette.amber,
+              ),
+              SizedBox(width: 3),
+              Text(
+                'PATRON',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
+                  color: NeonPalette.amber,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

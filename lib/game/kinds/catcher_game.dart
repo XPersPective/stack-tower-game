@@ -93,9 +93,13 @@ class CatcherGame implements MiniGame {
     _host?.haptic(6);
   }
 
+  /// İmza anı (PB-035 B8): hedefe son yıldız kaldığında ağır çekim finalsı.
+  bool get _finalRun => _def.target > 1 && _score == _def.target - 1;
+
   @override
   void tick(double dt) {
     if (_over) return;
+    if (_finalRun) dt *= 0.6; // son yıldız — her şey ağır çekimde akar
     time += dt;
     shake = math.max(0, shake - dt * 55);
     flash = math.max(0, flash - dt * 3);
@@ -287,6 +291,18 @@ class CatcherGame implements MiniGame {
       ..color = const Color(0xFFBFF4FF)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.4);
+
+    // imza anı: son yıldız — sepet kenarında altın nabız (ağır çekim eşliği)
+    if (_finalRun) {
+      final pulse = 0.5 + 0.5 * math.sin(time * 9);
+      canvas.drawPath(
+          bp,
+          Paint()
+            ..color = const Color(0xFFFFD24A).withValues(alpha: 0.3 + pulse * 0.4)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 5 + pulse * 4
+            ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 8));
+    }
 
     // yakalama patlamaları
     for (final b in bursts) {

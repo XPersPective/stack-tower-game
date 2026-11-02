@@ -174,8 +174,13 @@ class MapScene {
       final d = levelDef(i);
       final host = islands[d.stage];
       final u = d.idx / (per - 1);
-      final a = 0.5 + u * math.pi * 2 * 1.7 + d.stage * 0.37;
-      final ring = host.r * (0.70 - u * 0.47);
+      // Göğü Atlası (PB-035): düğümler kameraya bakan SARMAL YAYda — kamera
+      // yaw'ına hizalı (öndeki ~200°'lik dilim); tüm bölümler tek bakışta.
+      // Göğü Atlası (PB-035): düğümler kameraya bakan SARMAL YAYda — tüm
+      // bölümler tek bakışta; uzak uçta hafif ölçek derinliği (s büyüğe).
+      const camYaw = 0.55;
+      final a = camYaw - math.pi * 0.52 + u * math.pi * 1.08;
+      final ring = host.r * (0.80 - u * 0.14);
       final nx = host.x + math.cos(a) * ring;
       final nz = host.z + math.sin(a) * ring;
       final nd = MapNode(
@@ -266,7 +271,7 @@ class MapScene {
 /* ------------------------------ kamera ------------------------------ */
 
 class MapCamera {
-  double yaw = 0.55, pitch = 0.60, dist = 1420;
+  double yaw = 0.55, pitch = 0.60, dist = 1240; // Göğü Atlası: orta kadraj
   Offset3 focus = const Offset3(0, 0, 0);
   double focal = 800;
   double w = 0, h = 0;
@@ -375,6 +380,38 @@ class MapScenePainter extends CustomPainter {
         Offset(r * size.width, r2 * size.height * 0.7),
         0.6 + r2 * 1.3,
         Paint()..color = Colors.white.withValues(alpha: tw * 0.7),
+      );
+    }
+    // Göğü Atlası: ufuk parıltı bandı — adalar bulut denizinin üstünde
+    final band = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.bottomCenter,
+        end: Alignment.center,
+        colors: [
+          hslColor(theme.glow, 70, 38).withValues(alpha: 0.22),
+          hslColor(theme.glow, 70, 38).withValues(alpha: 0),
+        ],
+      ).createShader(Rect.fromLTWH(0, size.height * 0.62, size.width, size.height * 0.38));
+    canvas.drawRect(Rect.fromLTWH(0, size.height * 0.62, size.width, size.height * 0.38), band);
+    // kayan yıldız: her ~8 sn'de bir, izli (deterministik zaman)
+    final cycle = time % 8.0;
+    if (cycle < 0.9) {
+      final k = cycle / 0.9;
+      final sx = size.width * (0.12 + 0.62 * k);
+      final sy = size.height * (0.10 + 0.16 * k);
+      final a = (1 - k) * 0.9;
+      canvas.drawLine(
+        Offset(sx - 46, sy - 26),
+        Offset(sx, sy),
+        Paint()
+          ..shader = LinearGradient(
+            colors: [Colors.white.withValues(alpha: 0), Colors.white.withValues(alpha: a)],
+          ).createShader(Rect.fromLTRB(sx - 46, sy - 26, sx, sy)),
+      );
+      canvas.drawCircle(
+        Offset(sx, sy),
+        1.8,
+        Paint()..color = Colors.white.withValues(alpha: a),
       );
     }
   }
@@ -488,18 +525,39 @@ class MapScenePainter extends CustomPainter {
     }
     if (tip != null && started) sidePath.lineTo(tip.x, tip.y);
     sidePath.close();
-    canvas.drawPath(
-      sidePath,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            hslColor(theme.glow, 42, 16),
-            hslColor(theme.glow, 40, 7),
-          ],
-        ).createShader(Rect.fromLTRB(topProj.x - rScreen, maxBotY, topProj.x + rScreen, tip?.y ?? maxBotY)),
-    );
+    // Göğü Atlası: faset gölgeleme — koni dilimleri nöbetleşe aydınlık/karanlık
+    canvas.save();
+    canvas.clipPath(sidePath);
+    if (tip != null) {
+      for (var k = 0; k < n; k++) {
+        final p1 = rimBot[k];
+        final p2 = rimBot[(k + 1) % n];
+        if (p1 == null || p2 == null) continue;
+        final light = k.isEven ? 20 : 9;
+        canvas.drawPath(
+          Path()
+            ..moveTo(p1.dx, p1.dy)
+            ..lineTo(p2.dx, p2.dy)
+            ..lineTo(tip.x, tip.y)
+            ..close(),
+          Paint()..color = hslColor(theme.glow, 40, light),
+        );
+      }
+    }
+    canvas.restore();
+    // uç altı bulut parıltısı — ada bulutların üstünde duruyor hissi
+    if (tip != null) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(tip.x, tip.y + 14 * s),
+          width: rScreen * 1.15,
+          height: rScreen * 0.22,
+        ),
+        Paint()
+          ..color = hslColor(theme.glow, 60, 55).withValues(alpha: 0.14)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(3.0, 10 * s)),
+      );
+    }
 
     // üst yüzey: rim diski + küre kubbesi (surfY'un balonlaşması) birleşimi
     final topPath = Path();
@@ -511,17 +569,68 @@ class MapScenePainter extends CustomPainter {
       started = true;
     }
     topPath.close();
+    // Göğü Atlası (PB-035): arazi — tema renkli, aydınlık, dokulu
     canvas.drawPath(
       topPath,
       Paint()
         ..shader = RadialGradient(
           center: Alignment.center,
           colors: [
-            hslColor(theme.glow, 30, 22),
-            hslColor(theme.glow, 32, 14),
+            hslColor(theme.glow, 45, 36),
+            hslColor(theme.glow, 40, 26),
+            hslColor(theme.hues.isNotEmpty ? theme.hues[1] : theme.glow, 38, 15),
           ],
+          stops: const [0, 0.55, 1],
         ).createShader(Rect.fromCircle(center: Offset(topProj.x, topProj.y), radius: rScreen)),
     );
+    // kıyı rim ışığı: dar parlak + geniş yumuşak
+    canvas.drawPath(
+      topPath,
+      Paint()
+        ..color = glow.withValues(alpha: 0.60)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = math.max(1.5, 2.2 * s),
+    );
+    canvas.drawPath(
+      topPath,
+      Paint()
+        ..color = glow.withValues(alpha: 0.16)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = math.max(4.0, 7 * s)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(2.0, 4 * s)),
+    );
+    // teraslar: merkeze doğru 2 iç ring (kayıp-ölçek güvenli: rimTop yolundan)
+    for (final f in const [0.62, 0.36]) {
+      canvas.save();
+      canvas.translate(topProj.x, topProj.y);
+      canvas.scale(f);
+      canvas.translate(-topProj.x, -topProj.y);
+      canvas.drawPath(
+        topPath,
+        Paint()
+          ..color = Colors.white.withValues(alpha: f > 0.5 ? 0.07 : 0.05)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = math.max(0.8, 1.2 * s / f),
+      );
+      canvas.restore();
+    }
+    // kristal kıvılcımları: deterministik, nabız atan mini elmaslar
+    for (var i = 0; i < 24; i++) {
+      final a = hashF(i * 13.7 + isl.seed) * math.pi * 2;
+      final rad = math.sqrt(hashF(i * 7.9 + 2)) * 0.82;
+      final dx = math.cos(a) * rScreen * rad;
+      final dy = math.sin(a) * rScreen * rad * 0.86; // elips sapması
+      final tw = 0.35 + 0.45 * (0.5 + 0.5 * math.sin(time * 1.4 + i * 2.3));
+      canvas.save();
+      canvas.translate(topProj.x + dx, topProj.y + dy);
+      canvas.rotate(0.7853982);
+      final cs = (1.6 + hashF(i * 3.1) * 2.4) * s;
+      canvas.drawRect(
+        Rect.fromLTWH(-cs / 2, -cs / 2, cs, cs),
+        Paint()..color = Colors.white.withValues(alpha: tw * 0.55),
+      );
+      canvas.restore();
+    }
     // kubbe: küre silüet çemberi ∩ ekvator üstü yarısı (surfY balonlaşması)
     final sphereC = Offset3(isl.x, isl.y - isl.r, isl.z);
     final cs = camera.project(sphereC);
@@ -549,12 +658,17 @@ class MapScenePainter extends CustomPainter {
           Offset(cs.x, cs.y),
           apparentR,
           Paint()
-            ..shader = RadialGradient(
+            ..shader = LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
               colors: [
-                hslColor(theme.glow, 34, 22),
-                hslColor(theme.glow, 32, 13),
+                // Göğü Atlası: tepede ışık — ada tepesi güneş alır
+                hslColor(theme.glow, 50, 46),
+                hslColor(theme.glow, 44, 32),
+                hslColor(theme.hues.isNotEmpty ? theme.hues[1] : theme.glow, 40, 20),
               ],
-            ).createShader(Rect.fromCircle(center: Offset(cs.x, cs.y), radius: apparentR)),
+              stops: const [0, 0.55, 1],
+            ).createShader(Rect.fromLTWH(cs.x - apparentR, cs.y - apparentR, apparentR * 2, apparentR * 2)),
         );
         canvas.restore();
       }
@@ -572,11 +686,11 @@ class MapScenePainter extends CustomPainter {
         final bh2 = it.h * p.s;
         canvas.drawRect(
           Rect.fromLTWH(p.x - bw / 2, p.y - bh2, bw, bh2),
-          Paint()..color = hslColor(it.hue, 70, 40),
+          Paint()..color = hslColor(it.hue, 62, 52),
         );
         canvas.drawRect(
           Rect.fromLTWH(p.x - bw / 2, p.y - bh2, bw, math.max(1.0, 2 * p.s)),
-          Paint()..color = hslColor(it.hue, 90, 68),
+          Paint()..color = hslColor(it.hue, 90, 76),
         );
         // pencere ışıkları
         canvas.drawRect(
@@ -590,7 +704,8 @@ class MapScenePainter extends CustomPainter {
           ..lineTo(p.x + h2 * 0.22, p.y - h2)
           ..lineTo(p.x + h2 * 0.44, p.y)
           ..close();
-        canvas.drawPath(path, Paint()..color = hslColor(it.hue, 60, 30));
+        canvas.drawPath(path, Paint()..color = hslColor(it.hue, 55, 40));
+        canvas.drawPath(path, Paint()..color = hslColor(it.hue, 80, 70).withValues(alpha: .5)..style = PaintingStyle.stroke..strokeWidth = 1);
       }
     }
 
@@ -845,16 +960,36 @@ class MapScenePainter extends CustomPainter {
       final unitH = 30 * s;
 
       if (built == 0) {
-        // blueprint: sıradaki yapının silüeti (merak)
+        // blueprint: sıradaki yapının silüeti (merak) — hologram dolgu + ışık sütunu
         final isNext = nextIdx != null && slotOf(nextIdx).structure == si;
+        final h3 = spec.pieces.length * unitH;
+        final rect = Rect.fromLTWH(p.x - baseW / 2, p.y - h3, baseW, h3);
+        if (isNext) {
+          canvas.drawRect(
+            rect,
+            Paint()
+              ..color = hslColor(isl.theme.glow, 85, 60).withValues(alpha: 0.10),
+          );
+          // hologram ışık sütunu — yapıya yükselen tema ışığı
+          canvas.drawRect(
+            Rect.fromLTWH(p.x - baseW * 0.85, p.y - h3 * 1.35, baseW * 1.7, h3 * 1.35),
+            Paint()
+              ..shader = LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [
+                  hslColor(isl.theme.glow, 90, 65).withValues(alpha: 0.16),
+                  hslColor(isl.theme.glow, 90, 65).withValues(alpha: 0),
+                ],
+              ).createShader(rect),
+          );
+        }
         final bp = Paint()
           ..color = (isNext ? hslColor(isl.theme.glow, 90, 70) : Colors.white)
               .withValues(alpha: isNext ? 0.42 : 0.14)
           ..style = PaintingStyle.stroke
           ..strokeWidth = math.max(1.0, 1.6 * s);
-        final h3 = spec.pieces.length * unitH;
-        canvas.drawRect(
-            Rect.fromLTWH(p.x - baseW / 2, p.y - h3, baseW, h3), bp);
+        canvas.drawRect(rect, bp);
         canvas.drawLine(Offset(p.x - baseW / 2, p.y - h3),
             Offset(p.x + baseW / 2, p.y), bp);
         canvas.drawLine(Offset(p.x + baseW / 2, p.y - h3),
@@ -926,7 +1061,7 @@ class MapScenePainter extends CustomPainter {
         nd.screen = null;
         continue;
       }
-      final r = math.max(7.0, p.s * 26);
+      final r = math.max(11.0, p.s * 30);
       nd.screen = Offset(p.x, p.y);
       nd.screenR = r;
 
@@ -936,25 +1071,24 @@ class MapScenePainter extends CustomPainter {
           : nd.unlocked
               ? NeonPalette.cyan
               : Colors.white24;
-      // halo (current pulse)
-      if (nd.current) {
-        final pulse = 1 + 0.18 * math.sin(time * 3);
-        canvas.drawCircle(
-          Offset(p.x, p.y),
-          r * 1.7 * pulse,
-          Paint()
-            ..color = NeonPalette.cyan.withValues(alpha: 0.28)
-            ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(1.0, r * 0.8)),
-        );
-      }
-      canvas.drawCircle(Offset(p.x, p.y), r, Paint()..color = color.withValues(alpha: 0.10));
+      // halo: her düğümde hafif, güncel düğümde güçlü nabız (PB-035 görünürlük)
+      final haloA = nd.current ? 0.28 : 0.12;
+      final pulse = nd.current ? 1 + 0.18 * math.sin(time * 3) : 1.0;
+      canvas.drawCircle(
+        Offset(p.x, p.y),
+        r * 1.7 * pulse,
+        Paint()
+          ..color = (nd.current ? NeonPalette.cyan : color).withValues(alpha: haloA)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(1.0, r * 0.8)),
+      );
+      canvas.drawCircle(Offset(p.x, p.y), r, Paint()..color = color.withValues(alpha: 0.16));
       canvas.drawCircle(
         Offset(p.x, p.y),
         r,
         Paint()
-          ..color = nd.unlocked ? color : Colors.white10
+          ..color = nd.unlocked ? color : Colors.white.withValues(alpha: 0.30)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = math.max(1.4, r * 0.16),
+          ..strokeWidth = math.max(2.2, r * 0.22),
       );
       if (nd.done) {
         // dolu çekirdek + yıldız puantiyeleri
@@ -980,6 +1114,82 @@ class MapScenePainter extends CustomPainter {
           Paint()..color = NeonPalette.gold,
         );
       }
+      // PB-035: gizemli glif — sıradaki oyunun SİNİRLİ görüntüsü (tam gösterilmez):
+      // bulanık alt katman + düşük alfa keskin çizim, yavaş nefes alma
+      if (nd.unlocked && !nd.done) {
+        final shimmer = 0.14 + 0.08 * (0.5 + 0.5 * math.sin(time * 1.1 + nd.i * 1.7));
+        _drawKindGlyph(canvas, nd.def.kind, Offset(p.x, p.y), r, shimmer, blurred: true);
+        _drawKindGlyph(canvas, nd.def.kind, Offset(p.x, p.y), r, shimmer + 0.12, blurred: false);
+      }
+    }
+  }
+
+  /// PB-035: 10 oyun türünün minik motifleri — harita düğümünde gizemli hayalet.
+  void _drawKindGlyph(Canvas canvas, GameKind kind, Offset c, double r, double alpha,
+      {required bool blurred}) {
+    final col = Colors.white.withValues(alpha: alpha.clamp(0.0, 1.0));
+    final p = Paint()
+      ..color = col
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(1.0, r * 0.13)
+      ..strokeCap = StrokeCap.round;
+    if (blurred) {
+      p.maskFilter = MaskFilter.blur(BlurStyle.normal, math.max(1.5, r * 0.35));
+    }
+    final u = r * 0.5; // motif yarıçapı
+    switch (kind) {
+      case GameKind.stack:
+        canvas.drawRect(Rect.fromLTWH(c.dx - u, c.dy + u * 0.15, u * 2, u * 0.42), p);
+        canvas.drawRect(Rect.fromLTWH(c.dx - u * 0.72, c.dy - u * 0.32, u * 1.44, u * 0.4), p);
+        canvas.drawRect(Rect.fromLTWH(c.dx - u * 0.45, c.dy - u * 0.85, u * 0.9, u * 0.38), p);
+      case GameKind.catcher:
+        canvas.drawArc(Rect.fromCircle(center: c, radius: u), 0.15 * math.pi, 0.7 * math.pi, false, p);
+        canvas.drawCircle(Offset(c.dx, c.dy - u * 0.75), u * 0.2, p);
+        canvas.drawLine(Offset(c.dx, c.dy - u * 0.5), Offset(c.dx, c.dy - u * 0.15), p);
+      case GameKind.ring:
+        canvas.drawCircle(c, u * 0.85, p);
+        final a = time * 1.3;
+        canvas.drawLine(c, Offset(c.dx + math.cos(a) * u * 0.85, c.dy + math.sin(a) * u * 0.85), p);
+      case GameKind.launch:
+        final path = Path()
+          ..moveTo(c.dx - u * 0.7, c.dy + u * 0.7)
+          ..quadraticBezierTo(c.dx + u * 0.2, c.dy + u * 0.4, c.dx + u * 0.7, c.dy - u * 0.7);
+        canvas.drawPath(path, p);
+        canvas.drawCircle(Offset(c.dx + u * 0.7, c.dy - u * 0.7), u * 0.18, p);
+      case GameKind.merge:
+        canvas.drawCircle(Offset(c.dx - u * 0.45, c.dy), u * 0.38, p);
+        canvas.drawCircle(Offset(c.dx + u * 0.45, c.dy), u * 0.38, p);
+        canvas.drawLine(Offset(c.dx, c.dy - u * 0.5), Offset(c.dx, c.dy + u * 0.5), p);
+      case GameKind.path:
+        final path = Path()
+          ..moveTo(c.dx - u, c.dy + u * 0.6)
+          ..lineTo(c.dx - u * 0.33, c.dy - u * 0.1)
+          ..lineTo(c.dx + u * 0.33, c.dy + u * 0.3)
+          ..lineTo(c.dx + u, c.dy - u * 0.6);
+        canvas.drawPath(path, p);
+      case GameKind.sort:
+        for (var i = -1; i <= 1; i++) {
+          canvas.drawLine(Offset(c.dx + i * u * 0.7, c.dy - u * 0.7),
+              Offset(c.dx + i * u * 0.7, c.dy + u * 0.7), p);
+          canvas.drawCircle(Offset(c.dx + i * u * 0.7, c.dy + (i - 1) * u * 0.35), u * 0.16, p);
+        }
+      case GameKind.balance:
+        canvas.drawLine(Offset(c.dx - u, c.dy), Offset(c.dx + u, c.dy - u * 0.45), p);
+        canvas.drawLine(Offset(c.dx, c.dy + u * 0.55), Offset(c.dx, c.dy), p);
+        canvas.drawCircle(Offset(c.dx + u * 0.72, c.dy - u * 0.62), u * 0.16, p);
+      case GameKind.defend:
+        final path = Path()
+          ..moveTo(c.dx - u * 0.6, c.dy - u * 0.7)
+          ..lineTo(c.dx + u * 0.6, c.dy - u * 0.7)
+          ..lineTo(c.dx + u * 0.6, c.dy + u * 0.1)
+          ..quadraticBezierTo(c.dx, c.dy + u * 0.9, c.dx - u * 0.6, c.dy + u * 0.1)
+          ..close();
+        canvas.drawPath(path, p);
+      case GameKind.rhythm:
+        canvas.drawCircle(Offset(c.dx - u * 0.4, c.dy + u * 0.3), u * 0.24, p);
+        canvas.drawCircle(Offset(c.dx + u * 0.45, c.dy - u * 0.05), u * 0.24, p);
+        canvas.drawLine(Offset(c.dx - u * 0.16, c.dy + u * 0.3),
+            Offset(c.dx + u * 0.68, c.dy - u * 0.05), p);
     }
   }
 

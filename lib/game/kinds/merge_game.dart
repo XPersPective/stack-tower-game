@@ -364,6 +364,28 @@ class MergeGame implements MiniGame {
                 .toColor()
             ..style = PaintingStyle.stroke
             ..strokeWidth = 3.2 * (1 - t) + 0.8);
+      // imza anı (PB-035 B8): birleşme halkası v2 — gecikmeli ikinci halka
+      // + dönen 6 kıvılcım (yalnız sunum; oyun mantığına dokunmaz)
+      final t2 = ((p.life - 0.07) / 0.4).clamp(0.0, 1.0);
+      canvas.drawCircle(
+          Offset(cx, cy),
+          cw * (0.3 + t2 * 1.05),
+          Paint()
+            ..color = Colors.white.withValues(alpha: (1 - t2) * 0.4)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.4 * (1 - t2) + 0.6);
+      for (var k = 0; k < 6; k++) {
+        final ang = k * math.pi / 3 + p.life * 2.2;
+        final r0 = cw * (0.32 + t * 0.72);
+        final r1 = r0 + 7 * scale * (1 - t) + 3;
+        canvas.drawLine(
+            Offset(cx + math.cos(ang) * r0, cy + math.sin(ang) * r0),
+            Offset(cx + math.cos(ang) * r1, cy + math.sin(ang) * r1),
+            Paint()
+              ..color = Colors.white.withValues(alpha: (1 - t) * 0.55)
+              ..strokeWidth = 2
+              ..strokeCap = StrokeCap.round);
+      }
     }
 
     // eriyen süre çubuğu

@@ -494,7 +494,7 @@ class GamePlay {
         rings.add(Ring(t0.x + t0.w / 2, y + bh / 2, rw * 0.6, 0.7, 190));
         burst(t0.x + t0.w / 2, y + bh / 2, rw, 190, 26);
         popupText('KALKAN KORUDU!', t0.x + t0.w / 2, y - 18 * scale, 190);
-        shake = 15;
+        setShake(16); // A8 (PB-035): kalkan kurtarışı — büyük kademe
         slowTimer = 0.55; // dramatik ağır çekim
         onHaptic?.call(45);
         spawnMoving();
@@ -513,7 +513,7 @@ class GamePlay {
       moving = null;
       misses++;
       onHaptic?.call(60);
-      shake = 20;
+      setShake(20); // A8 (PB-035): ıska — büyük kademe (değer korundu)
       endEvent = EngineEvent.lose;
       endTimer = 0.55;
       state = EngineState.lost;
@@ -552,7 +552,9 @@ class GamePlay {
         coinBurst(x2 + w2 / 2, y, 4 + math.min(8, combo));
       }
       if (wasCrit) coinBurst(x2 + w2 / 2, y, 10);
-      shake = math.min(13, 4 + combo * 0.8) + (wasCrit ? 6 : 0);
+      // A8 (PB-035): mükemmel — orta kademe; formül korunur, kritik ek darbesi
+      // dahil sonuç 13'te tavanlanır (genlik ayarı, C-002)
+      setShake(math.min(13, 4 + combo * 0.8 + (wasCrit ? 6 : 0)));
       // juice (PB-016): hit-stop her mükemmelde — 40ms + kombo başına 4ms (tavan
       // 70ms); yerleştirme matematiğine (C-002) dokunmaz, yalnız his katmanıdır
       hitStop = math.min(hitStopMax, 0.04 + combo * 0.004 + (wasCrit ? 0.03 : 0));
@@ -589,7 +591,7 @@ class GamePlay {
             (_rnd.nextDouble() < 0.5 ? -1 : 1) * (2.5 + _rnd.nextDouble() * 3.5), blockHue(idx).toDouble()));
         burst(c.x + c.w / 2, y + bh / 2, c.w, blockHue(idx), 10);
       }
-      shake = math.min(7, 2 + res.cuts.length * 2);
+      setShake(math.min(6, 2 + res.cuts.length * 2)); // A8 (PB-035): kırpım — mikro kademe
     }
 
     score = blocks.length - 1;
@@ -607,7 +609,9 @@ class GamePlay {
     if (blocks[blocks.length - 1].w < kMinBlockWidth * scale) {
       onHaptic?.call(60);
       endEvent = EngineEvent.lose;
-      endTimer = 0.5;
+      // A7 (PB-035) yenilgi yumuşatma: kule çökerken sonuç kartı daha erken
+      // açılır — hızlı yeniden başlama akışı (D5); çöküş fiziği değişmez.
+      endTimer = 0.35;
       state = EngineState.lost;
       return;
     }
@@ -626,6 +630,14 @@ class GamePlay {
       (blocks: score, perfects: perfects, reached: state == EngineState.won, crits: crits, goldBlocks: goldBlocks);
 
   /* --------------------------- Efektler --------------------------- */
+
+  /// A8 (PB-035): sarsıntı ölçek tablosu — tüm sarsıntı atamaları bu kanaldan
+  /// geçer. Kademeler: mikro ≤ 6 (kırpım), orta ≤ 13 (mükemmel, deprem),
+  /// büyük ≤ 20 (kalkan kurtarışı 16, ıska 20). Gelen genlik genel 20
+  /// tavanına sıkıştırılır; zamanlama/fizik (C-002) dokunulmaz — yalnız genlik.
+  void setShake(double amp) {
+    shake = clamp(amp, 0, 20);
+  }
 
   /// B1 (PB-033): kazanma şöleni — final stiline göre dağıtılır. Her stil
   /// sunumdur; skor/ödül matematiği (C-002) değişmez.
@@ -855,7 +867,9 @@ class GamePlay {
       if (def?.modifier == 'deprem') {
         final q1 = (time / 2.2).floor();
         final q0 = ((time - dt) / 2.2).floor();
-        if (q1 != q0) shake = math.max(shake, 11 + _rnd.nextDouble() * 7);
+        // A8 (PB-035): deprem tikleri — orta kademe (13 tavan); varolan daha
+        // büyük sarsıntı (ör. kalkan 16'sı) düşürülmez (max korunur)
+        if (q1 != q0) setShake(math.max(shake, math.min(13, 11 + _rnd.nextDouble() * 7)));
       }
       stepMoving(moving!, top, placed, dt, speedScale);
       if (ghost != null) _stepGhost(ghost!, top, placed, dt);

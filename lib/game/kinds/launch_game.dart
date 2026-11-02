@@ -14,6 +14,8 @@ class Projectile {
   double x, y, vx, vy;
   double life;
 
+  /// İmza anı (PB-035 B8): son konumlardan solan kuyruk izi.
+  final List<Offset> trail = [];
 
   Projectile(this.x, this.y, this.vx, this.vy) : life = 0;
 }
@@ -213,6 +215,9 @@ class LaunchGame implements MiniGame, HoldGame {
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       p.life += dt;
+      // imza anı: kuyruk izi — son 12 konum hafızada tutulur
+      p.trail.add(Offset(p.x, p.y));
+      if (p.trail.length > 12) p.trail.removeAt(0);
       // duvar sekmesi (spec §2): yan duvarlardan %72 enerjiyle döner
       if (p.x < 0) {
         p.x = -p.x;
@@ -367,6 +372,14 @@ class LaunchGame implements MiniGame, HoldGame {
 
     // mermiler + iz
     for (final p in shots) {
+      // imza anı: solan kuyruk — eski konumlar küçülüp söner
+      for (var k = 0; k < p.trail.length; k++) {
+        final a = (k + 1) / p.trail.length;
+        canvas.drawCircle(
+            p.trail[k],
+            (1.5 + 4 * a) * scale,
+            Paint()..color = const Color(0xFF46E6FF).withValues(alpha: 0.45 * a));
+      }
       final tail = Offset(p.x - p.vx * 0.03, p.y - p.vy * 0.03);
       canvas.drawLine(tail, Offset(p.x, p.y),
           Paint()

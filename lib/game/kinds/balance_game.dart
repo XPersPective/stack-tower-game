@@ -28,6 +28,8 @@ class BalanceGame implements MiniGame {
   double time = 0, shake = 0, flash = 0;
   double _centerAcc = 0; // merkez bandında biriken süre (0.5 s = 1 mükemmel)
   double _cd = 0; // dokunuş bekleme süresi (spam koruması)
+  double _savePulse = 0; // imza anı (PB-035 B8): son anda kurtarma nabzı
+  bool _wasDanger = false; // tehlike bandından döndü mü
   int _weightSide = 0; // son ağırlığın tarafı (görsel)
   double _weightT = 0; // ağırlık bloğu görünürlüğü
   int _perfects = 0; // merkez bandında geçirilen yarım-saniyeler
@@ -130,6 +132,17 @@ class BalanceGame implements MiniGame {
     drift += tilt * 0.35 * dt;
     drift = drift.clamp(-0.9, 0.9);
     tilt += drift * dt;
+    // imza anı (PB-035 B8): son anda kurtarma — tehlike bandından (0.42)
+    // güvenli banda dönüş anında amber nabız + kalkan sesi
+    _savePulse = math.max(0, _savePulse - dt);
+    if (tilt.abs() > 0.42) {
+      _wasDanger = true;
+    } else if (_wasDanger && tilt.abs() < 0.25) {
+      _wasDanger = false;
+      _savePulse = 0.6;
+      _host?.playSound('shield');
+      _host?.haptic(15);
+    }
     survived += dt;
     shake = (tilt.abs() * 26 * scale).clamp(0.0, 14);
 
@@ -203,6 +216,37 @@ class BalanceGame implements MiniGame {
           colors: [theme.bg1, theme.bg2],
         ).createShader(Offset.zero & size),
     );
+    // imza anı: kurtarma nabzı — kenarlardan içe sönen amber perde
+    if (_savePulse > 0) {
+      final a = (_savePulse / 0.6) * 0.35;
+      for (final edge in const [0, 1, 2, 3]) {
+        final rect = edge == 0
+            ? Rect.fromLTWH(0, 0, w, h * 0.18)
+            : edge == 1
+                ? Rect.fromLTWH(0, h * 0.82, w, h * 0.18)
+                : edge == 2
+                    ? Rect.fromLTWH(0, 0, w * 0.14, h)
+                    : Rect.fromLTWH(w * 0.86, 0, w * 0.14, h);
+        canvas.drawRect(
+          rect,
+          Paint()
+            ..shader = LinearGradient(
+              begin: Alignment.center,
+              end: edge == 0
+                  ? Alignment.topCenter
+                  : edge == 1
+                      ? Alignment.bottomCenter
+                      : edge == 2
+                          ? Alignment.centerLeft
+                          : Alignment.centerRight,
+              colors: [
+                const Color(0xFFFFB020).withValues(alpha: 0),
+                Color(0xFFFFB020).withValues(alpha: a),
+              ],
+            ).createShader(rect),
+        );
+      }
+    }
     canvas.save();
     if (shake > 0.2) {
       canvas.translate(
