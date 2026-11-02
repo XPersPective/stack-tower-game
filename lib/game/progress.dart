@@ -138,6 +138,7 @@ class SaveState {
   int nightmareTries; // bu hafta tüketilen haklar (0..3)
   int nightmareBest; // tüm zamanlar rekoru (blok)
   bool devUnlockAll; // PB-036: geliştirici modu — tüm bölümler açık (yalnız debug UI)
+  int lastLossStreak; // PB-037 X8: ardışık kayıp sayısı (comeback rozeti için)
 
   SaveState({
     this.v = 3,
@@ -172,6 +173,7 @@ class SaveState {
     this.nightmareTries = 0,
     this.nightmareBest = 0,
     this.devUnlockAll = false,
+    this.lastLossStreak = 0,
   })  : dailyHistory = dailyHistory ?? {},
         marketBought = marketBought ?? {},
         completed = completed ?? {},
@@ -214,6 +216,7 @@ class SaveState {
         'nightmareTries': nightmareTries,
         'nightmareBest': nightmareBest,
         'devUnlockAll': devUnlockAll,
+        'lastLossStreak': lastLossStreak,
       };
 
   /// JS şemasıyla aynı JSON (anahtar sırası fark etmez, alan adları aynı).
@@ -272,6 +275,7 @@ class SaveState {
       nightmareTries: (j['nightmareTries'] as num?)?.toInt() ?? 0,
       nightmareBest: (j['nightmareBest'] as num?)?.toInt() ?? 0,
       devUnlockAll: j['devUnlockAll'] == true,
+      lastLossStreak: (j['lastLossStreak'] as num?)?.toInt() ?? 0,
     );
   }
 }

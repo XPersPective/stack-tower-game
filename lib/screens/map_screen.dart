@@ -416,20 +416,55 @@ class _NightmareGate extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Kabus Kulesi: $left hak kaldı. Rekor $best blok.',
-      child: GradientButton(
-        label: active ? 'KABUS KULESİ · $left HAK' : 'KABUS BU HAFTA BİTTİ',
-        icon: Icons.dark_mode_rounded,
-        expand: true,
-        height: 54,
-        enabled: active,
-        colors: active
-            ? const [Color(0xFF3B0D54), Color(0xFF54146B), Color(0xFF22104E)]
-            : const [Color(0xFF1D1D2E), Color(0xFF161625)],
-        onTap: () {
-          prog.consumeNightmareTry(session.state, week);
-          session.persist();
-          Navigator.pushNamed(context, Routes.playNightmare);
-        },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          GradientButton(
+            label: active ? 'KABUS KULESİ' : 'KABUS BU HAFTA BİTTİ',
+            icon: Icons.dark_mode_rounded,
+            expand: true,
+            height: 64,
+            enabled: active,
+            colors: active
+                ? const [Color(0xFF4A1170), Color(0xFF6B1890), Color(0xFF2A1058)]
+                : const [Color(0xFF1D1D2E), Color(0xFF161625)],
+            onTap: active
+                ? () {
+                    prog.consumeNightmareTry(session.state, week);
+                    session.persist();
+                    Navigator.pushNamed(context, Routes.playNightmare);
+                  }
+                : () {},
+          ),
+          // PB-037 (RESEARCH-hud #3): 'N HAK' AYRI amber rozet — etiket
+          // kayması giderildi; rozet kabarık ve parıltılı
+          if (active)
+            Positioned(
+              right: -6,
+              top: -8,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                      colors: [NeonPalette.amber, Color(0xFFFF7A3D)]),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: .5)),
+                  boxShadow: [
+                    BoxShadow(
+                        color: NeonPalette.amber.withValues(alpha: .45),
+                        blurRadius: 8),
+                  ],
+                ),
+                child: Text('$left HAK',
+                    style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black87)),
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -73,6 +73,7 @@ class GameSession extends ChangeNotifier {
   prog.CompleteResult? pendingRewards;
   Surprise? currentSurprise;
   String? lastNightmareRelic; // PB-035 B3: kabus kazanımında kalıntı adı
+  bool pendingComebackBoost = false; // PB-037 X8: TEKRAR'da ödül ×2 tek seferlik
   bool doubleCoinsThisLevel = false;
   WorldCeremony? lastCeremony;
   List<BoardRow> boardRows = [];
@@ -225,6 +226,9 @@ class GameSession extends ChangeNotifier {
     lastConstruction =
         (!def.endless && !def.daily) ? constructionFor(state, def.i) : null;
     _chain.clear();
+    // X9 result-first ESCALATE: SONRAKİ butonu zinciri atlayınca inşaat/
+    // dünya şölenleri öksüz kalıyor — akış tasarımı kullanıcı kararıyla
+    // PB-037 dalga 3'te (result sheet'e DEVAM eklenerek) yeniden kurulacak.
     if (lastConstruction != null) _chain.add(FlowStep.construction);
     if (rewards.boxDropped) _chain.add(FlowStep.box);
     if (lastCeremony != null) _chain.add(FlowStep.world);

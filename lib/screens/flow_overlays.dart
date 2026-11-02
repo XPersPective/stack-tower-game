@@ -420,6 +420,13 @@ class _FlowOverlaysState extends State<FlowOverlays> {
     // yeniden deneme BİRİNCİL eylemdir — TEKRAR, HARİTA'dan büyük/parlak çizilir
     // (D5: yenilgi → hızlı tekrar). Kazanma ekranında SONRAKİ BÖLÜM birincil kalır.
     final lostNormal = !endless && !daily && !r.reached;
+    // PB-037 (RESEARCH-endgame X6-X8): kayıp affi paketi — hedefe %N barı +
+    // 2. ardışık kayıpta 'BU TUR ×2 PARA' comeback rozeti (sunum; cüzdan
+    // uygulaması session'da comebackBoost bayrağıyla bir sonraki denemede)
+    final comebackEligible = lostNormal && s.state.lastLossStreak >= 1;
+    final targetPct = lostNormal && def.target > 0
+        ? ((r.blocks * 100) / def.target).round().clamp(0, 100)
+        : null;
 
     return _sheet(
       celebrate: r.reached,
@@ -443,6 +450,59 @@ class _FlowOverlaysState extends State<FlowOverlays> {
                     fontWeight: FontWeight.w700,
                   ),
               textAlign: TextAlign.center,
+            ),
+          ],
+          // X6: hedefe %N — 'NEREDEYSE' hissinin görsel kanıtı
+          if (targetPct != null) ...[
+            const SizedBox(height: AppSpace.sm),
+            SizedBox(
+              width: 190,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(5),
+                child: LinearProgressIndicator(
+                  value: targetPct / 100,
+                  minHeight: 7,
+                  backgroundColor: Colors.white.withValues(alpha: .08),
+                  valueColor:
+                      const AlwaysStoppedAnimation(NeonPalette.cyan),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text('HEDEFE %$targetPct',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: NeonPalette.cyan,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.4)),
+          ],
+          // X8: comeback rozeti — 2. ardışık kayıpta bir sonraki deneme ×2 para
+          if (comebackEligible) ...[
+            const SizedBox(height: AppSpace.sm),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [
+                  NeonPalette.amber,
+                  Color(0xFFFF7A3D),
+                ]),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                boxShadow: [
+                  BoxShadow(
+                      color: NeonPalette.amber.withValues(alpha: .4),
+                      blurRadius: 10),
+                ],
+              ),
+              child: Text('🔥 BU TUR ×2 PARA',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black87,
+                      shadows: [
+                        Shadow(
+                            color: Colors.white.withValues(alpha: .4),
+                            blurRadius: 6),
+                      ])),
             ),
           ],
           const SizedBox(height: AppSpace.lg),

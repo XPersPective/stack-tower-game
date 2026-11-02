@@ -102,6 +102,12 @@ class PlayScreenState extends State<PlayScreen>
 
   void _prepare() {
     final start = widget.session.prepareLevel(_def);
+    // PB-037 X8 comeback: 2. ardışık kayıptan sonra TEKRAR — bu denemede
+    // ödül ×2 (tek seferlik; rozet ekranı zaten vaat etti)
+    if (widget.session.pendingComebackBoost) {
+      widget.session.pendingComebackBoost = false;
+      widget.session.doubleCoinsThisLevel = true;
+    }
     _game = createMiniGame(_def.kind);
     _won = false;
     if (_size.width > 0) _game.resize(_size.width, _size.height);
@@ -348,54 +354,79 @@ class PlayScreenState extends State<PlayScreen>
                       horizontal: AppSpace.md, vertical: AppSpace.sm),
                   child: Column(
                     children: [
-                      Row(
-                        children: [
-                          _hudButton(Icons.arrow_back_rounded, 'ÇIK', _exit),
-                          const SizedBox(width: AppSpace.sm),
-                          Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.pill),
-                                color: Colors.white.withValues(alpha: .08),
-                                border: Border.all(
-                                    color: Colors.white.withValues(alpha: .18)),
+                      // PB-037 (RESEARCH-hud): 3 bant TEK cam kapsül —
+                      // ÇIK | tür rozeti | büyük gradyan skor | kombo/kalkan | ses
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                            color: Colors.black.withValues(alpha: .32),
+                            border: Border.all(
+                                color: Colors.white.withValues(alpha: .16)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: .25),
+                                blurRadius: 14,
                               ),
-                              child: Text('${spec.icon} ${spec.name}',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium),
-                            ),
+                            ],
                           ),
-                          const Spacer(),
-                          _buildHudScore(),
-                          const Spacer(),
-                          _hudButton(
-                            widget.audio.muted
-                                ? Icons.volume_off_rounded
-                                : Icons.volume_up_rounded,
-                            '',
-                            () => setState(() => widget.audio.toggleMute()),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _hudButton(
+                                  Icons.arrow_back_rounded, 'ÇIK', _exit),
+                              const SizedBox(width: 6),
+                              // tür rozeti
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 9, vertical: 5),
+                                decoration: BoxDecoration(
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.pill),
+                                  color: Colors.white.withValues(alpha: .08),
+                                  border: Border.all(
+                                      color: Colors.white
+                                          .withValues(alpha: .18)),
+                                ),
+                                child: Text('${spec.icon} ${spec.name}',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall),
+                              ),
+                              const SizedBox(width: 10),
+                              _buildHudScore(),
+                              const SizedBox(width: 10),
+                              _HudCombo(combo: _hudCombo),
+                              const SizedBox(width: 6),
+                              _HudShields(count: _hudShields),
+                              const SizedBox(width: 6),
+                              _hudButton(
+                                widget.audio.muted
+                                    ? Icons.volume_off_rounded
+                                    : Icons.volume_up_rounded,
+                                '',
+                                () => setState(
+                                    () => widget.audio.toggleMute()),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                       if (_hudTarget > 0) ...[
-                        const SizedBox(height: AppSpace.sm),
-                        _HudProgress(
-                          value: (_hudScore / _hudTarget).clamp(0.0, 1.0),
+                        const SizedBox(height: 6),
+                        // hedef ilerlemesi — kapsül altında ince şerit
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 60),
+                          child: _HudProgress(
+                            value:
+                                (_hudScore / _hudTarget).clamp(0.0, 1.0),
+                          ),
                         ),
                       ],
-                      const SizedBox(height: AppSpace.sm),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _HudCombo(combo: _hudCombo),
-                          _HudShields(count: _hudShields),
-                        ],
-                      ),
                     ],
                   ),
                 ),
@@ -454,14 +485,27 @@ class PlayScreenState extends State<PlayScreen>
   /// HUD skoru — metin birebir korunur (testler '0'/'1' bekler), üstünde
   /// yalnızca görsel "pop" animasyonu vardır.
   Widget _buildHudScore() {
-    return _PopText(
-      text: _hudTarget > 0 ? '$_hudScore/$_hudTarget' : '$_hudScore',
-      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            shadows: [
-              Shadow(
-                  color: NeonPalette.cyan.withValues(alpha: .45), blurRadius: 16),
-            ],
-          ),
+    // PB-037 (RESEARCH-hud): 31px w900 beyaz→cyan gradyan + çift glow
+    final style = TextStyle(
+      fontFamily: 'Inter',
+      fontSize: 31,
+      fontWeight: FontWeight.w900,
+      letterSpacing: 0.5,
+      shadows: [
+        Shadow(color: NeonPalette.cyan.withValues(alpha: .55), blurRadius: 18),
+        Shadow(color: NeonPalette.magenta.withValues(alpha: .30), blurRadius: 30),
+      ],
+    );
+    return ShaderMask(
+      shaderCallback: (b) => const LinearGradient(colors: [
+        Colors.white,
+        Color(0xFF9BE8FF),
+      ]).createShader(b),
+      blendMode: BlendMode.srcIn,
+      child: _PopText(
+        text: _hudTarget > 0 ? '$_hudScore/$_hudTarget' : '$_hudScore',
+        style: style,
+      ),
     );
   }
 }
