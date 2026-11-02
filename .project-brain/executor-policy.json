@@ -8,11 +8,11 @@
   },
   "scheduling": {
     "mode": "parallel",
-    "max_parallel": 10
+    "max_parallel": 2
   },
   "quota_recovery": {
     "enabled": false,
     "threshold_percent": 10
   },
-  "note": "Kullanıcı tur 8: kota engel DEĞİL — ajanlar kota beklemeden serbest çalışır; QRP kapalı."
+  "note": "Kullanıcı tur 10: eşzamanlı ajan=2 (3'te çöküyor); kota engel değil; her öğe ayrı kriterli araştırma; ekran görüntüsü doğrulaması zorunlu; kesintisiz çalışma."
 }

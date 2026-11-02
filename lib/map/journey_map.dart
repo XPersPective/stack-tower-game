@@ -247,11 +247,18 @@ class JourneyPainter extends CustomPainter {
       final sy = (rnd.nextDouble() * journeyHeight() * 0.6 - sc * 0.55) % size.height;
       final yy = sy < 0 ? sy + size.height : sy;
       final tw = 0.3 + 0.5 * (0.5 + 0.5 * math.sin(time * (0.4 + rnd.nextDouble()) + i));
+      final rr = 0.5 + rnd.nextDouble() * 1.5;
       canvas.drawCircle(
         Offset(sx, yy),
-        0.5 + rnd.nextDouble() * 1.5,
+        rr,
         Paint()..color = Colors.white.withValues(alpha: tw * 0.55),
       );
+      // PB-037: parlak yıldızlara çapraz ışın (twinkle hissi)
+      if (rr > 1.6 && tw > 0.7) {
+        final ray = Paint()..color = Colors.white.withValues(alpha: tw * 0.5);
+        canvas.drawRect(Rect.fromLTWH(sx - rr * 3, yy - 0.5, rr * 6, 1), ray);
+        canvas.drawRect(Rect.fromLTWH(sx - 0.5, yy - rr * 3, 1, rr * 6), ray);
+      }
     }
   }
 
@@ -370,30 +377,37 @@ class JourneyPainter extends CustomPainter {
     for (var s = kStageCount; s < kStageCount + mystery.length; s++) {
       final gy = gateY(s) - sc;
       if (gy < -140 || gy > size.height + 140) continue;
+      // PB-037 (harita raporu): kemer KALDIRILDI — ufuk ışık sütunu:
+      // yukarı doğru yükselen, nabızlayan sisli ışık (içerik sızmaz)
       final pulse = 0.5 + 0.5 * math.sin(time * 1.2 + s * 1.9);
       final cx = size.width / 2;
-      final arch = Path()
-        ..moveTo(cx - 120, gy + 60)
-        ..lineTo(cx - 120, gy - 20)
-        ..quadraticBezierTo(cx, gy - 120, cx + 120, gy - 20)
-        ..lineTo(cx + 120, gy + 60);
-      // sisli kemer — mor gri, nabızlı
-      canvas.drawPath(
-        arch,
+      final beam = Rect.fromLTWH(cx - 90, gy - 190, 180, 250);
+      canvas.drawRect(
+        beam,
         Paint()
-          ..color = Colors.white.withValues(alpha: 0.16 + 0.14 * pulse)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 6
-          ..strokeCap = StrokeCap.round
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+          ..shader = LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              hslColor(268, 70, 34).withValues(alpha: 0.20 + 0.10 * pulse),
+              hslColor(268, 70, 34).withValues(alpha: 0),
+            ],
+          ).createShader(beam),
       );
-      // ağır sis: kemer içini örten bulutlar (içerik sızmaz)
-      canvas.drawOval(
-        Rect.fromCenter(center: Offset(cx, gy - 10), width: 210, height: 110),
-        Paint()
-          ..color = const Color(0xFF0A0A1E).withValues(alpha: 0.72)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
-      );
+      // segment girişinde yıldız tozları — yol buradan ufka uzanır
+      final rnd = math.Random(900 + s);
+      for (var d = 0; d < 14; d++) {
+        final dx = cx + (rnd.nextDouble() - 0.5) * 260;
+        final dy = gy + 60 - rnd.nextDouble() * 200;
+        final dd = rnd.nextDouble();
+        canvas.drawCircle(
+          Offset(dx, dy),
+          0.8 + dd * 1.6,
+          Paint()
+            ..color = Colors.white
+                .withValues(alpha: (0.12 + 0.30 * pulse) * (1 - dd * 0.6)),
+        );
+      }
       final tp = TextPainter(
         text: TextSpan(
           text: mystery[s - kStageCount],
@@ -770,6 +784,19 @@ class JourneyPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2.6,
       );
+      // PB-037: kenar ışıltısı — kontur üzerinde dönen 2 parıltı burnu
+      for (var gIdx = 0; gIdx < 2; gIdx++) {
+        final ga = time * 1.8 + gIdx * math.pi + n.i * 0.5;
+        final gp = Offset(
+            p.dx + math.cos(ga) * r * 1.1, p.dy + math.sin(ga) * r * 1.1);
+        canvas.drawCircle(
+          gp,
+          3.2,
+          Paint()
+            ..color = Colors.white.withValues(alpha: 0.9)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+        );
+      }
       _paintKindGlyph(canvas, n.def.kind, p, glow);
     } else {
       canvas.drawCircle(p, r * 0.9, Paint()..color = const Color(0xB80B0B16));

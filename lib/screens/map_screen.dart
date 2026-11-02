@@ -417,12 +417,10 @@ class _NightmareGate extends StatelessWidget {
       button: true,
       label: 'Kabus Kulesi: $left hak kaldı. Rekor $best blok.',
       child: GradientButton(
-        label: active
-            ? 'KABUS KULESİ · $left HAK'
-            : 'KABUS BU HAFTA BİTTİ · REKOR $best',
+        label: active ? 'KABUS KULESİ · $left HAK' : 'KABUS BU HAFTA BİTTİ',
         icon: Icons.dark_mode_rounded,
         expand: true,
-        height: 42,
+        height: 54,
         enabled: active,
         colors: active
             ? const [Color(0xFF3B0D54), Color(0xFF54146B), Color(0xFF22104E)]
