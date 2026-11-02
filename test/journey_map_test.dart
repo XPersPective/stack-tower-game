@@ -3,6 +3,8 @@ library;
 
 import 'dart:ui' as ui;
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stack_tower_game/game/game_session.dart';
@@ -19,8 +21,8 @@ Future<List<int>> _frame(GameSession session, double scroll, double t) async {
   JourneyPainter(
     session: session,
     nodes: nodes,
-    scroll: scroll,
-    time: t,
+    scroll: ValueNotifier<double>(scroll),
+    time: ValueNotifier<double>(t),
     marketOpen: false,
     repaint: _Noop(),
   ).paint(Canvas(rec), const Size(420, 900));
@@ -93,12 +95,12 @@ void main() {
   test('tur 6: düğüm etiketleri — özel isimler parıltılı', () {
     final s = GameSession(MemoryStorage());
     final nodes = journeyLayout(s, 420);
-    expect(nodes[4].label, '★ ALTIN HAZİNE'); // idx4 = altin
-    expect(nodes[9].label, '★ ALTIN HAZİNE'); // idx9 = altin
-    expect(nodes[14].label, '♛ PATRON'); // idx14 = patron
+    expect(nodes[4].label, 'ALTIN HAZİNE · ★'); // idx4 = altin
+    expect(nodes[9].label, 'ALTIN HAZİNE · ★'); // idx9 = altin
+    expect(nodes[14].label, 'PATRON KAPISI'); // idx14 = patron
     // kutu kuralı: (i+1)%7==0 → i=6 ilk kutu düğümü
     expect(nodes[6].def.box, isTrue);
-    expect(nodes[6].label, '🎁 SÜRPRİZ');
+    expect(nodes[6].label, 'SÜRPRİZ SANDIK');
     // normal düğüm: kutu-olmayan ilk bölüm num'lu etiket taşır
     final normal = nodes
         .firstWhere((n) => !n.def.box && n.def.modifier == 'normal');
@@ -108,10 +110,20 @@ void main() {
     expect(normal.isSpecial, isFalse);
   });
 
-  test('kapı: journeyHeight 10 dünyayı kapsar', () {
+  test('kapı: journeyHeight 10 dünya + teaser bandını kapsar', () {
     final s = GameSession(MemoryStorage());
     final nodes = journeyLayout(s, 420);
     expect(journeyHeight(), greaterThan(nodes.last.pos.dy));
     expect(gateY(3), worldBaseY(3) + 130);
+    // PB-036 tur 7: sonsuz harita — 10 dünya sonrası teaser kapıları var
+    expect(gateY(kStageCount + 4), greaterThan(0));
+    expect(journeyHeight(), greaterThan(gateY(kStageCount + 4)));
+  });
+
+  test('PB-036 tur 7: haritada emoji süs yok — geometrik premium', () {
+    // kaynağın kendisinde emoji metni geçmez (🎁/? dekorları kaldırıldı)
+    final src = File('lib/map/journey_map.dart').readAsStringSync();
+    expect(src.contains('🎁'), isFalse, reason: 'hediye emoji çıkarıldı');
+    expect(src.contains("text: '?'"), isFalse, reason: 'soru işareti emoji süsü çıkarıldı');
   });
 }

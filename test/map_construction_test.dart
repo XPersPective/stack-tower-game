@@ -23,8 +23,8 @@ Future<void> _renderMap(GameSession session, String name) async {
   JourneyPainter(
     session: session,
     nodes: nodes,
-    scroll: 0,
-    time: 1.2,
+    scroll: ValueNotifier<double>(0),
+    time: ValueNotifier<double>(1.2),
     marketOpen: false,
     repaint: _Noop(),
   ).paint(canvas, size);
@@ -85,8 +85,8 @@ void main() {
       JourneyPainter(
         session: session,
         nodes: nodes,
-        scroll: 0,
-        time: t,
+        scroll: ValueNotifier<double>(0),
+        time: ValueNotifier<double>(t),
         marketOpen: false,
         repaint: _Noop(),
       ).paint(Canvas(rec), const Size(420, 900));

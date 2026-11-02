@@ -1,10 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Stack Tower Game — koyu açılış zemini + ortada neon kule ikonu -->
+<!-- PB-036 tur 9: açılış ekranı — uzay gradyanı + yıldız ışıltıları +
+     merkezde neon hale içinde kule ikonu (düz koyu zemin yerine) -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@color/ic_launcher_background" />
-    <item>
+
+    <!-- derin uzay gradyanı -->
+    <item android:drawable="@drawable/launch_gradient" />
+
+    <!-- neon hale: ikonun arkasında yumuşak mor ışıma -->
+    <item android:gravity="center">
+        <shape android:shape="oval">
+            <size android:width="220dp" android:height="220dp" />
+            <gradient
+                android:type="radial"
+                android:gradientRadius="110dp"
+                android:startColor="#557A4BFF"
+                android:centerColor="#2A5A2EDB"
+                android:endColor="#00120A2E" />
+        </shape>
+    </item>
+
+    <!-- kule ikonu -->
+    <item android:gravity="center">
         <bitmap
             android:gravity="center"
             android:src="@mipmap/ic_launcher" />
     </item>
+
 </layer-list>

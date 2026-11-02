@@ -41,7 +41,10 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   late final _Signal _repaint = _Signal();
   late Ticker _ticker;
   Duration _last = Duration.zero;
-  double _scroll = 0;
+  // PB-036 kök-düzeltme: scroll/zaman CANLI — painter build kopyasıyla değil
+  // dinleyiciden okur (harita kayması + ambient animasyon artık cihazda yaşar)
+  final ValueNotifier<double> _scrollN = ValueNotifier(0);
+  final ValueNotifier<double> _timeN = ValueNotifier(0);
   double _vel = 0;
   double _viewH = 800;
   int _layoutStamp = -1; // ilerleme değişince yerleşimi tazele
@@ -67,18 +70,24 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   void dispose() {
     _ticker.dispose();
     _repaint.dispose();
+    _scrollN.dispose();
+    _timeN.dispose();
     super.dispose();
   }
+
+  double get _scroll => _scrollN.value;
+  set _scroll(double v) => _scrollN.value = v.clamp(0.0, journeyHeight() - _viewH);
 
   void _onTick(Duration elapsed) {
     final dt = ((elapsed - _last).inMicroseconds / 1e6).clamp(0.001, 0.05);
     _last = elapsed;
     // atalet: sürükleme bitince yavaşlayarak dur
     if (_vel.abs() > 1) {
-      _scroll = (_scroll + _vel * dt).clamp(0.0, journeyHeight() - _viewH);
+      _scroll = _scroll + _vel * dt;
       _vel *= math.pow(0.0035, dt).toDouble();
       if (_vel.abs() < 20) _vel = 0;
     }
+    _timeN.value = elapsed.inMicroseconds / 1e6;
     _repaint.notify();
   }
 
@@ -89,12 +98,11 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
     // kilitli aşamalar yukarıda/ufukta; ilerledikçe harita aşağı akar.
     for (final n in nodes) {
       if (n.unlocked && !n.done) {
-        _scroll = (n.pos.dy - _viewH * 0.68).clamp(0.0, journeyHeight() - _viewH);
+        _scroll = n.pos.dy - _viewH * 0.68;
         return;
       }
     }
-    _scroll = (nodes.last.pos.dy - _viewH * 0.68)
-        .clamp(0.0, journeyHeight() - _viewH);
+    _scroll = nodes.last.pos.dy - _viewH * 0.68;
   }
 
   void _openDaily() {
@@ -109,7 +117,9 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
       body: LayoutBuilder(builder: (context, constraints) {
         _viewH = constraints.maxHeight;
         // ilerleme damgası: tamamlanan bölümlerin sağlaması (ucuz)
-        final stamp = session.state.levelsDone * 1000 + session.totalStars;
+        final stamp = session.state.levelsDone * 1000 +
+            session.totalStars * 10 +
+            (session.state.devUnlockAll ? 1 : 0);
         var nodes = _nodes;
         if (nodes == null || stamp != _layoutStamp) {
           nodes = journeyLayout(session, constraints.maxWidth);
@@ -153,20 +163,20 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
               },
               onVerticalDragStart: (_) => _vel = 0,
               onVerticalDragUpdate: (d) {
-                // tur 6: yolculuk yukarı — yukarı sürükle ileri götürür
-                _scroll =
-                    (_scroll + d.delta.dy).clamp(0.0, journeyHeight() - _viewH);
+                // tur 8: doğal kaydırma — parmak içeriği takip eder
+                // (yukarı sürükle → ileri/ufka; aşağı sürükle → geriye)
+                _scroll = _scroll - d.delta.dy;
                 _repaint.notify();
               },
               onVerticalDragEnd: (d) {
-                _vel = d.velocity.pixelsPerSecond.dy * 0.55;
+                _vel = -d.velocity.pixelsPerSecond.dy * 0.55;
               },
               child: CustomPaint(
                 painter: JourneyPainter(
                   session: session,
                   nodes: list,
-                  scroll: _scroll,
-                  time: _last.inMicroseconds / 1e6,
+                  scroll: _scrollN,
+                  time: _timeN,
                   marketOpen: marketOpen,
                   repaint: _repaint,
                 ),
@@ -194,13 +204,13 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
               ),
             ),
             Positioned(
-              left: 0,
-              right: 0,
-              bottom: 96,
+              left: 20,
+              right: 20,
+              bottom: 136,
               child: Center(
                 child: GlassPanel(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpace.xl, vertical: AppSpace.lg),
+                      horizontal: AppSpace.lg, vertical: AppSpace.md),
                   radius: AppRadius.xl,
                   blur: 10,
                   glowColor: hslColor(world.glow, 90, 62),
@@ -209,29 +219,65 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // tur 9: tipografi hiyerarşisi — küçük başlık + glow'lu ad
                       Text('DÜNYA ${world.stage + 1}',
-                          style: Theme.of(context).textTheme.bodyMedium
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                   color: hslColor(world.glow, 90, 70),
-                                  letterSpacing: 2)),
-                      Text(world.open ? world.name : '🔒 ???',
-                          style: Theme.of(context).textTheme.displayMedium),
-                      Text(
-                        world.open
-                            ? '${world.done}/$kLevelsPerStage · ★ ${world.stars}'
-                            : '🔒 ${session.totalStars}/${world.need} yıldız',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                                  letterSpacing: 3,
+                                  fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 2),
+                      ShaderMask(
+                        shaderCallback: (b) => LinearGradient(colors: [
+                          hslColor(world.glow, 95, 78),
+                          hslColor(world.glow, 92, 62),
+                        ]).createShader(b),
+                        child: Text(world.open ? world.name : '🔒 ???',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.2)),
+                      ),
+                      const SizedBox(height: 4),
+                      // tur 9: çip satırı — ham metin yerine net hiyerarşi
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          _WorldChip(
+                            icon: Icons.grid_view_rounded,
+                            label: '${world.done}/$kLevelsPerStage',
+                            color: NeonPalette.cyan,
+                          ),
+                          _WorldChip(
+                            icon: Icons.star_rounded,
+                            label: '${world.stars}',
+                            color: NeonPalette.star,
+                          ),
+                          if (!world.open)
+                            _WorldChip(
+                              icon: Icons.lock_rounded,
+                              label: '${session.totalStars}/${world.need} ★',
+                              color: NeonPalette.textDim,
+                            ),
+                        ],
                       ),
                       // PB-019: kilitli dünyada kademeli ipucu
                       if (!world.open)
-                        Text(lockedWorldHint(world.stage),
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(
-                                    fontStyle: FontStyle.italic,
-                                    color: NeonPalette.textDim)),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(lockedWorldHint(world.stage),
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                      fontStyle: FontStyle.italic,
+                                      color: NeonPalette.textDim)),
+                        ),
                       // PB-029: blueprint ipucu METİNLE de okunur (accessibility)
                       _buildHint(context, session, world),
                     ],
@@ -242,18 +288,19 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
             Positioned(
               left: 24,
               right: 24,
-              bottom: 20,
+              // tur 9 taşma düzeltmesi: nav-bar üstü güvenli boşluk
+              bottom: 44,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // PB-035 B3: KABUS KULESİ kapısı — haftalık 3 hak, kayıp cezasız
                   _NightmareGate(session: session),
-                  const SizedBox(height: AppSpace.sm),
+                  const SizedBox(height: 8),
                   GradientButton(
                     label: 'GÜNLÜK MEYDAN OKUMA',
                     icon: Icons.public_rounded,
                     expand: true,
-                    height: 54,
+                    height: 46,
                     colors: const [
                       Color(0xFF2E1E86),
                       Color(0xFF12407E),
@@ -375,7 +422,7 @@ class _NightmareGate extends StatelessWidget {
             : 'KABUS BU HAFTA BİTTİ · REKOR $best',
         icon: Icons.dark_mode_rounded,
         expand: true,
-        height: 46,
+        height: 42,
         enabled: active,
         colors: active
             ? const [Color(0xFF3B0D54), Color(0xFF54146B), Color(0xFF22104E)]
@@ -434,4 +481,34 @@ class _Signal implements Listenable {
   }
 
   void dispose() => _ls.clear();
+}
+
+/// PB-036 tur 9: dünya paneli çipi — ilerleme/yıldız/kilit net hiyerarşi.
+class _WorldChip extends StatelessWidget {
+  const _WorldChip({required this.icon, required this.label, required this.color});
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        color: color.withValues(alpha: .12),
+        border: Border.all(color: color.withValues(alpha: .35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 4),
+          Text(label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: color, fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
+  }
 }

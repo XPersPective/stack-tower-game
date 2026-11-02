@@ -294,10 +294,13 @@ class LevelSignature {
   final double hueShift; // tema renginde kayma (derece, ±13)
   final int skyPhase; // gökyüzü/paralaks fazı 0..3
   final int silVariant; // siluet dizilim varyantı 0..2
+  final int shape; // blok şekil varyantı 0..3 (YALNIZ GÖRSEL — C-002 dışı):
+  // 0 = yuvarlak köşe (klasik) · 1 = silindir · 2 = altıgen · 3 = kama (üçgen üst)
   const LevelSignature({
     required this.hueShift,
     required this.skyPhase,
     required this.silVariant,
+    this.shape = 0,
   });
 }
 
@@ -309,6 +312,7 @@ LevelSignature levelSignature(int i) {
     hueShift: (r.nextDouble() - 0.5) * 26,
     skyPhase: r.nextInt(4),
     silVariant: r.nextInt(3),
+    shape: r.nextInt(4), // PB-036: tuğla oyununa sıkışma — her bölüm farklı form
   );
 }
 

@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import '../game/audio.dart';
 import '../game/game_session.dart';
+import '../game/levels.dart';
 import '../game/market.dart';
 import '../game/progress.dart' as prog;
 import '../game/scene_painter.dart' show hslColor;
@@ -51,11 +52,15 @@ class _MarketScreenState extends State<MarketScreen> {
     final session = context.watch<GameSession>();
     final day = prog.dayOf(DateTime.now());
     final stock = dailyStock(day);
+    // PB-036 tur 8: mağaza BÖLGEYE AİT — tezgah, bulunduğun dünyanın temasıyla
+    final stage = session.state.levelsDone.clamp(0, kStageCount - 1) ~/
+        (kLevelCount ~/ kStageCount);
+    final th = kThemes[stage];
 
     return Scaffold(
       body: AuroraBackground(
-        hue: 35,
-        accentHue: 20,
+        hue: th.glow.toDouble(),
+        accentHue: (th.hues.isNotEmpty ? th.hues[0] : th.glow).toDouble(),
         intensity: 0.85,
         showPlanet: false,
         child: SafeArea(

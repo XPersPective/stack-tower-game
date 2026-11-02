@@ -14,5 +14,5 @@
     "enabled": false,
     "threshold_percent": 10
   },
-  "note": "Tur 4+tur 6 onayı: ESP/REV=native (yalnız kendi alt ajanları, flash), SP=parallel(10), QRP=kapalı — tur 6 'devam' ile yeniden teyit."
+  "note": "Kullanıcı tur 8: kota engel DEĞİL — ajanlar kota beklemeden serbest çalışır; QRP kapalı."
 }

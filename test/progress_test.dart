@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stack_tower_game/game/levels.dart';
 import 'package:stack_tower_game/game/progress.dart';
+import 'package:stack_tower_game/game/rank.dart';
 import 'package:stack_tower_game/services/storage.dart';
 
 Map<String, dynamic> _fixture() =>
@@ -395,4 +396,42 @@ void main() {
       expect(missingRelicPieces(s), kStageCount - 1);
     });
   });
+}
+
+void pb036RankTests() {
+  test('PB-036: rütbe kademeleri — eşikler sıralı ve 8 kademe', () {
+    expect(kRankTable.length, 8);
+    for (var i = 1; i < kRankTable.length; i++) {
+      expect(kRankTable[i].points, greaterThan(kRankTable[i - 1].points));
+    }
+    expect(kRankTable.first.points, 0);
+  });
+
+  test('PB-036: rankFor — bileşik puan kademeyi belirler', () {
+    final s = createSave();
+    expect(rankFor(s).tier, RankTier.caylak); // 0 puan
+    s.completed[0] = {'stars': 3, 'best': 10};
+    // 3 yıldız ×10 = 30 → hâlâ çaylak (eşik 60)
+    expect(rankFor(s).tier, RankTier.caylak);
+    s.completed[1] = {'stars': 3, 'best': 10};
+    expect(rankFor(s).tier, RankTier.bronz); // 60 puan
+    s.totalBlocks = 100; // +100 → 160+ → gümüş
+    expect(rankFor(s).tier, RankTier.gumus);
+    expect(pointsToNext(s), isNotNull);
+    // efsane eşiği üstü
+    s.completed[2] = {'stars': 3, 'best': 10};
+    s.totalBlocks = 10000;
+    s.levelsDone = 50;
+    s.totalPerfect = 500;
+    expect(rankFor(s).tier, RankTier.efsane);
+    expect(pointsToNext(s), isNull); // zirve
+  });
+
+  test('PB-036: localPercentile — rakipler içinde yüzde', () {
+    final s = createSave();
+    s.daily = {'day': 20001, 'best': 100};
+    final pct = localPercentile(s, 20001);
+    expect(pct, inInclusiveRange(0, 100));
+  });
+  pb036RankTests();
 }

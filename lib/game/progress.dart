@@ -137,6 +137,7 @@ class SaveState {
   int nightmareWeek; // son oynanan hafta
   int nightmareTries; // bu hafta tüketilen haklar (0..3)
   int nightmareBest; // tüm zamanlar rekoru (blok)
+  bool devUnlockAll; // PB-036: geliştirici modu — tüm bölümler açık (yalnız debug UI)
 
   SaveState({
     this.v = 3,
@@ -170,6 +171,7 @@ class SaveState {
     this.nightmareWeek = -1,
     this.nightmareTries = 0,
     this.nightmareBest = 0,
+    this.devUnlockAll = false,
   })  : dailyHistory = dailyHistory ?? {},
         marketBought = marketBought ?? {},
         completed = completed ?? {},
@@ -211,6 +213,7 @@ class SaveState {
         'nightmareWeek': nightmareWeek,
         'nightmareTries': nightmareTries,
         'nightmareBest': nightmareBest,
+        'devUnlockAll': devUnlockAll,
       };
 
   /// JS şemasıyla aynı JSON (anahtar sırası fark etmez, alan adları aynı).
@@ -268,6 +271,7 @@ class SaveState {
       nightmareWeek: (j['nightmareWeek'] as num?)?.toInt() ?? -1,
       nightmareTries: (j['nightmareTries'] as num?)?.toInt() ?? 0,
       nightmareBest: (j['nightmareBest'] as num?)?.toInt() ?? 0,
+      devUnlockAll: j['devUnlockAll'] == true,
     );
   }
 }
@@ -378,6 +382,9 @@ int totalStars(SaveState state) {
 /// Bölüm açık mı: önceki bölüm bitirilmiş VE dünya yeterli yıldızda mı
 /// (aynı dünyadaysa yıldız şartı aranmaz — progress.js isUnlocked birebir).
 bool isUnlocked(SaveState state, int i, LevelDef lv) {
+  // PB-036 geliştirici modu: bayrak açıkken tüm bölümler (yalnız debug UI açar;
+  // kayıt alanı v3 üst-kümeleri — normal oyuncuda hep false, C-002 etkilenmez)
+  if (state.devUnlockAll) return true;
   if (i <= 0) return true;
   final prev = state.completed[i - 1];
   if (prev != null) {

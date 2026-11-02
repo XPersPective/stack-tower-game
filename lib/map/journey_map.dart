@@ -12,6 +12,7 @@ library;
 
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 
 import '../game/game_session.dart';
@@ -31,7 +32,7 @@ double worldBaseY(int stage) =>
     journeyHeight() - 240 - stage * kWorldH;
 
 /// Toplam harita yüksekliği.
-double journeyHeight() => kStageCount * kWorldH + 300;
+double journeyHeight() => (kStageCount + 5) * kWorldH + 300; // +5 gizem teaser'ı
 
 /// Dünya [stage]'e giriş kapısının y merkezi (giriş, düğümlerin ALTINDAN).
 double gateY(int stage) => worldBaseY(stage) + 130;
@@ -56,10 +57,10 @@ class JourneyNode {
 
   /// Düğümün ışıltılı etiketi (kullanıcı tur 6: isimler + görevler).
   String get label {
-    if (def.modifier == 'patron') return '♛ PATRON';
-    if (def.box) return '🎁 SÜRPRİZ';
-    if (def.modifier == 'altin') return '★ ALTIN HAZİNE';
-    if (def.modifier == 'karanlik') return '◐ GİZEMLİ';
+    if (def.modifier == 'patron') return 'PATRON KAPISI';
+    if (def.box) return 'SÜRPRİZ SANDIK';
+    if (def.modifier == 'altin') return 'ALTIN HAZİNE · ★';
+    if (def.modifier == 'karanlik') return 'GİZEMLİ · ◐';
     return 'BÖLÜM ${def.num}';
   }
 
@@ -130,27 +131,49 @@ Path starPath(Offset c, double r) {
   return p..close();
 }
 
+/// PB-036 tur 9 KÖK-DÜZELTME: metin önbelleği — kaydırma jankının kök nedeni
+/// her karede 150+ TextPainter.layout idi. Etiket bir kez layout edilir,
+/// sonraki karelerde yalnız boyanır (60 fps kaydırma bütçesi).
+final Map<String, TextPainter> _journeyTextCache = {};
+
+TextPainter _journeyText(String key, TextSpan span) {
+  return _journeyTextCache.putIfAbsent(key, () {
+    final tp = TextPainter(text: span, textDirection: TextDirection.ltr);
+    tp.layout();
+    return tp;
+  });
+}
+
 /// Dikey yol haritası painter'ı. [scroll] = alttan kaydırma (0 = başlangıç).
 class JourneyPainter extends CustomPainter {
   JourneyPainter({
     required this.session,
     required this.nodes,
-    required this.scroll,
-    required this.time,
+    required ValueListenable<double> scroll,
+    required ValueListenable<double> time,
     required this.marketOpen,
     this.riseT = 1.0,
     super.repaint,
-  });
+  })  : _scrollN = scroll,
+        _timeN = time;
 
   final GameSession session;
   final List<JourneyNode> nodes;
-  final double scroll;
-  final double time;
+  // PB-036 kök-düzeltme: painter build anında KOPYALAMIYOR — kaydırma/animasyon
+  // zamanı canlı dinleyiciden okunuyor (eskiden notify yeniden boyar ama eski
+  // alan değerleriyle boyuyordu → harita taşınmaz/animasyonsuz görünürdü)
+  final ValueListenable<double> _scrollN;
+  final ValueListenable<double> _timeN;
   final bool marketOpen;
   final double riseT; // PB-029: son parça yükselme (0..1)
 
+  double get scroll => _scrollN.value;
+  double get time => _timeN.value;
+
   @override
   void paint(Canvas canvas, Size size) {
+    // ignore: avoid_print
+    if (math.Random().nextDouble() < 0.02) print('PB036PAINT scroll=$scroll time=$time');
     final w = size.width;
     final currentIdx = _currentIdx();
 
@@ -334,6 +357,79 @@ class JourneyPainter extends CustomPainter {
 
   void _paintGates(Canvas canvas, Size size, double sc) {
     final save = session.state;
+    // PB-036 tur 7: SONSUZ HARİTA — 10 dünya sonrası prosedürel gizem
+    // segmentleri: isim bulutundan kapılar, ağır sis + rune; içerik SIZMAZ
+    // (kullanıcı: "aşağı indikçe hepsi gelebilsin, sonu gözükmesin")
+    final mystery = [
+      '??? · GİZENLİK BULUTLARI',
+      '??? · YANKI KULESİ',
+      '??? · SONSUZLUK NOKTASI',
+      '??? · AYNALAR DÜNYASI',
+      '??? · KARANLIK MATRİS',
+    ];
+    for (var s = kStageCount; s < kStageCount + mystery.length; s++) {
+      final gy = gateY(s) - sc;
+      if (gy < -140 || gy > size.height + 140) continue;
+      final pulse = 0.5 + 0.5 * math.sin(time * 1.2 + s * 1.9);
+      final cx = size.width / 2;
+      final arch = Path()
+        ..moveTo(cx - 120, gy + 60)
+        ..lineTo(cx - 120, gy - 20)
+        ..quadraticBezierTo(cx, gy - 120, cx + 120, gy - 20)
+        ..lineTo(cx + 120, gy + 60);
+      // sisli kemer — mor gri, nabızlı
+      canvas.drawPath(
+        arch,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.16 + 0.14 * pulse)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 6
+          ..strokeCap = StrokeCap.round
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+      );
+      // ağır sis: kemer içini örten bulutlar (içerik sızmaz)
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(cx, gy - 10), width: 210, height: 110),
+        Paint()
+          ..color = const Color(0xFF0A0A1E).withValues(alpha: 0.72)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
+      );
+      final tp = TextPainter(
+        text: TextSpan(
+          text: mystery[s - kStageCount],
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2,
+            color: Colors.white.withValues(alpha: 0.35 + 0.2 * pulse),
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, Offset(cx - tp.width / 2, gy + 2));
+      // rune halka: kapı üstünde dönen
+      canvas.save();
+      canvas.translate(cx, gy - 86);
+      canvas.rotate(time * 0.6 + s);
+      canvas.drawCircle(
+        Offset.zero,
+        16,
+        Paint()
+          ..color = hslColor(268, 70, 32).withValues(alpha: 0.35)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
+      for (var tick = 0; tick < 8; tick++) {
+        final ta = tick / 8 * math.pi * 2;
+        canvas.drawCircle(
+          Offset(math.cos(ta) * 16, math.sin(ta) * 16),
+          2.4,
+          Paint()..color = Colors.white.withValues(alpha: 0.4 + 0.3 * pulse),
+        );
+      }
+      canvas.restore();
+    }
     for (var s = 1; s < kStageCount; s++) {
       final gy = gateY(s) - sc;
       if (gy < -140 || gy > size.height + 140) continue;
@@ -382,8 +478,8 @@ class JourneyPainter extends CustomPainter {
   }
 
   void _paintDecor(Canvas canvas, Size size, double sc) {
-    // yol kenarı süsleri: parıltılı küreler + sürpriz hediyeler + gizem orbs
-    // (kullanıcı tur 6: dikdörtgen çubuklar KALDIRILDI — şeffaf/parıltılı)
+    // PB-036 tur 7: emoji süsler (hediye/soru kova hissi) KALDIRILDI → geometrik
+    // premium süsler: parıltılı küreler, 4 uçlu glintler, rune halkaları
     for (var s = 0; s < kStageCount; s++) {
       final th = kThemes[s];
       final baseBottom = journeyHeight() - s * kWorldH - sc;
@@ -391,14 +487,14 @@ class JourneyPainter extends CustomPainter {
       if (baseTop > size.height + 100 || baseBottom < -100) continue;
       final hue = th.hues.isNotEmpty ? th.hues[0] : th.glow;
       final rnd = math.Random(500 + s);
-      for (var k = 0; k < 8; k++) {
+      for (var k = 0; k < 9; k++) {
         final side = k.isEven ? -1 : 1;
         final dx = size.width * 0.5 +
             side * (size.width * 0.28 + rnd.nextDouble() * size.width * 0.16);
         final dy = baseTop + 200 + rnd.nextDouble() * (kWorldH - 340);
         final kind = rnd.nextInt(3);
         if (kind == 0) {
-          // parıltılı küre — şeffaf, nabızlı (çubuk DEĞİL)
+          // parıltılı küre — şeffaf, nabızlı
           final pulse = 0.5 + 0.5 * math.sin(time * 1.1 + k * 2.1 + s);
           final r = 5 + rnd.nextDouble() * 7;
           canvas.drawCircle(
@@ -414,45 +510,47 @@ class JourneyPainter extends CustomPainter {
             Paint()..color = Colors.white.withValues(alpha: 0.35 + 0.3 * pulse),
           );
         } else if (kind == 1) {
-          // sürpriz hediye — küçük, sallanan, parıltılı 🎁
-          final bob = math.sin(time * 1.6 + k) * 3;
-          final tp = TextPainter(
-            text: TextSpan(
-              text: '🎁',
-              style: TextStyle(
-                fontSize: 16 + rnd.nextDouble() * 6,
-                shadows: [
-                  Shadow(
-                      color: hslColor(35, 95, 60).withValues(alpha: 0.55),
-                      blurRadius: 10),
-                ],
-              ),
-            ),
-            textDirection: TextDirection.ltr,
-          )..layout();
-          tp.paint(canvas, Offset(dx - tp.width / 2, dy - tp.height / 2 + bob));
+          // 4 uçlu glint — dönen yıldız pırıltısı (deterministik nefes)
+          final pulse = 0.55 + 0.45 * math.sin(time * 1.4 + k * 1.7 + s);
+          final g = 7 + rnd.nextDouble() * 6;
+          canvas.save();
+          canvas.translate(dx, dy);
+          canvas.rotate(time * 0.4 + k);
+          final gp = Paint()
+            ..shader = RadialGradient(colors: [
+              Colors.white.withValues(alpha: 0.85 * pulse),
+              hslColor(hue, 90, 72).withValues(alpha: 0.25 * pulse),
+              Colors.white.withValues(alpha: 0),
+            ]).createShader(Rect.fromCircle(center: Offset.zero, radius: g));
+          canvas.drawCircle(Offset.zero, g, gp);
+          canvas.drawLine(Offset(-g, 0), Offset(g, 0),
+              Paint()..color = Colors.white.withValues(alpha: 0.5 * pulse)..strokeWidth = 1);
+          canvas.drawLine(Offset(0, -g), Offset(0, g),
+              Paint()..color = Colors.white.withValues(alpha: 0.5 * pulse)..strokeWidth = 1);
+          canvas.restore();
         } else {
-          // gizem küresi — içinde '?' parıldayan
-          final pulse = 0.6 + 0.4 * math.sin(time * 0.9 + k * 1.3 + s);
+          // rune halkası — yavaş dönen, düşük alfa (gizem; emoji yok)
+          final rot = time * 0.5 + k + s;
+          canvas.save();
+          canvas.translate(dx, dy);
+          canvas.rotate(rot);
           canvas.drawCircle(
-            Offset(dx, dy),
-            14,
+            Offset.zero,
+            15,
             Paint()
-              ..color = hslColor(268, 80, 40).withValues(alpha: 0.35 * pulse),
+              ..color = hslColor(268, 70, 30).withValues(alpha: 0.22)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 2,
           );
-          final tp = TextPainter(
-            text: TextSpan(
-              text: '?',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                color: Colors.white.withValues(alpha: 0.55 + 0.25 * pulse),
-              ),
-            ),
-            textDirection: TextDirection.ltr,
-          )..layout();
-          tp.paint(canvas, Offset(dx - tp.width / 2, dy - tp.height / 2));
+          for (var tick = 0; tick < 6; tick++) {
+            final ta = tick / 6 * math.pi * 2;
+            canvas.drawCircle(
+              Offset(math.cos(ta) * 15, math.sin(ta) * 15),
+              2.2,
+              Paint()..color = hslColor(hue, 90, 70).withValues(alpha: 0.55),
+            );
+          }
+          canvas.restore();
         }
       }
     }
@@ -547,50 +645,80 @@ class JourneyPainter extends CustomPainter {
     final depth = (n.pos.dy / journeyHeight()).clamp(0.0, 1.0);
     final r = kNodeR * (0.80 + 0.20 * depth);
 
-    // ışıltılı İSİM etiketi — düğümün altında (kullanıcı tur 6)
-    final label = TextPainter(
-      text: TextSpan(
+    // ışıltılı İSİM etiketi — önbellekli, OKUNUR (tur 9: küçük/soluktu)
+    final labelColor = n.isSpecial
+        ? (n.def.modifier == 'patron'
+            ? NeonPalette.magenta
+            : n.def.box
+                ? NeonPalette.gold
+                : NeonPalette.amber)
+        : (n.done ? Colors.white : Colors.white.withValues(alpha: 0.85));
+    final label = _journeyText(
+      'lbl|${n.label}',
+      TextSpan(
         text: n.label,
         style: TextStyle(
           fontFamily: 'Inter',
-          fontSize: n.isSpecial ? 11.5 : 10.5,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.8,
-          color: n.isSpecial
-              ? (n.def.modifier == 'patron'
-                  ? NeonPalette.magenta
-                  : n.def.box
-                      ? NeonPalette.gold
-                      : NeonPalette.amber)
-              : Colors.white.withValues(alpha: n.done ? 0.75 : 0.55),
+          fontSize: n.isSpecial ? 13.5 : 12,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.6,
+          color: labelColor,
           shadows: [
+            Shadow(color: Colors.black.withValues(alpha: .9), blurRadius: 6),
             Shadow(
                 color: n.isSpecial
-                    ? hslColor(45, 95, 60).withValues(alpha: .7)
-                    : glow.withValues(alpha: .5),
-                blurRadius: 8),
+                    ? hslColor(45, 95, 60).withValues(alpha: .85)
+                    : glow.withValues(alpha: .7),
+                blurRadius: 10),
           ],
         ),
       ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    label.paint(canvas, Offset(p.dx - label.width / 2, p.dy + r + 4));
+    );
+    label.paint(canvas, Offset(p.dx - label.width / 2, p.dy + r + 5));
 
+    // tur 9 PREMIUM DÜĞÜM: katmanlı madalyon (halo gradyan + kıvılcım
+    // halkası + çift kontur + çekirdek parıltısı)
     if (n.done) {
-      canvas.drawCircle(p, r, Paint()..color = glow.withValues(alpha: 0.24));
-      canvas.drawCircle(p, r * 0.82, Paint()..color = glow);
+      canvas.drawCircle(
+        p,
+        r * 1.25,
+        Paint()
+          ..shader = RadialGradient(colors: [
+            glow.withValues(alpha: 0.30),
+            glow.withValues(alpha: 0),
+          ]).createShader(Rect.fromCircle(center: p, radius: r * 1.25)),
+      );
+      canvas.drawCircle(
+        p,
+        r * 0.82,
+        Paint()
+          ..shader = RadialGradient(colors: [
+            hslColor(th.glow, 95, 72),
+            hslColor(th.glow, 90, 48),
+          ]).createShader(Rect.fromCircle(center: p, radius: r * 0.82)),
+      );
+      canvas.drawCircle(
+        p,
+        r * 0.82,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.65)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.4,
+      );
       canvas.drawPath(starPath(p, r * 0.5), Paint()..color = const Color(0xFFFFF3C4));
     } else if (n.unlocked) {
       if (current) {
         final pulse = 1 + 0.14 * math.sin(time * 3);
         canvas.drawCircle(
           p,
-          r * 1.5 * pulse,
+          r * 1.6 * pulse,
           Paint()
-            ..color = NeonPalette.cyan.withValues(alpha: 0.22)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+            ..shader = RadialGradient(colors: [
+              NeonPalette.cyan.withValues(alpha: 0.34),
+              NeonPalette.cyan.withValues(alpha: 0),
+            ]).createShader(Rect.fromCircle(center: p, radius: r * 1.6 * pulse)),
         );
-        // oyuncu işareti: güncel düğümde kuyruklu kuyrukluyıldız (sen buradasın)
+        // oyuncu işareti: kuyruklu yıldız (sen buradasın)
         final tail = Path()
           ..moveTo(p.dx - r * 1.9, p.dy + r * 1.9)
           ..quadraticBezierTo(p.dx - r * 0.6, p.dy + r * 0.9, p.dx, p.dy);
@@ -604,14 +732,43 @@ class JourneyPainter extends CustomPainter {
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
         );
       }
-      canvas.drawCircle(p, r, Paint()..color = const Color(0xE60E0E1C));
+      // iç gradyan madalyon
+      canvas.drawCircle(
+        p,
+        r,
+        Paint()
+          ..shader = RadialGradient(colors: [
+            hslColor(th.glow, 60, 22),
+            const Color(0xE60E0E1C),
+          ]).createShader(Rect.fromCircle(center: p, radius: r)),
+      );
+      // dönen kıvılcım halkası (6 nokta — canlılık)
+      final spin = time * (current ? 1.6 : 0.5) + n.i * 0.7;
+      for (var d = 0; d < 6; d++) {
+        final a = spin + d / 6 * math.pi * 2;
+        final sa = current ? 0.8 : 0.45;
+        canvas.drawCircle(
+          Offset(p.dx + math.cos(a) * r * 1.22, p.dy + math.sin(a) * r * 1.22),
+          1.6,
+          Paint()..color = Colors.white.withValues(alpha: sa),
+        );
+      }
+      // çift kontur: yumuşak dış + keskin iç
+      canvas.drawCircle(
+        p,
+        r * 1.1,
+        Paint()
+          ..color = glow.withValues(alpha: 0.25)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 4,
+      );
       canvas.drawCircle(
         p,
         r,
         Paint()
           ..color = glow
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 3,
+          ..strokeWidth = 2.6,
       );
       _paintKindGlyph(canvas, n.def.kind, p, glow);
     } else {
@@ -623,6 +780,14 @@ class JourneyPainter extends CustomPainter {
           ..color = Colors.white.withValues(alpha: 0.14)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2,
+      );
+      canvas.drawCircle(
+        p,
+        r * 0.55,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.08)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2,
       );
       final lk = Paint()
         ..color = Colors.white38

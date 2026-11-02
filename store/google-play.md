@@ -21,7 +21,7 @@ bırak, kombo yap, kritik vuruşları yakala — ama her bölüm aynı değil.
 • Görünür inşaat: bitirdiğin her bölüm adada bir yapı parçası yükseltir;
   birkaç bölümde yapı tamamlanır, dünya sonunda anıt dikilir.
 • Pazar yeri: her gün tazelenen tezgah, gizli sandık, kalkan/çarpan/joker.
-• Tamamen çevrimdışı oynanır. Reklam yok, analitik yok, üçüncü taraf veri paylaşımı yok.
+• Tamamen çevrimdışı oynanır. Analitik ve üçüncü taraf veri paylaşımı yok.
 
 İsteğe bağlı hesap: yalnızca skor tahtası için. E-posta saklanmaz; kimlik sağlayıcı
 kimliği (sub) ve görünen ad tutulur. Hesabını uygulama içinden silebilirsin.
@@ -30,7 +30,7 @@ kimliği (sub) ve görünen ad tutulur. Hesabını uygulama içinden silebilirsi
 kule, blok, tek dokunuş, arcade, hyper-casual, neon, günlük, skor tahtası
 
 ## İçerik derecelendirmesi
-Herkes (şiddet yok, kumar yok, gerçek para yok, reklam yok).
+Herkes (şiddet yok, kumar yok).
 
 ## Veri güvenliği (Data safety)
 | Veri | Toplanır | Paylaşılır | Amaç | Silinebilir |

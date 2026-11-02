@@ -728,6 +728,7 @@ class ScenePainter extends CustomPainter {
       {bool bossTop = false}) {
     if (y > e.h + h || y + h + e.depthY < -h) return;
     final r = math.min(5 * e.scale, h / 3);
+    final shape = e.sig.shape; // PB-036: şekil varyantı (YALNIZ GÖRSEL)
 
     // sağ yan (paralelkenar)
     final side = Paint()
@@ -744,7 +745,8 @@ class ScenePainter extends CustomPainter {
       ..close();
     canvas.drawPath(sidePath, side);
 
-    // ön yüz
+    // ön yüz — şekle göre patika (0 klasik · 1 silindir · 2 altıgen · 3 kama)
+    final frontPath = _blockFrontPath(shape, x, y, w, h, r);
     final front = Paint()
       ..shader = ui.Gradient.linear(
         Offset(x, y),
@@ -753,24 +755,68 @@ class ScenePainter extends CustomPainter {
         const [0, 0.45, 1],
       )
       ..isAntiAlias = true;
-    _roundRect(canvas, front, x, y, w, h, r);
+    canvas.drawPath(frontPath, front);
 
-    // cam parlaması
+    // cam parlaması — ön yüzün içine kırpılmış parlama bandı
     final spec = Paint()
       ..shader = ui.Gradient.linear(
         Offset(x, y),
         Offset(x, y + h * 0.55),
-        [const Color(0x38FFFFFF), const Color(0x00FFFFFF)],
+        [const Color(0x4DFFFFFF), const Color(0x00FFFFFF)],
       );
-    _roundRect(canvas, spec, x + 2 * e.scale, y + 1.5 * e.scale, w - 4 * e.scale,
-        math.max(3, h * 0.4), r * 0.7);
+    canvas.save();
+    canvas.clipPath(frontPath);
+    canvas.drawRect(
+        Rect.fromLTWH(x, y, w, math.max(3, h * 0.42)), spec);
+    // PB-036 parlaklık: iç bevel — üst kenarda ince aydınlık çizgi
+    canvas.drawLine(
+      Offset(x + w * 0.08, y + 1.2 * e.scale),
+      Offset(x + w * 0.92, y + 1.2 * e.scale),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.55)
+        ..strokeWidth = math.max(0.8, 1.1 * e.scale)
+        ..strokeCap = StrokeCap.round,
+    );
+    // PB-036 KRİSTAL (tur 9): iç ışık çekirdeği — blok merkezinde radial ışıma
+    final coreR = math.min(w, h) * 0.75;
+    canvas.drawRect(
+      Rect.fromLTWH(x, y, w, h),
+      Paint()
+        ..shader = ui.Gradient.radial(
+          Offset(x + w / 2, y + h * 0.42),
+          coreR,
+          [hsla(hue, 100, 82, 0.28), hsla(hue, 100, 82, 0)],
+        ),
+    );
+    // kristal faset çizgileri — köşeden merkeze ince ışık kırılımları
+    final facet = Paint()
+      ..color = Colors.white.withValues(alpha: 0.16)
+      ..strokeWidth = math.max(0.6, 0.9 * e.scale);
+    canvas.drawLine(Offset(x + w * 0.14, y + h * 0.14),
+        Offset(x + w * 0.5, y + h * 0.5), facet);
+    canvas.drawLine(Offset(x + w * 0.86, y + h * 0.2),
+        Offset(x + w * 0.5, y + h * 0.5), facet);
+    canvas.restore();
 
-    // neon çerçeve
+    // ateş modunda glint — köşede parıltı pırıltısı (PB-036)
+    if (e.fireMode && w > 30 * e.scale) {
+      final gx = x + w * (0.2 + 0.6 * ((e.time * 2.2) % 1.0));
+      final gy = y + h * 0.28;
+      canvas.drawCircle(
+        Offset(gx, gy),
+        2.2 * e.scale,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.85)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 2.5 * e.scale),
+      );
+    }
+
+    // neon çerçeve — şekil patikasını izler
     final border = Paint()
       ..color = hsla(hue, 100, 82, 0.45)
       ..style = PaintingStyle.stroke
       ..strokeWidth = math.max(0.8, 1.1 * e.scale);
-    _roundRectStroke(canvas, border, x + 0.5, y + 0.5, w - 1, h - 1, r);
+    canvas.drawPath(frontPath, border);
 
     // PB-035 B2: patron görsel varyantı — en üst yerleşik blokta birincil
     // konturun 3px dışında düşük alfalı ikinci ince kontur (yalnız sunum).
@@ -779,36 +825,72 @@ class ScenePainter extends CustomPainter {
         ..color = hsla(hue, 100, 82, 0.18)
         ..style = PaintingStyle.stroke
         ..strokeWidth = math.max(0.8, 1.1 * e.scale);
-      _roundRectStroke(canvas, outer, x - 3, y - 3, w + 6, h + 6, r + 3);
+      canvas.drawPath(frontPath, outer);
     }
 
-    // üst yüz
-    final topG = Paint()
-      ..shader = ui.Gradient.linear(
-        Offset(x, y + e.depthY),
-        Offset(x + w, y),
-        [hslColor(hue, 98, 82), hslColor(hue, 96, 64)],
-      );
-    final topPath = Path()
-      ..moveTo(x, y)
-      ..lineTo(x + e.depthX, y + e.depthY)
-      ..lineTo(x + w + e.depthX, y + e.depthY)
-      ..lineTo(x + w, y)
-      ..close();
-    canvas.drawPath(topPath, topG);
-    final topEdge = Paint()
-      ..color = hsla(hue, 100, 96, 0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = math.max(0.6, 0.9 * e.scale);
-    canvas.drawPath(topPath, topEdge);
+    // üst yüz — yalnız klasik/silindirde (altıgen/kama tepesi kendi derinliği)
+    if (shape == 0 || shape == 1) {
+      final topG = Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(x, y + e.depthY),
+          Offset(x + w, y),
+          [hslColor(hue, 98, 82), hslColor(hue, 96, 64)],
+        );
+      final topPath = Path()
+        ..moveTo(x, y)
+        ..lineTo(x + e.depthX, y + e.depthY)
+        ..lineTo(x + w + e.depthX, y + e.depthY)
+        ..lineTo(x + w, y)
+        ..close();
+      canvas.drawPath(topPath, topG);
+      final topEdge = Paint()
+        ..color = hsla(hue, 100, 96, 0.5)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = math.max(0.6, 0.9 * e.scale);
+      canvas.drawPath(topPath, topEdge);
 
-    // iç ışık çizgisi
-    final line = Paint()
-      ..color = hsla(hue, 100, 88, 0.35)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = math.max(0.6, 0.8 * e.scale);
-    canvas.drawLine(Offset(x + 4 * e.scale, y + h * 0.22), Offset(x + 4 * e.scale, y + h * 0.9), line);
+      // iç ışık çizgisi
+      final line = Paint()
+        ..color = hsla(hue, 100, 88, 0.35)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = math.max(0.6, 0.8 * e.scale);
+      canvas.drawLine(Offset(x + 4 * e.scale, y + h * 0.22),
+          Offset(x + 4 * e.scale, y + h * 0.9), line);
+    }
   }
+
+  /// PB-036: blok ön yüz patikası — şekil varyantları (görsel katman).
+  /// 0 = yuvarlak köşe · 1 = silindir (tam pill) · 2 = altıgen · 3 = kama
+  Path _blockFrontPath(int shape, double x, double y, double w, double h, double r) {
+    switch (shape) {
+      case 1: // silindir: tam yuvarlak uçlar
+        return Path()
+          ..addRRect(RRect.fromRectAndRadius(
+              Rect.fromLTWH(x, y, w, h), Radius.circular(h / 2)));
+      case 2: // altıgen (yatay, düz üst-alt)
+        return Path()
+          ..moveTo(x + w * 0.14, y)
+          ..lineTo(x + w * 0.86, y)
+          ..lineTo(x + w, y + h / 2)
+          ..lineTo(x + w * 0.86, y + h)
+          ..lineTo(x + w * 0.14, y + h)
+          ..lineTo(x, y + h / 2)
+          ..close();
+      case 3: // kama: üçgen tepe
+        return Path()
+          ..moveTo(x, y + h)
+          ..lineTo(x, y + h * 0.42)
+          ..lineTo(x + w / 2, y)
+          ..lineTo(x + w, y + h * 0.42)
+          ..lineTo(x + w, y + h)
+          ..close();
+      default: // klasik yuvarlak
+        return Path()
+          ..addRRect(RRect.fromRectAndRadius(
+              Rect.fromLTWH(x, y, w, h), Radius.circular(r)));
+    }
+  }
+
 
   void _drawMoving(Canvas canvas, GamePlay e) {
     final m = e.moving;

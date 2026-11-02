@@ -12,6 +12,7 @@ import '../theme/tokens.dart';
 import '../ui/ambient.dart';
 import '../ui/aurora_background.dart';
 import '../ui/premium_kit.dart';
+import '../game/rank.dart';
 import 'router.dart';
 
 class MenuScreen extends StatefulWidget {
@@ -239,45 +240,90 @@ class _StatStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rank = rankFor(session.state);
     return FadeSlideIn(
       delay: const Duration(milliseconds: 60),
-      child: GlassPanel(
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSpace.lg, vertical: AppSpace.md),
-        radius: AppRadius.pill,
-        glow: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _Stat(
-              icon: StarGlyph(size: 17),
-              label: '${session.totalStars}',
-              color: NeonPalette.star,
+      // PB-036 tur 7: puan/sıralama HER ZAMAN erişilebilir — şeride dokun →
+      // kişisel puan & rütbe sayfası
+      child: Semantics(
+        button: true,
+        label: 'Puan ve rütbe: ${rank.name}. Puan sayfasını aç',
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          onTap: () => Navigator.pushNamed(context, Routes.rank),
+          child: GlassPanel(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.lg, vertical: AppSpace.md),
+            radius: AppRadius.pill,
+            glow: false,
+            child: Row(
+              children: [
+                // rütbe madalyonu (mini) — hiyerarşi ilk bakışta
+                _RankBadge(rank: rank),
+                const SizedBox(width: AppSpace.md),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _Stat(
+                        icon: StarGlyph(size: 17),
+                        label: '${session.totalStars}',
+                        color: NeonPalette.star,
+                      ),
+                      _Stat(
+                        icon: Icon(Icons.emoji_events_rounded,
+                            size: 17, color: NeonPalette.amber),
+                        label: '${session.state.best}',
+                        color: NeonPalette.amber,
+                      ),
+                      _Stat(
+                        icon: CoinGlyph(size: 17),
+                        label: '${session.state.coins}',
+                        color: NeonPalette.gold,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpace.sm),
+                const Icon(Icons.chevron_right_rounded,
+                    size: 20, color: NeonPalette.textDim),
+              ],
             ),
-            _divider(),
-            _Stat(
-              icon: Icon(Icons.emoji_events_rounded,
-                  size: 17, color: NeonPalette.amber),
-              label: '${session.state.best}',
-              color: NeonPalette.amber,
-            ),
-            _divider(),
-            _Stat(
-              icon: CoinGlyph(size: 17),
-              label: '${session.state.coins}',
-              color: NeonPalette.gold,
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
+}
 
-  Widget _divider() => Container(
-        width: 1,
-        height: 22,
-        color: Colors.white.withValues(alpha: .12),
-      );
+/// PB-036: mini rütbe madalyonu — puana göre değişen sembol/görünüm (hiyerarşi).
+class _RankBadge extends StatelessWidget {
+  const _RankBadge({required this.rank});
+  final RankThreshold rank;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: rank.colors,
+        ),
+        border: Border.all(color: Colors.white.withValues(alpha: .5)),
+        boxShadow: [
+          BoxShadow(
+            color: rank.colors.first.withValues(alpha: .4),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Icon(rank.icon, size: 18, color: Colors.white),
+    );
+  }
 }
 
 class _Stat extends StatelessWidget {

@@ -8,6 +8,7 @@ library;
 import 'dart:async';
 import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -795,6 +796,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   padding: const EdgeInsets.fromLTRB(
                       AppSpace.lg, 0, AppSpace.lg, AppSpace.lg),
                   children: [
+                    // PB-036: geliştirici modu — yalnız debug derlemelerde
+                    if (kDebugMode)
+                      _DevUnlockPanel(
+                          session: context.read<GameSession>()),
                     GlassPanel(
                       padding: const EdgeInsets.symmetric(
                           horizontal: AppSpace.lg, vertical: AppSpace.xs),
@@ -1119,6 +1124,54 @@ class _CalendarSlot extends StatelessWidget {
                   .textTheme
                   .bodySmall
                   ?.copyWith(color: col, fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
+  }
+}
+
+/// PB-036: geliştirici modu — yalnız kDebugMode'da görünür; tüm bölümleri açar.
+/// Üretim derlemesinde derlenmez (tree-shaken) ve oyuncuya asla görünmez.
+class _DevUnlockPanel extends StatefulWidget {
+  const _DevUnlockPanel({required this.session});
+  final GameSession session;
+
+  @override
+  State<_DevUnlockPanel> createState() => _DevUnlockPanelState();
+}
+
+class _DevUnlockPanelState extends State<_DevUnlockPanel> {
+  @override
+  Widget build(BuildContext context) {
+    final session = widget.session;
+    final on = session.state.devUnlockAll;
+    return GlassPanel(
+      padding: const EdgeInsets.all(AppSpace.md),
+      radius: AppRadius.md,
+      glow: false,
+      borderColor: NeonPalette.magenta.withValues(alpha: .4),
+      child: Row(
+        children: [
+          const Icon(Icons.developer_mode_rounded,
+              size: 18, color: NeonPalette.magenta),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'GELİŞTİRİCİ: TÜM BÖLÜMLER AÇIK',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: NeonPalette.magenta,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ),
+          Switch(
+            value: on,
+            activeThumbColor: NeonPalette.magenta,
+            onChanged: (v) {
+              setState(() => session.state.devUnlockAll = v);
+              session.persist();
+            },
+          ),
         ],
       ),
     );

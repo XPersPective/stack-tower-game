@@ -1,0 +1,14 @@
+{
+  "protocol": 1,
+  "next": "Tick proven criteria, verify remaining behavior, then review and accept",
+  "failing": "",
+  "dirty": "lib/game/levels.dart, lib/game/progress.dart, lib/game/scene_painter.dart, lib/map/journey_map.dart, lib/screens/map_screen.dart, lib/screens/market_screen.dart, lib/screens/menu_screen.dart, lib/screens/rank_screen.dart, lib/screens/router.dart, lib/screens/shop_screens.dart, store/app-store.md, store/google-play.md, test/journey_map_test.dart, test/map_construction_test.dart, test/progress_test.dart",
+  "strategy": "check",
+  "attempt": "20fa8926da4a6ba8",
+  "repeats": 0,
+  "contract": "9f452522fea059a9",
+  "usage": {
+    "checks": 1,
+    "seconds": 58.797
+  }
+}
