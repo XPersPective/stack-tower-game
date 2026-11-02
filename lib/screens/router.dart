@@ -15,12 +15,15 @@ import 'preview_screen.dart';
 import 'shop_screens.dart';
 
 /// Adlandırılmış rota sabitleri.
+int dayOfNow() => DateTime.now().millisecondsSinceEpoch ~/ 86400000;
+
 class Routes {
   static const menu = '/';
   static const map = '/map';
   static const preview = '/preview';
   static const play = '/play';
   static const playEndless = '/play-endless';
+  static const playNightmare = '/play-nightmare'; // PB-035 B3
   static const shop = '/shop';
   static const market = '/market';
   static const missions = '/missions';
@@ -45,6 +48,9 @@ Widget routeFor(RouteSettings settings) {
       return PlayRoute(def: settings.arguments as LevelDef);
     case Routes.playEndless:
       return PlayRoute(def: endlessDef());
+    case Routes.playNightmare:
+      return PlayRoute(
+          def: nightmareDef(weekOf(dayOfNow()))); // günün haftası tohumu
     case Routes.menu:
     default:
       return const MenuScreen();

@@ -350,6 +350,44 @@ void main() {
       expect(restored.v, 2); // fromJson v2'yi korur; load() kabul eder
     });
 
+    test('PB-035 B3: kabus hakları — hafta sıfırlar, 3 tavan, kayıp cezasız', () {
+      final s = createSave();
+      final w = 3400;
+      expect(nightmareTriesLeft(s, w), 3);
+      consumeNightmareTry(s, w);
+      expect(nightmareTriesLeft(s, w), 2);
+      consumeNightmareTry(s, w);
+      consumeNightmareTry(s, w);
+      expect(nightmareTriesLeft(s, w), 0);
+      // kayıp cezasız: rekor güncellenmez, hak düşmez
+      recordNightmare(s, w, 20, false);
+      expect(s.nightmareBest, 0);
+      expect(nightmareTriesLeft(s, w), 0);
+      // kazanç rekoru
+      recordNightmare(s, w, 25, true);
+      expect(s.nightmareBest, 25);
+      // yeni hafta → haklar yenilenir
+      expect(nightmareTriesLeft(s, w + 1), 3);
+      consumeNightmareTry(s, w + 1);
+      expect(s.nightmareWeek, w + 1);
+      expect(s.nightmareTries, 1);
+      // rekor haftalar arası korunur
+      expect(s.nightmareBest, 25);
+    });
+
+    test('PB-035 B3: nightmareDef hafta tohumu deterministik + hep stack', () {
+      final a = nightmareDef(3400);
+      final b = nightmareDef(3400);
+      expect(a.target, b.target);
+      expect(a.speed, b.speed);
+      expect(a.nightmare, isTrue);
+      expect(a.kind, GameKind.stack);
+      expect(a.target, greaterThanOrEqualTo(14));
+      expect(a.tol, 4);
+      expect(nightmareDef(3401).target, isNot(a.target));
+      expect(weekOf(3400 * 7), 3400);
+    });
+
     test('missingRelicPieces: eksik kalıntı sayısı', () {
       final s = createSave();
       expect(missingRelicPieces(s), kStageCount);

@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 
 import 'gameplay.dart';
 import 'levels.dart';
+import 'market.dart' as market;
 import 'progress.dart' as prog;
 import '../map/construction.dart';
 import '../services/leaderboard_service.dart';
@@ -71,6 +72,7 @@ class GameSession extends ChangeNotifier {
   LevelResult? pendingResult;
   prog.CompleteResult? pendingRewards;
   Surprise? currentSurprise;
+  String? lastNightmareRelic; // PB-035 B3: kabus kazanımında kalıntı adı
   bool doubleCoinsThisLevel = false;
   WorldCeremony? lastCeremony;
   List<BoardRow> boardRows = [];
@@ -107,7 +109,9 @@ class GameSession extends ChangeNotifier {
   LevelStart prepareLevel(LevelDef def) {
     currentDef = def;
     currentSurprise =
-        (def.endless || def.daily) ? null : surpriseFor(def.i, prog.dayOf(_clock()));
+        (def.endless || def.daily || def.nightmare)
+            ? null
+            : surpriseFor(def.i, prog.dayOf(_clock()));
     doubleCoinsThisLevel = currentSurprise?.effect == 'doubleCoins';
     var shields = currentSurprise?.effect == 'shieldUp' ? 2 : 1;
     // PB-018 pazar: satın alınan kalkan/çarpan bir sonraki bölümde tüketilir
@@ -140,6 +144,23 @@ class GameSession extends ChangeNotifier {
   prog.CompleteResult onWin(int blocks, int perfects,
       {int crits = 0, int goldBlocks = 0}) {
     final def = currentDef!;
+    // PB-035 B3: KABUS KULESİ — kayıp cezasız, kazanç: 40 para + kalıntı
+    // parçası + rekor; normal bölüm ekonomisine (completed/yıldız) girmez.
+    if (def.nightmare) {
+      final week = weekOf(prog.dayOf(_clock()));
+      prog.recordNightmare(state, week, blocks, true);
+      final gained = 40;
+      state.coins += gained;
+      final relic = market.addRelicPiece(state); // cömertlik: kalıntı parçası
+      persist();
+      pendingResult = LevelResult(blocks, perfects, true);
+      pendingRewards = prog.CompleteResult(coins: gained, firstClear: false);
+      _chain.clear();
+      _chain.add(FlowStep.result);
+      _chain.add(FlowStep.showMap);
+      lastNightmareRelic = relic;
+      return pendingRewards!;
+    }
     var stars = starsFor(perfects, def.target);
     // PB-018 pazar jokeri: sonraki kazanılan bölümde +1 yıldız (tavan 3)
     if (state.marketJoker) {
@@ -245,6 +266,17 @@ class GameSession extends ChangeNotifier {
   /// kazanılan bölümde ödenir — kayıpta para birikmez.
   prog.CompleteResult onLose(int blocks, int perfects) {
     final def = currentDef!;
+    // PB-035 B3: kabus kaybı CEZASIZ — teselli bile bozmadan sadece sonuç
+    if (def.nightmare) {
+      final week = weekOf(prog.dayOf(_clock()));
+      prog.recordNightmare(state, week, blocks, false);
+      persist();
+      pendingResult = LevelResult(blocks, perfects, false);
+      pendingRewards = prog.CompleteResult();
+      _chain.clear();
+      _chain.add(FlowStep.result);
+      return pendingRewards!;
+    }
     final rw =
         prog.completeLevel(state, def, blocks: blocks, perfects: perfects, reached: false);
     if (doubleCoinsThisLevel) {

@@ -1,9 +1,7 @@
 /// PB-018 — pazar yeri: rotasyon determinizmi, ekonomi, sandık, eski kayıt.
 library;
 
-import 'dart:io';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,7 +11,7 @@ import 'package:stack_tower_game/game/game_session.dart';
 import 'package:stack_tower_game/game/levels.dart';
 import 'package:stack_tower_game/game/market.dart';
 import 'package:stack_tower_game/game/progress.dart' as prog;
-import 'package:stack_tower_game/map/map3d.dart';
+import 'package:stack_tower_game/map/journey_map.dart';
 import 'package:stack_tower_game/screens/market_screen.dart';
 import 'package:stack_tower_game/services/storage.dart';
 
@@ -225,46 +223,13 @@ void main() {
     });
   });
 
-  group('harita: pazar binası', () {
-    test('3 bölüm bitmiş adada pazar kurulur; hitTest market döner', () async {
+  group('harita (yol)', () {
+    test('3 bölüm bitmiş adada pazar tezgahı hitTest market döner', () {
       final session = GameSession(MemoryStorage());
-      for (var i = 0; i < 3; i++) {
-        prog.completeLevel(session.state, levelDef(i),
-            blocks: 10, perfects: 5, reached: true, stars: 3);
-      }
-      final scene = MapScene(session);
-      final cam = MapCamera();
-      const size = Size(540, 1200);
-      cam.w = size.width;
-      cam.h = size.height;
-      cam.update(scene, 0.016, snap: true);
-      cam.update(scene, 0.016, snap: false);
-      final rec = ui.PictureRecorder();
-      MapScenePainter(scene, cam, 1.2, repaint: _Noop()).paint(Canvas(rec), size);
-      final isl = scene.islands[scene.focusStage];
-      expect(isl.hasMarket, isTrue);
-      expect(isl.marketScreen, isNotNull);
-      expect(hitTest(scene, isl.marketScreen!), 'market');
-      // görsel kanıt
-      final img = await rec.endRecording().toImage(540, 1200);
-      final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
-      final dir = Directory(Platform.environment['PB_EVIDENCE'] == '1'
-          ? '.project-brain/evidence/PB-018'
-          : '.cache/runs/snapshots')
-        ..createSync(recursive: true);
-      File('${dir.path}/map_market.png')
-          .writeAsBytesSync(bytes!.buffer.asUint8List());
-    });
-
-    test('2 bölüm bitmiş adada pazar YOK', () async {
-      final session = GameSession(MemoryStorage());
-      for (var i = 0; i < 2; i++) {
-        prog.completeLevel(session.state, levelDef(i),
-            blocks: 10, perfects: 5, reached: true, stars: 3);
-      }
-      final scene = MapScene(session);
-      final isl = scene.islands[scene.focusStage];
-      expect(isl.hasMarket, isFalse);
+      final nodes = journeyLayout(session, 420);
+      final stall = Offset(nodes[2].pos.dx + 96, nodes[2].pos.dy + 8);
+      expect(journeyHitTest(nodes, stall, marketOpen: true), 'market');
+      expect(journeyHitTest(nodes, stall, marketOpen: false), isNull);
     });
   });
 
@@ -294,7 +259,7 @@ void main() {
 }
 
 /// Harita testi için sahte repaint kaynağı.
-class _Noop extends ChangeNotifier {}
+
 
 /// Sabit değer döndüren Random (sandık oranı testleri).
 class _FixedRandom implements math.Random {

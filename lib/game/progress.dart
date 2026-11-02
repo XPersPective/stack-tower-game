@@ -133,6 +133,10 @@ class SaveState {
   bool streakShield; // telafi kalkanı: 1 gün kaçırma affedilir (7. gün kazanılır)
   int calendarClaimDay; // son talep günü
   int calendarIndex; // 7 günlük döngüde sıradaki slot (0..6)
+  // PB-035 B3: Kabus Kulesi (haftalık 3 hak, kayıp cezasız)
+  int nightmareWeek; // son oynanan hafta
+  int nightmareTries; // bu hafta tüketilen haklar (0..3)
+  int nightmareBest; // tüm zamanlar rekoru (blok)
 
   SaveState({
     this.v = 3,
@@ -163,6 +167,9 @@ class SaveState {
     this.streakShield = false,
     this.calendarClaimDay = -1,
     this.calendarIndex = 0,
+    this.nightmareWeek = -1,
+    this.nightmareTries = 0,
+    this.nightmareBest = 0,
   })  : dailyHistory = dailyHistory ?? {},
         marketBought = marketBought ?? {},
         completed = completed ?? {},
@@ -201,6 +208,9 @@ class SaveState {
         'streakShield': streakShield,
         'calendarClaimDay': calendarClaimDay,
         'calendarIndex': calendarIndex,
+        'nightmareWeek': nightmareWeek,
+        'nightmareTries': nightmareTries,
+        'nightmareBest': nightmareBest,
       };
 
   /// JS şemasıyla aynı JSON (anahtar sırası fark etmez, alan adları aynı).
@@ -255,6 +265,9 @@ class SaveState {
       streakShield: j['streakShield'] == true,
       calendarClaimDay: (j['calendarClaimDay'] as num?)?.toInt() ?? -1,
       calendarIndex: (j['calendarIndex'] as num?)?.toInt() ?? 0,
+      nightmareWeek: (j['nightmareWeek'] as num?)?.toInt() ?? -1,
+      nightmareTries: (j['nightmareTries'] as num?)?.toInt() ?? 0,
+      nightmareBest: (j['nightmareBest'] as num?)?.toInt() ?? 0,
     );
   }
 }
@@ -292,6 +305,33 @@ int touchStreak(SaveState s, int today) {
   s.calendarIndex = (slot + 1) % 7;
   if (slot == 6) s.streakShield = true;
   return (kCalendarRewards[slot], slot);
+}
+
+/* ---- PB-035 B3: Kabus Kulesi (saf mantık) ---- */
+
+/// Haftanın kalan hakları — hafta değişince sayaç sıfırlanır (yan etki yok:
+/// okuma çağrısı kaydı güncellemez; consume ayrı).
+int nightmareTriesLeft(SaveState s, int week) {
+  if (s.nightmareWeek != week) return 3;
+  return (3 - s.nightmareTries).clamp(0, 3);
+}
+
+/// Bir hak tüket (hafta değişimini de kalıcılaştırır).
+void consumeNightmareTry(SaveState s, int week) {
+  if (s.nightmareWeek != week) {
+    s.nightmareWeek = week;
+    s.nightmareTries = 0;
+  }
+  s.nightmareTries = (s.nightmareTries + 1).clamp(0, 3);
+}
+
+/// Kabus sonucu: kayıp CEZASIZ (hiçbir şey düşülmez); kazanım rekoru günceller.
+void recordNightmare(SaveState s, int week, int blocks, bool reached) {
+  if (s.nightmareWeek != week) {
+    s.nightmareWeek = week;
+    s.nightmareTries = 0;
+  }
+  if (reached && blocks > s.nightmareBest) s.nightmareBest = blocks;
 }
 
 /// Defter sayacı: eksik parça = toplanmamış kalıntı (10 dünya kalıntısı).

@@ -57,6 +57,7 @@ class LevelDef {
   final String name;
   final bool daily;
   final bool endless;
+  final bool nightmare; // PB-035 B3: haftalık Kabus Kulesi (stack tabanlı etkinlik)
 
   const LevelDef({
     required this.i,
@@ -73,6 +74,7 @@ class LevelDef {
     required this.name,
     this.daily = false,
     this.endless = false,
+    this.nightmare = false,
   });
 }
 
@@ -169,6 +171,33 @@ LevelDef dailyDef(int day) {
     box: false,
     name: 'GÜNLÜK MEYDAN OKUMA',
     daily: true,
+  );
+}
+
+/// Hafta indeksi (7 günlük) — Kabus Kulesi tohumu (PB-035 B3).
+int weekOf(int day) => day ~/ 7;
+
+/// KABUS KULESİ (PB-035 B3): haftalık, 3 haklı, kayıp cezasız bonus kule.
+/// Hafta tohumuyla zorlaşır; HER ZAMAN stack türü. Ödül oturumda özel işlenir.
+LevelDef nightmareDef(int week) {
+  final target = 14 + (week % 3) * 2;
+  final speed = math.min(3.4, 1.9 + (week % 5) * 0.18);
+  const tol = 4;
+  final modifier = const ['hizli', 'karanlik', 'ruzgar'][week % 3];
+  return LevelDef(
+    i: -2 - (week % 1000) * 1000, // çakışmasın: twistedengelle + completed'a düşmez
+    stage: 9,
+    idx: 0,
+    num: 0,
+    theme: kThemes[9], // SON KULE · ZİRVE — karanlık atmosfer
+    target: target,
+    speed: speed,
+    tol: tol,
+    modifier: modifier,
+    coins: 40,
+    box: false,
+    name: 'KABUS KULESİ',
+    nightmare: true,
   );
 }
 

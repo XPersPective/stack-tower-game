@@ -433,7 +433,7 @@ class GamePlay {
     skinHue = hue;
     shieldsLeft = shields;
     slowTimer = 0;
-    twist = twistType ?? ((d.daily || d.endless) ? null : twistFor(d.i));
+    twist = twistType ?? ((d.daily || d.endless || d.nightmare) ? null : twistFor(d.i));
     // PB-033: bölüm görsel imzası + final stili + kamera sıfırı
     sig = levelSignature(d.i);
     finale = finaleFor(d.i);

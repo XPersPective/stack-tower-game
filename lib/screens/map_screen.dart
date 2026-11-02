@@ -1,5 +1,8 @@
-/// Stack Tower Game — 3B takımada haritası ekranı (map.js portu).
-/// Sürükle→yörünge, dikey sürükle→dünya geçişi, dokun→bölüm/günlük.
+/// Stack Tower Game — DİKEY YOL HARİTASI ekranı (PB-035 tur 5).
+///
+/// Premium saga-map (Royal Match modeli): kıvrımlı yol + bölüm düğümleri +
+/// dünya kapıları; dikey kaydırma (sürükle + atalet), dokun→bölüm/pazar.
+/// 3B takımada denemesi kullanıcı talebiyle kaldırıldı.
 library;
 
 import 'dart:math' as math;
@@ -13,7 +16,7 @@ import '../game/levels.dart';
 import '../game/progress.dart' as prog;
 import '../game/scene_painter.dart' show hslColor;
 import '../map/construction.dart';
-import '../map/map3d.dart';
+import '../map/journey_map.dart';
 import '../theme/tokens.dart';
 import '../ui/premium_kit.dart';
 import 'flow_overlays.dart';
@@ -34,19 +37,19 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMixin {
-  late MapScene _scene;
-  late MapCamera _camera;
-  late MapRepaint _repaint;
+  List<JourneyNode>? _nodes;
+  late final _Signal _repaint = _Signal();
   late Ticker _ticker;
   Duration _last = Duration.zero;
-  bool _snap = true;
-  double _yawVel = 0;
-  _Drag? _drag;
+  double _scroll = 0;
+  double _vel = 0;
+  double _viewH = 800;
+  int _layoutStamp = -1; // ilerleme değişince yerleşimi tazele
 
   @override
   void initState() {
     super.initState();
-    _scene = MapScene(context.read<GameSession>());
+    _ticker = createTicker(_onTick)..start();
     // PB-021: 3. bölümden sonra pazar keşfi bir kez duyurulur
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -55,35 +58,41 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
         s.pendingMarketDiscovery = false;
         s.state.marketSeen = true;
         s.persist();
-        ToastHost.show(context, 'PAZAR YERİ AÇILDI — adadaki tezgaha dokun');
+        ToastHost.show(context, 'PAZAR YERİ AÇILDI — yoldaki tezgaha dokun');
       }
     });
-    // PB-029: haritaya dönüşte en son inşa edilen parça 1.2s yükselir
-    final next = nextBuildIdx(context.read<GameSession>().state, _scene.focusStage);
-    if (next != null && next > 0) _scene.startRise(next - 1);
-    _camera = MapCamera();
-    _repaint = MapRepaint();
-    _ticker = createTicker(_onTick)..start();
   }
 
   @override
   void dispose() {
     _ticker.dispose();
+    _repaint.dispose();
     super.dispose();
   }
 
   void _onTick(Duration elapsed) {
     final dt = ((elapsed - _last).inMicroseconds / 1e6).clamp(0.001, 0.05);
     _last = elapsed;
-    if (_drag == null) {
-      _camera.yaw += _yawVel * dt;
-      _yawVel *= 0.9;
-      if (_yawVel.abs() < 0.001) _yawVel = 0;
+    // atalet: sürükleme bitince yavaşlayarak dur
+    if (_vel.abs() > 1) {
+      _scroll = (_scroll + _vel * dt).clamp(0.0, journeyHeight() - _viewH);
+      _vel *= math.pow(0.0035, dt).toDouble();
+      if (_vel.abs() < 20) _vel = 0;
     }
-    _scene.updateRise(dt);
-    _camera.update(_scene, dt, snap: _snap);
-    _snap = false;
     _repaint.notify();
+  }
+
+  void _snapToCurrent() {
+    final nodes = _nodes;
+    if (nodes == null) return;
+    for (final n in nodes) {
+      if (n.unlocked && !n.done) {
+        _scroll = (n.pos.dy - _viewH * 0.62).clamp(0.0, journeyHeight() - _viewH);
+        return;
+      }
+    }
+    _scroll = (nodes.last.pos.dy - _viewH * 0.62)
+        .clamp(0.0, journeyHeight() - _viewH);
   }
 
   void _openDaily() {
@@ -94,18 +103,36 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     final session = context.watch<GameSession>();
-    final isl = _scene.islands[_scene.focusStage];
     return Scaffold(
       body: LayoutBuilder(builder: (context, constraints) {
+        _viewH = constraints.maxHeight;
+        // ilerleme damgası: tamamlanan bölümlerin sağlaması (ucuz)
+        final stamp = session.state.levelsDone * 1000 + session.totalStars;
+        var nodes = _nodes;
+        if (nodes == null || stamp != _layoutStamp) {
+          final first = nodes == null;
+          nodes = journeyLayout(session, constraints.maxWidth);
+          _nodes = nodes;
+          _layoutStamp = stamp;
+          if (first) {
+            _snapToCurrent();
+          }
+        }
+        final list = nodes; // kapama içlerinde güvenli yerel kopya
+        final marketOpen = _marketOpen(session);
+        final focusStage = _focusStage(list);
+        final world = _worldInfo(focusStage);
+
         return Stack(
           children: [
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTapUp: (d) {
-                final hit = hitTest(_scene, d.localPosition);
+                final mapPos = d.localPosition + Offset(0, _scroll);
+                final hit = journeyHitTest(list, mapPos, marketOpen: marketOpen);
                 if (hit != null && hit.startsWith('node:')) {
                   final i = int.parse(hit.substring(5));
-                  final nd = _scene.nodes[i];
+                  final nd = list.firstWhere((e) => e.i == i);
                   if (nd.unlocked) {
                     Navigator.pushNamed(context, Routes.preview,
                         arguments: levelDef(nd.i));
@@ -121,37 +148,26 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                   }
                 } else if (hit == 'market') {
                   Navigator.pushNamed(context, Routes.market); // PB-018
-                } else {
-                  _openDaily();
                 }
               },
-              onPanStart: (d) {
-                _drag = _Drag(start: d.localPosition, yaw: _camera.yaw);
-                _yawVel = 0;
+              onVerticalDragStart: (_) => _vel = 0,
+              onVerticalDragUpdate: (d) {
+                _scroll =
+                    (_scroll - d.delta.dy).clamp(0.0, journeyHeight() - _viewH);
+                _repaint.notify();
               },
-              onPanUpdate: (d) {
-                final drag = _drag;
-                if (drag == null) return;
-                final dx = d.localPosition.dx - drag.start.dx;
-                final dy = d.localPosition.dy - drag.start.dy;
-                drag.moved = math.max(drag.moved, (d.localPosition - drag.start).distance);
-                drag.dy = dy;
-                _camera.yaw = drag.yaw - dx * 0.006;
-              },
-              onPanEnd: (d) {
-                final drag = _drag;
-                if (drag == null) return;
-                if (drag.moved >= 12 &&
-                    drag.dy.abs() > 64 &&
-                    drag.dy.abs() > (d.localPosition.dx - drag.start.dx).abs() * 0.75) {
-                  _scene.setFocus(_scene.focusStage + (drag.dy < 0 ? 1 : -1));
-                  _snap = true;
-                }
-                _drag = null;
+              onVerticalDragEnd: (d) {
+                _vel = -d.velocity.pixelsPerSecond.dy * 0.55;
               },
               child: CustomPaint(
-                painter: MapScenePainter(_scene, _camera, _last.inMicroseconds / 1e6,
-                    repaint: _repaint),
+                painter: JourneyPainter(
+                  session: session,
+                  nodes: list,
+                  scroll: _scroll,
+                  time: _last.inMicroseconds / 1e6,
+                  marketOpen: marketOpen,
+                  repaint: _repaint,
+                ),
                 size: Size.infinite,
               ),
             ),
@@ -185,34 +201,37 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                       horizontal: AppSpace.xl, vertical: AppSpace.lg),
                   radius: AppRadius.xl,
                   blur: 10,
-                  glowColor: hslColor(isl.theme.glow, 90, 62),
+                  glowColor: hslColor(world.glow, 90, 62),
                   borderColor:
-                      hslColor(isl.theme.glow, 90, 62).withValues(alpha: .45),
+                      hslColor(world.glow, 90, 62).withValues(alpha: .45),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('DÜNYA ${isl.stage + 1}',
+                      Text('DÜNYA ${world.stage + 1}',
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
-                                  color: hslColor(isl.theme.glow, 90, 70),
+                                  color: hslColor(world.glow, 90, 70),
                                   letterSpacing: 2)),
-                      Text(isl.open ? isl.theme.name : '🔒 ???',
+                      Text(world.open ? world.name : '🔒 ???',
                           style: Theme.of(context).textTheme.displayMedium),
                       Text(
-                        isl.open
-                            ? '${isl.done}/$kLevelsPerStage · ★ ${isl.stars}'
-                            : '🔒 ${session.totalStars}/${isl.need} yıldız',
+                        world.open
+                            ? '${world.done}/$kLevelsPerStage · ★ ${world.stars}'
+                            : '🔒 ${session.totalStars}/${world.need} yıldız',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       // PB-019: kilitli dünyada kademeli ipucu
-                      if (!isl.open)
-                        Text(lockedWorldHint(isl.stage),
+                      if (!world.open)
+                        Text(lockedWorldHint(world.stage),
                             textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontStyle: FontStyle.italic,
-                                color: NeonPalette.textDim)),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                    fontStyle: FontStyle.italic,
+                                    color: NeonPalette.textDim)),
                       // PB-029: blueprint ipucu METİNLE de okunur (accessibility)
-                      _buildHint(context, session, isl.stage),
+                      _buildHint(context, session, world),
                     ],
                   ),
                 ),
@@ -222,17 +241,25 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
               left: 24,
               right: 24,
               bottom: 20,
-              child: GradientButton(
-                label: 'GÜNLÜK MEYDAN OKUMA',
-                icon: Icons.public_rounded,
-                expand: true,
-                height: 54,
-                colors: const [
-                  Color(0xFF2E1E86),
-                  Color(0xFF12407E),
-                  Color(0xFF451C7A),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // PB-035 B3: KABUS KULESİ kapısı — haftalık 3 hak, kayıp cezasız
+                  _NightmareGate(session: session),
+                  const SizedBox(height: AppSpace.sm),
+                  GradientButton(
+                    label: 'GÜNLÜK MEYDAN OKUMA',
+                    icon: Icons.public_rounded,
+                    expand: true,
+                    height: 54,
+                    colors: const [
+                      Color(0xFF2E1E86),
+                      Color(0xFF12407E),
+                      Color(0xFF451C7A),
+                    ],
+                    onTap: _openDaily,
+                  ),
                 ],
-                onTap: _openDaily,
               ),
             ),
           ],
@@ -241,10 +268,59 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
     );
   }
 
-  /// PB-029: "burada ne yükselecek?" — haritadaki silüetin metin karşılığı.
-  Widget _buildHint(BuildContext context, GameSession session, int stage) {
+  bool _marketOpen(GameSession session) {
+    var done = 0;
+    for (var i = 0; i < 3; i++) {
+      if (session.state.completed[i] != null) done++;
+    }
+    return done >= 3; // eski map3d hasMarket kuralı: 3 bölüm bitince pazar
+  }
+
+  int _focusStage(List<JourneyNode> nodes) {
+    final midY = _scroll + _viewH * 0.45;
+    JourneyNode? best;
+    var bestD = double.infinity;
+    for (final n in nodes) {
+      final d = (n.pos.dy - midY).abs();
+      if (d < bestD) {
+        bestD = d;
+        best = n;
+      }
+    }
+    return best?.def.stage ?? 0;
+  }
+
+  ({int stage, bool open, String name, int done, int stars, int need, int glow})
+      _worldInfo(int stage) {
+    final session = context.read<GameSession>();
+    var done = 0, stars = 0;
+    for (var k = 0; k < kLevelsPerStage; k++) {
+      final cm = session.state.completed[stage * kLevelsPerStage + k];
+      if (cm != null) {
+        done++;
+        stars += cm['stars'] ?? 0;
+      }
+    }
+    final need = requiredStars(stage);
+    return (
+      stage: stage,
+      open: stage == 0 || session.totalStars >= need,
+      name: kThemes[stage].name,
+      done: done,
+      stars: stars,
+      need: need,
+      glow: kThemes[stage].glow,
+    );
+  }
+
+  /// PB-029: "burada ne yükselecek?" — inşaat ilerlemesinin metin karşılığı.
+  Widget _buildHint(
+      BuildContext context,
+      GameSession session,
+      ({int stage, bool open, String name, int done, int stars, int need, int glow})
+          world) {
     final save = session.state;
-    final next = nextBuildIdx(save, stage);
+    final next = nextBuildIdx(save, world.stage);
     final String visible;
     final String spoken;
     if (next == null) {
@@ -252,12 +328,13 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
       spoken = 'Bu dünyada tüm yapılar tamamlandı; anıt hazır.';
     } else {
       final spec = structureAt(next);
-      final built = piecesBuilt(save, stage, slotOf(next).structure);
+      final built = piecesBuilt(save, world.stage, slotOf(next).structure);
       final total = spec.pieces.length;
       final pct = (built * 100 / total).round();
-      // PB-034 C3: yapı yüzdesi + blueprint siluet bilgisi (merak kancası)
+      // PB-034 C3: yapı yüzdesi (merak kancası)
       visible = 'SIRADA: ${spec.name} · $built/$total · %$pct';
-      spoken = 'Burada ne yükselecek? ${spec.name}, $built/$total parça tamam, yüzde $pct. '
+      spoken =
+          'Burada ne yükselecek? ${spec.name}, $built/$total parça tamam, yüzde $pct. '
           'Sıradaki parça: ${pieceName(next)}.';
     }
     return Padding(
@@ -267,23 +344,48 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
         child: Text(
           visible,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: hslColor(_glowFor(stage), 90, 78),
+                color: hslColor(world.glow, 90, 78),
                 letterSpacing: 1.2,
               ),
         ),
       ),
     );
   }
-
-  int _glowFor(int stage) => kThemes[stage].glow;
 }
 
-class _Drag {
-  Offset start;
-  double yaw;
-  double moved = 0;
-  double dy = 0;
-  _Drag({required this.start, required this.yaw});
+/// PB-035 B3: Kabus Kulesi kapısı — hafta tohumlu, 3 hak, kayıp cezasız.
+class _NightmareGate extends StatelessWidget {
+  const _NightmareGate({required this.session});
+  final GameSession session;
+
+  @override
+  Widget build(BuildContext context) {
+    final week = weekOf(DateTime.now().millisecondsSinceEpoch ~/ 86400000);
+    final left = prog.nightmareTriesLeft(session.state, week);
+    final best = session.state.nightmareBest;
+    final active = left > 0;
+    return Semantics(
+      button: true,
+      label: 'Kabus Kulesi: $left hak kaldı. Rekor $best blok.',
+      child: GradientButton(
+        label: active
+            ? 'KABUS KULESİ · $left HAK'
+            : 'KABUS BU HAFTA BİTTİ · REKOR $best',
+        icon: Icons.dark_mode_rounded,
+        expand: true,
+        height: 46,
+        enabled: active,
+        colors: active
+            ? const [Color(0xFF3B0D54), Color(0xFF54146B), Color(0xFF22104E)]
+            : const [Color(0xFF1D1D2E), Color(0xFF161625)],
+        onTap: () {
+          prog.consumeNightmareTry(session.state, week);
+          session.persist();
+          Navigator.pushNamed(context, Routes.playNightmare);
+        },
+      ),
+    );
+  }
 }
 
 /// Harita köşe düğmesi (geri).
@@ -309,9 +411,25 @@ class _MapIconButton extends StatelessWidget {
             color: Colors.black.withValues(alpha: .28),
             border: Border.all(color: Colors.white.withValues(alpha: .14)),
           ),
-          child: Icon(icon, color: NeonPalette.text, size: 24),
+          child: Icon(icon, size: 22, color: Colors.white.withValues(alpha: .9)),
         ),
       ),
     );
   }
+}
+
+/// Yol haritası tik sinyali (ChangeNotifier kısıtı olmadan).
+class _Signal implements Listenable {
+  final Set<VoidCallback> _ls = {};
+  @override
+  void addListener(VoidCallback l) => _ls.add(l);
+  @override
+  void removeListener(VoidCallback l) => _ls.remove(l);
+  void notify() {
+    for (final l in List.of(_ls)) {
+      l();
+    }
+  }
+
+  void dispose() => _ls.clear();
 }
