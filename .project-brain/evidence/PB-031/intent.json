@@ -1,8 +1,0 @@
-{
-  "contract": "4096f6185ca86318",
-  "epoch": "8411f3d06e23a106",
-  "independent": false,
-  "intent": "dd743f18fa582a93",
-  "note": "2026-11-02 bagimsiz inceleme PASS + 5 MINOR duzeltmesi uygulandi; hedef/kisitlarla uyumlu (C-005 guclendi, C-014 minimizasyon, C-011 aynen).",
-  "protocol": 1
-}

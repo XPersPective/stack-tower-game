@@ -18,6 +18,7 @@ import '../services/leaderboard_service.dart';
 import '../services/session.dart';
 import '../theme/tokens.dart';
 import '../ui/aurora_background.dart';
+import 'flow_overlays.dart' show ToastHost;
 import '../ui/premium_kit.dart';
 
 /* ------------------------------ MAĞAZA ------------------------------ */
@@ -391,6 +392,13 @@ class _RelicGrid extends StatelessWidget {
               children: [
                 Text('$ownedCount/${prog.kRelics.length}',
                     style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(width: AppSpace.sm),
+                Text(
+                  '${prog.kRelics.length - ownedCount} parça eksik',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: NeonPalette.textDim,
+                      ),
+                ),
                 const SizedBox(width: AppSpace.md),
                 Expanded(
                   child: ClipRRect(
@@ -400,6 +408,52 @@ class _RelicGrid extends StatelessWidget {
                       minHeight: 8,
                       backgroundColor: Colors.white.withValues(alpha: .1),
                       valueColor: const AlwaysStoppedAnimation(NeonPalette.star),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // PB-034 D1: streak rozetleri — 3/7/14/30 gün
+        Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpace.lg, 0, AppSpace.lg, AppSpace.sm),
+          child: GlassPanel(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.lg, vertical: AppSpace.md),
+            radius: AppRadius.md,
+            glow: false,
+            child: Row(
+              children: [
+                const Icon(Icons.local_fire_department_rounded,
+                    size: 18, color: NeonPalette.magenta),
+                const SizedBox(width: 8),
+                Text('SERİ: ${session.state.streakDays} GÜN',
+                    style: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(letterSpacing: 1.2)),
+                const SizedBox(width: AppSpace.md),
+                // PB-034: dar ekran güvencesi — rozetler sığmazsa yatay kayar
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (final goal in const [3, 7, 14, 30])
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: InfoChip(
+                              label: '$goal',
+                              icon: Icons.emoji_events_rounded,
+                              color: session.state.streakDays >= goal
+                                  ? NeonPalette.star
+                                  : NeonPalette.textDim,
+                              filled: session.state.streakDays >= goal,
+                            ),
+                          ),
+                        if (session.state.streakShield)
+                          const Icon(Icons.shield_rounded,
+                              size: 16, color: NeonPalette.mint),
+                      ],
                     ),
                   ),
                 ),
@@ -523,9 +577,16 @@ class _MissionsScreenState extends State<MissionsScreen> {
                 child: ListView.builder(
                   padding: const EdgeInsets.fromLTRB(
                       AppSpace.lg, 0, AppSpace.lg, AppSpace.lg),
-                  itemCount: items.length,
+                  itemCount: items.length + 1,
                   itemBuilder: (context, i) {
-                    final m = items[i];
+                    if (i == 0) {
+                      // PB-034 C4/D1: günlük takvim kartı — 7 günlük ödül şeridi
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.md),
+                        child: _CalendarCard(session: session),
+                      );
+                    }
+                    final m = items[i - 1];
                     final goal = m['goal'] as int;
                     final claimed = m['claimed'] == true;
                     final reward = m['reward'] as int;
@@ -594,7 +655,7 @@ class _MissionsScreenState extends State<MissionsScreen> {
                                   Color(0xFF12406E),
                                 ],
                                 onTap: () {
-                                  final got = session.claimMissionAt(i);
+                                  final got = session.claimMissionAt(i - 1); // 0: takvim kartı
                                   if (got != null) {
                                     playRewardSound(context);
                                     showSnack(context,
@@ -947,6 +1008,119 @@ class _SectionLabel extends StatelessWidget {
                 color: NeonPalette.cyan,
                 letterSpacing: 1.2,
               )),
+    );
+  }
+}
+
+/// PB-034 C4/D1: 7 günlük giriş ödülü kartı. Günün ödülü henüz alınmadıysa
+/// "AL" düğmesi parlar; 7. gün büyük ödül + telafi kalkanı.
+class _CalendarCard extends StatelessWidget {
+  const _CalendarCard({required this.session});
+  final GameSession session;
+
+  @override
+  Widget build(BuildContext context) {
+    final today = prog.dayOf(DateTime.now());
+    final s = session.state;
+    final claimedToday = s.calendarClaimDay == today;
+    final nextSlot = s.calendarIndex % 7;
+    return GlassPanel(
+      padding: const EdgeInsets.all(AppSpace.lg),
+      radius: AppRadius.md,
+      glow: !claimedToday,
+      glowColor: NeonPalette.amber,
+      borderColor: NeonPalette.amber.withValues(alpha: claimedToday ? .25 : .55),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.calendar_month_rounded,
+                  size: 18, color: NeonPalette.amber),
+              const SizedBox(width: 8),
+              Text('GÜNLÜK ÖDÜL · SERİ ${s.streakDays} GÜN',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const Spacer(),
+              if (s.streakShield)
+                const Icon(Icons.shield_rounded, size: 16, color: NeonPalette.mint),
+            ],
+          ),
+          const SizedBox(height: AppSpace.md),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              for (var i = 0; i < 7; i++)
+                _CalendarSlot(
+                  index: i,
+                  passed: i < nextSlot,
+                  isNext: i == nextSlot,
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpace.md),
+          GradientButton(
+            label: claimedToday ? 'BUGÜN ALINDI' : 'GÜNÜN ÖDÜLÜNÜ AL',
+            icon: claimedToday ? Icons.check_circle_rounded : Icons.redeem_rounded,
+            expand: true,
+            height: 46,
+            colors: claimedToday
+                ? const [Color(0xFF22304A), Color(0xFF1A2438)]
+                : const [Color(0xFF7A4E12), Color(0xFF8F2D6E)],
+            onTap: claimedToday
+                ? () {}
+                : () {
+                    final res = prog.claimCalendar(s, today);
+                    if (res != null) {
+                      s.coins += res.$1;
+                      session.persist();
+                      ToastHost.show(
+                          context,
+                          res.$2 == 6
+                              ? '🎁 BÜYÜK ÖDÜL: +${res.$1} 🪙 + telafi kalkanı!'
+                              : '+${res.$1} 🪙 Günün ödülü hesabında');
+                    }
+                  },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CalendarSlot extends StatelessWidget {
+  const _CalendarSlot({required this.index, required this.passed, required this.isNext});
+  final int index;
+  final bool passed;
+  final bool isNext;
+
+  @override
+  Widget build(BuildContext context) {
+    final reward = prog.kCalendarRewards[index];
+    final col = passed
+        ? NeonPalette.mint
+        : isNext
+            ? NeonPalette.amber
+            : NeonPalette.textDim;
+    return Semantics(
+      label: '${index + 1}. gün: $reward para${passed ? " alındı" : isNext ? " bugünün ödülü" : ""}',
+      child: Column(
+        children: [
+          Icon(
+            index == 6
+                ? Icons.diamond_rounded
+                : passed
+                    ? Icons.check_circle_rounded
+                    : Icons.monetization_on_rounded,
+            size: 20,
+            color: col,
+          ),
+          Text('${index + 1}',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: col, fontWeight: FontWeight.w700)),
+        ],
+      ),
     );
   }
 }

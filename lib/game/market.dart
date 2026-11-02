@@ -69,6 +69,10 @@ const List<int> _productHues = [45, 192, 322, 130, 280, 12];
 
 /// Günün 3 ürünü + 1 gizli sandık. Tezgah YALNIZ güne bağlıdır: satın alma
 /// rotasyonu değiştirmez (aynı gün aynı ürünler, stok kapanır).
+/// PB-034 D3: yarınki tezgâh — gün tohumu deterministik olduğu için bedava
+/// dönüş hissi verir (Township bekleme kancası). Saf fonksiyon.
+List<MarketEntry> tomorrowStock(int day) => dailyStock(day + 1);
+
 List<MarketEntry> dailyStock(int day) {
   final rnd = _Lcg(_seedFor(day));
   final entries = <MarketEntry>[];

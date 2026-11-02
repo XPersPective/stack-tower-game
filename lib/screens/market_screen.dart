@@ -98,6 +98,8 @@ class _MarketScreenState extends State<MarketScreen> {
                       ),
                       const SizedBox(height: AppSpace.md),
                     ],
+                    const SizedBox(height: AppSpace.md),
+                    _TomorrowStrip(day: day),
                     if (_lastMessage != null)
                       Padding(
                         padding: const EdgeInsets.only(top: AppSpace.sm),
@@ -288,6 +290,39 @@ class _MarketMessage extends StatelessWidget {
                   .textTheme
                   .titleSmall
                   ?.copyWith(color: color, letterSpacing: 1.0),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// PB-034 D3: "YARIN: 3 ürün" şeridi — gün tohumu deterministik olduğu için
+/// yarınki tezgâh bedava öngörülür; dönüş kancası (Township bekleme hissi).
+class _TomorrowStrip extends StatelessWidget {
+  const _TomorrowStrip({required this.day});
+  final int day;
+
+  @override
+  Widget build(BuildContext context) {
+    final names = tomorrowStock(day + 1).map((e) => e.name).join(' · ');
+    return GlassPanel(
+      padding: const EdgeInsets.all(AppSpace.md),
+      radius: AppRadius.md,
+      glow: false,
+      child: Row(
+        children: [
+          const Icon(Icons.update_rounded, size: 16, color: NeonPalette.mint),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'YARIN: $names',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: NeonPalette.textDim,
+                  ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

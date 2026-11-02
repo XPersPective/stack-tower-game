@@ -253,8 +253,11 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
     } else {
       final spec = structureAt(next);
       final built = piecesBuilt(save, stage, slotOf(next).structure);
-      visible = 'SIRADA: ${spec.name} · $built/${spec.pieces.length}';
-      spoken = 'Burada ne yükselecek? ${spec.name}, $built/${spec.pieces.length} parça tamam. '
+      final total = spec.pieces.length;
+      final pct = (built * 100 / total).round();
+      // PB-034 C3: yapı yüzdesi + blueprint siluet bilgisi (merak kancası)
+      visible = 'SIRADA: ${spec.name} · $built/$total · %$pct';
+      spoken = 'Burada ne yükselecek? ${spec.name}, $built/$total parça tamam, yüzde $pct. '
           'Sıradaki parça: ${pieceName(next)}.';
     }
     return Padding(

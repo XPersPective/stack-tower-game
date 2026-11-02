@@ -9,7 +9,7 @@ import 'dart:math' as math;
 import 'levels.dart';
 import '../services/storage.dart';
 
-const String kSaveKey = 'stacktower_save_v2'; // ADR-001
+const String kSaveKey = 'stacktower_save_v2'; // ADR-001 (anahtar sabit; biçim v3 üst-kümeleri)
 
 /// Kilitlenebilir kule görünümleri (hue: blok paletinin başlangıç rengi).
 class Skin {
@@ -127,9 +127,15 @@ class SaveState {
   bool marketSeen;
   /// PB-020: son 7 günün en iyi skoru (gün → blok).
   Map<int, int> dailyHistory;
+  // PB-034 (v3): günlük takvim + streak (eski kayıtlar varsayılanla okunur)
+  int streakLastDay;
+  int streakDays;
+  bool streakShield; // telafi kalkanı: 1 gün kaçırma affedilir (7. gün kazanılır)
+  int calendarClaimDay; // son talep günü
+  int calendarIndex; // 7 günlük döngüde sıradaki slot (0..6)
 
   SaveState({
-    this.v = 2,
+    this.v = 3,
     this.coins = 60,
     Map<int, Map<String, int>>? completed,
     List<String>? skins,
@@ -152,6 +158,11 @@ class SaveState {
     this.relicPieces = 0,
     this.marketSeen = false,
     Map<int, int>? dailyHistory,
+    this.streakLastDay = -1,
+    this.streakDays = 0,
+    this.streakShield = false,
+    this.calendarClaimDay = -1,
+    this.calendarIndex = 0,
   })  : dailyHistory = dailyHistory ?? {},
         marketBought = marketBought ?? {},
         completed = completed ?? {},
@@ -185,6 +196,11 @@ class SaveState {
         'relicPieces': relicPieces,
         'marketSeen': marketSeen,
         'dailyHistory': dailyHistory.map((k, v) => MapEntry(k.toString(), v)),
+        'streakLastDay': streakLastDay,
+        'streakDays': streakDays,
+        'streakShield': streakShield,
+        'calendarClaimDay': calendarClaimDay,
+        'calendarIndex': calendarIndex,
       };
 
   /// JS şemasıyla aynı JSON (anahtar sırası fark etmez, alan adları aynı).
@@ -234,8 +250,57 @@ class SaveState {
       marketSeen: j['marketSeen'] == true,
       dailyHistory: (j['dailyHistory'] as Map<String, dynamic>? ?? {})
           .map((k, v) => MapEntry(int.parse(k), (v as num).toInt())),
+      streakLastDay: (j['streakLastDay'] as num?)?.toInt() ?? -1,
+      streakDays: (j['streakDays'] as num?)?.toInt() ?? 0,
+      streakShield: j['streakShield'] == true,
+      calendarClaimDay: (j['calendarClaimDay'] as num?)?.toInt() ?? -1,
+      calendarIndex: (j['calendarIndex'] as num?)?.toInt() ?? 0,
     );
   }
+}
+
+/* ============ PB-034: günlük takvim + streak (saf mantık) ============ */
+
+/// 7 günlük takvim ödülleri — 7. gün büyük ödül (C-019 cömertlik ilkesi).
+const List<int> kCalendarRewards = [25, 30, 35, 40, 50, 60, 100];
+
+/// Gün açılışı: streak sayacını günceller. Zaten bugün görüldüyse dokunmaz.
+/// Telafi kalkanı [streakShield] tam 1 gün kaçırma affeder (kalkan tüketilir).
+/// Dönen değer: yeni streak (bilgi amaçlı).
+int touchStreak(SaveState s, int today) {
+  if (s.streakLastDay == today) return s.streakDays;
+  final gap = today - s.streakLastDay;
+  if (s.streakLastDay == -1 || gap == 1) {
+    s.streakDays += 1;
+  } else if (gap == 2 && s.streakShield) {
+    s.streakShield = false; // kalkan dünü affetti
+    s.streakDays += 1;
+  } else {
+    s.streakDays = 1;
+  }
+  s.streakLastDay = today;
+  return s.streakDays;
+}
+
+/// Günün takvim ödülünü talep eder; bugün zaten talep edildiyse null.
+/// 7. slot (index 6) büyük ödül + telafi kalkanı kazandırır.
+/// Dönen: (verilen para, slot indeksi).
+(int, int)? claimCalendar(SaveState s, int today) {
+  if (s.calendarClaimDay == today) return null;
+  final slot = s.calendarIndex % 7;
+  s.calendarClaimDay = today;
+  s.calendarIndex = (slot + 1) % 7;
+  if (slot == 6) s.streakShield = true;
+  return (kCalendarRewards[slot], slot);
+}
+
+/// Defter sayacı: eksik parça = toplanmamış kalıntı (10 dünya kalıntısı).
+int missingRelicPieces(SaveState s) {
+  var missing = 0;
+  for (final r in kRelics) {
+    if (s.relics[r.stage.toString()] != true) missing++;
+  }
+  return missing;
 }
 
 SaveState createSave() => SaveState();
@@ -245,8 +310,8 @@ SaveState load(KeyValueStorage storage) {
     final raw = storage.getString(kSaveKey);
     if (raw != null) {
       final s = SaveState.fromJson(jsonDecode(raw) as Map<String, dynamic>);
-      if (s.v == 2) {
-        // eski kayıt uyumu (JS load ile aynı)
+      if (s.v == 2 || s.v == 3) {
+        // v2 kayıt → v3 alanları varsayılanla açılır (migrasyon geriye dönük)
         return s;
       }
     }

@@ -46,6 +46,8 @@ class GameSession extends ChangeNotifier {
       : _clock = clock ?? DateTime.now {
     state = prog.load(storage);
     prog.ensureMissions(state, _clock());
+    // PB-034: gün açılışı — streak sayacı (takvim talebi kullanıcıda, UI'dan)
+    prog.touchStreak(state, prog.dayOf(_clock()));
     // Eski kayıtlar: bitirilmiş + kutlanmış dünyaların kalıntılarını geriye dönük ver.
     for (var st = 0; st < kStageCount; st++) {
       if (prog.isWorldComplete(state, st) &&

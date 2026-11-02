@@ -291,4 +291,70 @@ void main() {
       expect(isUnlocked(st, 15, levelDef(15)), isTrue); // 15 ≥ 10
     });
   });
+
+  group('PB-034: günlük takvim + streak (v3)', () {
+    test('touchStreak: ardışık günler artar, gün içi tekrar dokunmaz', () {
+      final s = createSave();
+      expect(touchStreak(s, 100), 1);
+      expect(touchStreak(s, 100), 1); // aynı gün: değişmez
+      expect(touchStreak(s, 101), 2);
+      expect(touchStreak(s, 102), 3);
+    });
+
+    test('touchStreak: kopma sıfırlar, telafi kalkanı 1 gün affeder', () {
+      final s = createSave();
+      touchStreak(s, 100);
+      touchStreak(s, 101);
+      touchStreak(s, 104); // 2 gün kaçtı, kalkan yok → sıfır
+      expect(s.streakDays, 1);
+      // kalkanlı kopma
+      final s2 = createSave();
+      touchStreak(s2, 100);
+      touchStreak(s2, 101);
+      s2.streakShield = true;
+      touchStreak(s2, 103); // 1 gün kaçtı + kalkan → affedilir
+      expect(s2.streakDays, 3);
+      expect(s2.streakShield, isFalse); // kalkan tüketildi
+    });
+
+    test('claimCalendar: günde bir talep, döngü 7 slotta döner', () {
+      final s = createSave();
+      expect(claimCalendar(s, 100), (25, 0));
+      expect(claimCalendar(s, 100), isNull); // bugün alındı
+      expect(claimCalendar(s, 101), (30, 1));
+      // 100 → 106: 7 talep, son slot 6 büyük ödül
+      final s2 = createSave();
+      (int, int)? last;
+      for (var d = 0; d < 7; d++) {
+        last = claimCalendar(s2, d);
+      }
+      expect(last, (100, 6));
+      expect(s2.streakShield, isTrue); // 7. gün telafi kalkanı hediye
+      expect(s2.calendarIndex, 0); // döngü başa döndü
+    });
+
+    test('v2→v3 migrasyon: eski kayıt yeni alanlarla açılır, veri kaybı yok', () {
+      final s2 = createSave();
+      s2.v = 2;
+      s2.coins = 123;
+      s2.best = 45;
+      s2.completed[3] = {'stars': 2, 'best': 12};
+      final restored = SaveState.fromJson(
+          jsonDecode(s2.encode()) as Map<String, dynamic>);
+      expect(restored.coins, 123);
+      expect(restored.best, 45);
+      expect(restored.completed[3]!['stars'], 2);
+      expect(restored.streakDays, 0); // v3 varsayılanı
+      expect(restored.streakLastDay, -1);
+      expect(restored.calendarIndex, 0);
+      expect(restored.v, 2); // fromJson v2'yi korur; load() kabul eder
+    });
+
+    test('missingRelicPieces: eksik kalıntı sayısı', () {
+      final s = createSave();
+      expect(missingRelicPieces(s), kStageCount);
+      s.relics['0'] = true;
+      expect(missingRelicPieces(s), kStageCount - 1);
+    });
+  });
 }

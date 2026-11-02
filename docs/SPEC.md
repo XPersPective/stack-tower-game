@@ -175,6 +175,11 @@ worldsCelebrated{}, relics{}, boxes{}`. Kayıt her önemli olayda anında yazıl
 güvenliği). Kayıt anahtarı ve başlangıç durumu (60 para) aynen korunur; eski Capacitor
 localStorage'ına erişim yoktur → v1→v2 migration yeni kurulumda geçersizdir (ADR-001).
 
+**v3 eki (PB-034, 2026-11-02):** `streakLastDay, streakDays, streakShield, 
+calendarClaimDay, calendarIndex` — günlük takvim (7 slot, 7. gün büyük ödül + 
+telafi kalkanı) ve gün-serisi sayacı. Depolama anahtarı `stacktower_save_v2` aynen 
+korunur (biçim üst-küme; v2 kayıtlar varsayılanlarla açılır — geriye dönük migrasyon).
+
 ## 6. Çevrimiçi Tasarım Prensibi
 - Skor asla kaybolmaz: gönderilemeyen her skor cihazda kuyruğa yazılır; bağlantı/oturum
   geldiğinde toplu gönderilir (kuyruk tavanı 50).

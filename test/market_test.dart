@@ -26,6 +26,19 @@ void main() {
       expect(a.map((e) => e.price).toList(), b.map((e) => e.price).toList());
     });
 
+    test('PB-034 D3: tomorrowStock = dailyStock(day+1) — YARIN önizlemesi', () {
+      final today = dailyStock(500);
+      final tomorrow = tomorrowStock(500);
+      expect(tomorrow.length, today.length);
+      for (var i = 0; i < tomorrow.length; i++) {
+        expect(tomorrow[i].name, isNot('')); // isimli ürünler
+      }
+      // bugün ≠ yarın (tohum farklı — dönüş hissi)
+      final tNames = tomorrow.map((e) => e.name).toList();
+      final bNames = today.map((e) => e.name).toList();
+      expect(tNames, isNot(equals(bNames)));
+    });
+
     test('3 ürün + 1 gizli sandık; fiyatlar 40-150 aralığında', () {
       for (final day in [0, 1, 7, 12345]) {
         final stock = dailyStock(day);
@@ -269,6 +282,8 @@ void main() {
       await tester.pump();
 
       expect(find.text('PAZAR YERİ'), findsOneWidget);
+      // PB-034 D3: YARIN şeridi — yarınki tezgâh bedava öngörülür
+      expect(find.textContaining('YARIN:'), findsOneWidget);
       final before = session.state.coins;
       await tester.tap(find.text('AL').first);
       await tester.pump();

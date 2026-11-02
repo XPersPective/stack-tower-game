@@ -47,7 +47,12 @@ class _FlowOverlaysState extends State<FlowOverlays> {
   @override
   void initState() {
     super.initState();
-    _advance();
+    // PB-034 (PB-031 incelemesi): popStep → notifyListeners zincirini build
+    // fazından çıkar — alt ağaçta bir gün GameSession.watch() olursa
+    // markNeedsBuild-during-build riski kapanır.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _advance();
+    });
   }
 
   void _advance() {
@@ -665,8 +670,13 @@ class _AnimatedStarState extends State<_AnimatedStar> with SingleTickerProviderS
   @override
   void initState() {
     super.initState();
+    // PB-034 C2 (tören v2): yıldız iniş anında pop + kısa haptic nabzı —
+    // süpürme hissi (yıldız başına hafif; yoğunluk ∝ önem, C-023).
     Future.delayed(Duration(milliseconds: widget.delayMs), () {
-      if (mounted && widget.on) _c.forward();
+      if (mounted && widget.on) {
+        _c.forward();
+        HapticFeedback.lightImpact();
+      }
     });
   }
 
