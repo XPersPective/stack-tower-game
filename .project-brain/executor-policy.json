@@ -14,5 +14,5 @@
     "enabled": false,
     "threshold_percent": 10
   },
-  "note": "Kullanicinin 4. tur yonergesi: maksimum paralel (10 eszamanli anahtar; dalga dalga atis, toplam alt ajan siniri yok), yurutucu=flash sinifi yerel alt ajanlar, lead=koordinator, hiz odakli."
+  "note": "Tur 4+tur 6 onayı: ESP/REV=native (yalnız kendi alt ajanları, flash), SP=parallel(10), QRP=kapalı — tur 6 'devam' ile yeniden teyit."
 }
