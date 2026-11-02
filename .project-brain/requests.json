@@ -7,8 +7,8 @@
         "Kullanıcı 2026-11-02: (1) Android derlemesi calisip uygulama acilir olsun (giris sorunu). (2) Yukaridan asagi inerken kayma hatasi. (3) Asamalar birbirinin aynisi hissi - her asama benzersiz ve surprizli olsun. (4) Premium ust-duzey efektler (dev oyun sirketleri kalitesi). (5) App Store en cok tutan ~100 kategori oyununun DNA'si arastirilip rapor cikarilsin, oyun ona gore guncellensin. Paralel kendi alt ajanlariyla calis."
       ],
       "relation": "new-work",
-      "status": "open",
-      "task": "",
+      "status": "resolved",
+      "task": "PB-033 (DONE bcb7122; dalga 2/3 -> PB-034)",
       "resume_task": "PB-031"
     }
   ]
