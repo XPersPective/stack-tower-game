@@ -1171,7 +1171,7 @@ class _DevUnlockPanelState extends State<_DevUnlockPanel> {
               setState(() => session.state.devUnlockAll = v);
               session.persist();
               // PB-037: haritaya bildir — düğüm kilitleri anında açılsın
-              session.notifyListeners();
+              session.notifyProgressChanged();
             },
           ),
         ],

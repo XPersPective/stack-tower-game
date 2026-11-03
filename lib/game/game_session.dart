@@ -298,6 +298,10 @@ class GameSession extends ChangeNotifier {
     return rw;
   }
 
+  /// PB-036: geliştirici modu gibi dış arayüz değişikliklerini dinleyicilere
+  /// bildirir (ChangeNotifier.notifyListeners protected — dışarıdan bu kapı).
+  void notifyProgressChanged() => notifyListeners();
+
   /// Zincirdeki sıradaki adımı tüket.
   FlowStep? popStep() {
     if (_chain.isEmpty) return null;
