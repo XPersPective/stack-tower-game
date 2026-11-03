@@ -798,15 +798,16 @@ class ScenePainter extends CustomPainter {
         Offset(x + w * 0.5, y + h * 0.5), facet);
     canvas.restore();
 
-    // ateş modunda glint — köşede parıltı pırıltısı (PB-036)
-    if (e.fireMode && w > 30 * e.scale) {
+    // PB-037 (blok raporu): süpüren glint HER ZAMAN — ateş modunda güçlü
+    if (w > 30 * e.scale) {
       final gx = x + w * (0.2 + 0.6 * ((e.time * 2.2) % 1.0));
       final gy = y + h * 0.28;
+      final ga = e.fireMode ? 0.85 : 0.38;
       canvas.drawCircle(
         Offset(gx, gy),
-        2.2 * e.scale,
+        (e.fireMode ? 2.2 : 1.6) * e.scale,
         Paint()
-          ..color = Colors.white.withValues(alpha: 0.85)
+          ..color = Colors.white.withValues(alpha: ga)
           ..maskFilter = MaskFilter.blur(BlurStyle.normal, 2.5 * e.scale),
       );
     }

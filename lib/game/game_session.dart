@@ -162,6 +162,8 @@ class GameSession extends ChangeNotifier {
       lastNightmareRelic = relic;
       return pendingRewards!;
     }
+    // PB-037 X8 (inceleme BLOCKER fix): kazanç ardışık kayıp serisini sıfırlar
+    state.lastLossStreak = 0;
     var stars = starsFor(perfects, def.target);
     // PB-018 pazar jokeri: sonraki kazanılan bölümde +1 yıldız (tavan 3)
     if (state.marketJoker) {
@@ -280,6 +282,9 @@ class GameSession extends ChangeNotifier {
       _chain.add(FlowStep.result);
       return pendingRewards!;
     }
+    // PB-037 X8 (inceleme BLOCKER fix): ardışık kayıp sayacı + comeback bayrağı
+    state.lastLossStreak += 1;
+    if (state.lastLossStreak >= 2) pendingComebackBoost = true;
     final rw =
         prog.completeLevel(state, def, blocks: blocks, perfects: perfects, reached: false);
     if (doubleCoinsThisLevel) {

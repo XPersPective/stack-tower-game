@@ -288,8 +288,8 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
             Positioned(
               left: 24,
               right: 24,
-              // tur 9 taşma düzeltmesi: nav-bar üstü güvenli boşluk
-              bottom: 44,
+              // tur 9 taşma düzeltmesi: nav-bar payı viewPadding'den
+              bottom: MediaQuery.of(context).padding.bottom + 16,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

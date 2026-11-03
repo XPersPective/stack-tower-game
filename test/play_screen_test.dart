@@ -93,6 +93,46 @@ void main() {
     }
   });
 
+  testWidgets('PB-037 X8 comeback: 2 ardışık kayıp → rozet + TEKRAR ×2 para', (tester) async {
+    final session = await makeSession();
+
+    // 1. kayıp
+    await tester.pumpWidget(host(session, levelDef(2)));
+    await tester.pump(const Duration(milliseconds: 120));
+    final e1 = tester.state<PlayScreenState>(find.byType(PlayScreen)).engineForTest;
+    e1.shieldsLeft = 0;
+    e1.moving!.x = e1.blocks.last.x - e1.moving!.w - 60;
+    e1.drop();
+    for (var i = 0; i < 14; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
+    expect(session.state.lastLossStreak, 1);
+    expect(find.textContaining('BU TUR'), findsNothing); // 1. kayıpta rozet yok
+    await tester.tap(find.text('TEKRAR'));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    // 2. kayıp → comeback bayrağı
+    final e2 = tester.state<PlayScreenState>(find.byType(PlayScreen)).engineForTest;
+    e2.shieldsLeft = 0;
+    e2.moving!.x = e2.blocks.last.x - e2.moving!.w - 60;
+    e2.drop();
+    for (var i = 0; i < 14; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
+    expect(session.state.lastLossStreak, 2);
+    expect(find.textContaining('BU TUR ×2 PARA'), findsOneWidget);
+
+    // TEKRAR → boost tüketilir, sonraki kazanım ×2
+    await tester.tap(find.text('TEKRAR'));
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(session.pendingComebackBoost, isFalse);
+    expect(session.doubleCoinsThisLevel, isTrue);
+    // temiz kapanış: pending timer yok
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+  });
+
   testWidgets('kaybetme: teselli 2 para ve sonuç overlay', (tester) async {
     final session = await makeSession();
     final before = session.state.coins;

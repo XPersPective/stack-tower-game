@@ -423,7 +423,7 @@ class _FlowOverlaysState extends State<FlowOverlays> {
     // PB-037 (RESEARCH-endgame X6-X8): kayıp affi paketi — hedefe %N barı +
     // 2. ardışık kayıpta 'BU TUR ×2 PARA' comeback rozeti (sunum; cüzdan
     // uygulaması session'da comebackBoost bayrağıyla bir sonraki denemede)
-    final comebackEligible = lostNormal && s.state.lastLossStreak >= 1;
+    final comebackEligible = lostNormal && s.state.lastLossStreak >= 2;
     final targetPct = lostNormal && def.target > 0
         ? ((r.blocks * 100) / def.target).round().clamp(0, 100)
         : null;
