@@ -14,6 +14,7 @@ import '../game/game_session.dart';
 import '../game/kinds/balance_game.dart';
 import '../game/kinds/catcher_game.dart';
 import '../game/kinds/color_gate_game.dart';
+import '../game/kinds/echo_game.dart';
 import '../game/kinds/crystal_cut_game.dart';
 import '../game/kinds/defend_game.dart';
 import '../game/kinds/flow_link_game.dart';
@@ -24,7 +25,9 @@ import '../game/kinds/wrecking_crew_game.dart';
 import '../game/kinds/dark_hole_game.dart';
 import '../game/kinds/hexa_merge_game.dart';
 import '../game/kinds/launch_game.dart';
+import '../game/kinds/light_beam_game.dart';
 import '../game/kinds/merge_game.dart';
+import '../game/kinds/mirror_twins_game.dart';
 import '../game/kinds/neon_clean_game.dart';
 import '../game/kinds/pin_route_game.dart';
 import '../game/kinds/path_game.dart';
@@ -32,6 +35,7 @@ import '../game/kinds/sort_game.dart';
 import '../game/kinds/rhythm_game.dart';
 import '../game/kinds/ring_game.dart';
 import '../game/kinds/stack_game.dart';
+import '../game/kinds/untangle_game.dart';
 import '../game/levels.dart';
 import '../game/mini_game.dart';
 import '../game/twists.dart';
@@ -83,6 +87,14 @@ MiniGame createMiniGame(GameKind kind) {
       return CrystalCutGame();
     case GameKind.wreckingCrew:
       return WreckingCrewGame();
+    case GameKind.untangle:
+      return UntangleGame();
+    case GameKind.echo:
+      return EchoGame();
+    case GameKind.lightBeam:
+      return LightBeamGame();
+    case GameKind.mirrorTwins:
+      return MirrorTwinsGame();
   }
 }
 

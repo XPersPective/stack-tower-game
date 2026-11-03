@@ -352,6 +352,10 @@ enum GameKind {
   katamariRoll, // PB-043: KATAMARİ ROLL (büyüme)
   crystalCut, // PB-044: KRİSTAL KESİK (kesme)
   wreckingCrew, // PB-044: YIKIM EKİBİ (yıkım)
+  untangle, // PB-045: DÜĞÜM ÇÖZ (planar)
+  echo, // PB-045: YANKI (dizi-yankılama)
+  lightBeam, // PB-045: IŞIK HUZMESİ (ayna yönlendirme)
+  mirrorTwins, // PB-045: AYNA İKİZ (simetrik yürüyüş)
 }
 
 class KindSpec {
@@ -385,6 +389,10 @@ const Map<GameKind, KindSpec> kKindSpecs = {
   GameKind.katamariRoll: KindSpec(GameKind.katamariRoll, 'KATAMARİ ROLL', '●', 'Yuvarlan, küçükleri yut, büyü; büyüklere dokunma!', 165),
   GameKind.crystalCut: KindSpec(GameKind.crystalCut, 'KRİSTAL KESİK', '◈', 'Işık kesik hedef dilime gelince dokun — tam merkez MÜKEMMEL!', 288),
   GameKind.wreckingCrew: KindSpec(GameKind.wreckingCrew, 'YIKIM EKİBİ', '⚒', 'Nişan dönerken dokun — kuleyi baştan aşağı dök!', 20),
+  GameKind.untangle: KindSpec(GameKind.untangle, 'DÜĞÜM ÇÖZ', '⌘', 'Düğüm seç, taşı; kesişme sıfırlanınca çözülür!', 175),
+  GameKind.echo: KindSpec(GameKind.echo, 'YANKI', '◍', 'Diziyi dinle, aynı sırayla yankıla!', 300),
+  GameKind.lightBeam: KindSpec(GameKind.lightBeam, 'IŞIK HUZMESİ', '✦', 'Aynalara dokun — ışığı kristale ulaştır!', 52),
+  GameKind.mirrorTwins: KindSpec(GameKind.mirrorTwins, 'AYNA İKİZ', '⇄', 'Sol/sağ dokun — ikizler ayna adımı atar; çukura düşme!', 262),
 };
 
 /// İlk 5 bölüm = 5 FARKLI tür (hook — C-020).
@@ -404,8 +412,9 @@ const List<GameKind> kKindCycle = [
   GameKind.hexaMerge, GameKind.pinRoute, GameKind.flowLink, GameKind.timeFreeze,
   GameKind.gravityFlip, GameKind.katamariRoll,
   GameKind.crystalCut, GameKind.wreckingCrew,
-  // STACK kimlik oyunudur: antolojide seyrelmesin diye çift slot (C-003)
-  GameKind.stack,
+  GameKind.untangle, GameKind.echo, GameKind.lightBeam, GameKind.mirrorTwins,
+  // STACK kimlik oyunudur: antolojide seyrelmesin diye üç slot (C-003)
+  GameKind.stack, GameKind.stack,
 ];
 
 /// Dünya patronu imza türleri (stage % uzunluk).

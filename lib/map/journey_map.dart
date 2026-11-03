@@ -943,6 +943,29 @@ class JourneyPainter extends CustomPainter {
         // ⚒ sarkaç yıkım: direk + gülle
         canvas.drawLine(c + Offset(0, -u * 0.8), c + Offset(u * 0.45, u * 0.3), p);
         canvas.drawCircle(c + Offset(u * 0.45, u * 0.45), u * 0.22, p);
+      case GameKind.untangle:
+        // ⌘ düğüm: üçgen + içinde nokta
+        canvas.drawLine(c + Offset(0, -u * 0.7), c + Offset(u * 0.65, u * 0.5), p);
+        canvas.drawLine(c + Offset(u * 0.65, u * 0.5), c + Offset(-u * 0.65, u * 0.5), p);
+        canvas.drawLine(c + Offset(-u * 0.65, u * 0.5), c + Offset(0, -u * 0.7), p);
+        canvas.drawCircle(c, u * 0.14, p);
+      case GameKind.echo:
+        // ◍ çift halka — yankı
+        canvas.drawCircle(c, u * 0.8, p);
+        canvas.drawCircle(c, u * 0.4, p);
+      case GameKind.lightBeam:
+        // ✦ ışın: kaynak + kırık hat
+        canvas.drawLine(c + Offset(-u * 0.8, -u * 0.5), c + Offset(0, -u * 0.5), p);
+        canvas.drawLine(c + Offset(0, -u * 0.5), c + Offset(u * 0.6, u * 0.4), p);
+        canvas.drawCircle(c + Offset(u * 0.6, u * 0.4), u * 0.14, p);
+      case GameKind.mirrorTwins:
+        // ⇄ iki zıt ok
+        canvas.drawLine(c + Offset(-u * 0.7, -u * 0.2), c + Offset(u * 0.7, -u * 0.2), p);
+        canvas.drawLine(c + Offset(u * 0.7, -u * 0.2), c + Offset(u * 0.35, -u * 0.55), p);
+        canvas.drawLine(c + Offset(u * 0.7, -u * 0.2), c + Offset(u * 0.35, u * 0.15), p);
+        canvas.drawLine(c + Offset(u * 0.7, u * 0.45), c + Offset(-u * 0.7, u * 0.45), p);
+        canvas.drawLine(c + Offset(-u * 0.7, u * 0.45), c + Offset(-u * 0.35, u * 0.1), p);
+        canvas.drawLine(c + Offset(-u * 0.7, u * 0.45), c + Offset(-u * 0.35, u * 0.8), p);
     }
   }
 
