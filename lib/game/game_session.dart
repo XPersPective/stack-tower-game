@@ -226,14 +226,13 @@ class GameSession extends ChangeNotifier {
     lastConstruction =
         (!def.endless && !def.daily) ? constructionFor(state, def.i) : null;
     _chain.clear();
-    // X9 result-first ESCALATE: SONRAKİ butonu zinciri atlayınca inşaat/
-    // dünya şölenleri öksüz kalıyor — akış tasarımı kullanıcı kararıyla
-    // PB-037 dalga 3'te (result sheet'e DEVAM eklenerek) yeniden kurulacak.
+    // PB-037 X9 result-first: İLK sonuç ekranı (doruk anı kaybedilmez);
+    // DEVAM meta şölen zincirini sürdürür (inşaat→kutu→dünya→tahta→harita)
+    _chain.add(FlowStep.result);
     if (lastConstruction != null) _chain.add(FlowStep.construction);
     if (rewards.boxDropped) _chain.add(FlowStep.box);
     if (lastCeremony != null) _chain.add(FlowStep.world);
     if (def.daily) _chain.add(FlowStep.board);
-    _chain.add(FlowStep.result);
     _chain.add(FlowStep.showMap);
     return rewards;
   }

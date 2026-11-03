@@ -546,7 +546,7 @@ class _FlowOverlaysState extends State<FlowOverlays> {
           const SizedBox(height: AppSpace.xl),
           if (hasNext) ...[
             GradientButton(
-              label: 'SONRAKİ BÖLÜM →',
+              label: 'DEVAM',
               icon: Icons.arrow_forward_rounded,
               expand: true,
               height: 54,
@@ -555,7 +555,10 @@ class _FlowOverlaysState extends State<FlowOverlays> {
                 Color(0xFF12407E),
                 Color(0xFF451C7A),
               ],
-              onTap: () => widget.onNext(levelDef(def.i + 1)),
+              // PB-037 X9 result-first: DEVAM meta şölen zincirini
+              // sürdürür (inşaat→kutu→dünya→tahta→harita) — doruk
+              // anından düşmeden törenler yaşanır
+              onTap: _advance,
             ),
             const SizedBox(height: AppSpace.sm),
           ],
@@ -578,7 +581,9 @@ class _FlowOverlaysState extends State<FlowOverlays> {
             height: 50,
             glow: false,
             colors: const [Color(0xFF2A2A44), Color(0xFF1C1C30)],
-            onTap: _advance,
+            // PB-037 result-first: result zincirin BAŞINDADIR — HARİTA akışı
+            // doğrudan kapatır (eski _advance inşaatı açıyordu)
+            onTap: widget.onFlowDone,
           ),
         ],
       ),

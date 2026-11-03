@@ -72,18 +72,21 @@ void main() {
       await tester.pump(const Duration(milliseconds: 60));
     }
 
-    // zincir: önce İNŞAAT kartı (ADR-009) → DEVAM → sonuç
-    expect(find.textContaining('yükseldi'), findsOneWidget);
+    // PB-037 result-first: İLK sonuç (BÖLÜM TAMAM!) → DEVAM → inşaat 'yükseldi'
+    expect(find.text('BÖLÜM TAMAM!'), findsOneWidget);
     await tester.tap(find.text('DEVAM'));
     for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 60));
     }
-    // sonuç ekranı: BÖLÜM TAMAM! + yıldızlar + TEKRAR + HARİTA
-    expect(find.text('BÖLÜM TAMAM!'), findsOneWidget);
-    expect(find.text('TEKRAR'), findsOneWidget);
-    expect(find.text('HARİTA'), findsOneWidget);
+    expect(find.textContaining('yükseldi'), findsOneWidget);
     // ödül uygulandı
     expect(session.state.completed[2], isNotNull);
+    // inşaat DEVAM → zincir biter (kutu/dünya yok) → showMap kapanır
+    await tester.tap(find.text('DEVAM'));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
+    expect(find.text('BÖLÜM TAMAM!'), findsNothing);
     // yıldız animasyon zamanlayıcılarının tamamı akıtılsın (pending timer yok)
     for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 100));
@@ -131,12 +134,7 @@ void main() {
     for (var i = 0; i < 24; i++) {
       await tester.pump(const Duration(milliseconds: 60));
     }
-    // önce inşaat kartı (ADR-009) → DEVAM → sonuç
-    expect(find.textContaining('yükseldi'), findsOneWidget);
-    await tester.tap(find.text('DEVAM'));
-    for (var i = 0; i < 10; i++) {
-      await tester.pump(const Duration(milliseconds: 60));
-    }
+    // PB-037 result-first: İLK sonuç ekranı
     expect(find.text('BÖLÜM TAMAM!'), findsOneWidget);
 
     // ui.js paritesi: sonuç butonu doğrudan showMap çağırır — tek dokunuş yeter
@@ -166,18 +164,19 @@ void main() {
     for (var i = 0; i < 24; i++) {
       await tester.pump(const Duration(milliseconds: 60));
     }
-    await tester.tap(find.text('DEVAM')); // inşaat kartı (ADR-009)
+    // result-first: result → DEVAM → inşaat kartı → DEVAM → harita
+    await tester.tap(find.text('DEVAM'));
     for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 60));
     }
-    expect(find.text('SONRAKİ BÖLÜM →'), findsOneWidget);
-
-    await tester.tap(find.text('SONRAKİ BÖLÜM →'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 150));
-    // oturum ve ekran aynı bölümde; tür artık LAUNCH (her bölüm farklı oyun)
-    expect(session.currentDef!.i, 3);
-    expect(state.gameForTest.kind, GameKind.launch);
+    expect(find.textContaining('yükseldi'), findsOneWidget);
+    await tester.tap(find.text('DEVAM'));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 60));
+    }
+    // zincir kapandı (showMap) — sıradaki bölüm türü antoloji yasasıyla FARKLI
+    expect(find.text('BÖLÜM TAMAM!'), findsNothing);
+    expect(kindFor(3), GameKind.launch); // i=3 → LAUNCH (STACK değil)
 
     for (var i = 0; i < 30; i++) {
       await tester.pump(const Duration(milliseconds: 100));

@@ -65,7 +65,9 @@ void main() {
     });
 
     test('kayıpta tür bonusu ödenmez — para ≥0 kalır', () {
-      final s = GameSession(MemoryStorage());
+      // saat sabit: doubleCoins sürprizi tarihe göre denk gelmesin (PB-033 dersi)
+      final s = GameSession(MemoryStorage(),
+          clock: () => DateTime.fromMillisecondsSinceEpoch(86400000 * 20001));
       final def = levelDef(4); // MERGE
       s.prepareLevel(def);
       final before = s.state.coins;
