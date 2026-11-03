@@ -17,6 +17,14 @@ amacı olmalı. Amaç tamamlandıkça arkada o bölümde tamamlanan bir şey gö
 farklı mantıkla değişik sürprizler içermeli. Çok güzel efektler, harika efektleri
 olmalı. Bunu öyle kurgula." (user, 2026-10-25 ikinci yön — DESIGN-V2-diyar.md)
 
+"Ya açıkçası bu hep böyle mi olacak? Yani yukarıdan şeyler gelecek ve bunları dizmeye
+mi çalışacak? Başka bir mantık yok mu? Her oyun, her bölüm farklı oyun içermeli...
+Oyunu bağımlılık haline getirebilecek bir şekle çevirmen gerekiyor. Ve oyunun bir
+amacı olmalı. Amaç tamamlandıkça arkada o bölümde tamamlanan bir şey gösterilmeli ve
+çok güzel olmalı... birkaç aşamadan sonra hep böyle bir şeyler tamamlanmalı. Her oyun
+farklı mantıkla değişik sürprizler içermeli. Çok güzel efektler, harika efektleri
+olmalı. Bunu öyle kurgula." (user, 2026-10-25 ikinci yön — DESIGN-V2-diyar.md)
+
 "Oyun çok tekdüze olmuş... Hiçbir sürprizi yok. Her oyun birbirinin aynısı... Daha
 değişik mantıklar, daha değişik içerikler konabilir. Özellikle ilk birkaç bölüm çok
 sürprizli olmalı... Değişik sürprizler konması ve efektler mükemmel olmalı. Sesler de

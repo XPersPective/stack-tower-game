@@ -9,6 +9,19 @@ import 'package:stack_tower_game/game/twists.dart';
 import 'package:stack_tower_game/screens/play_screen.dart';
 import 'package:stack_tower_game/services/storage.dart';
 
+
+/// kindFor sırasına göre n. stack bölümünün indeksi (PB-041 dinamik dağıtım).
+int nthStackLevel(int n) {
+  var seen = -1;
+  for (var i = 0; i < kLevelCount; i++) {
+    if (kindFor(i) == GameKind.stack) {
+      seen++;
+      if (seen == n) return i;
+    }
+  }
+  return -1;
+}
+
 void main() {
   // Tarih-duyarlı sürpriz döngüsünü sabitle (market_test kalıbı):
   // 20001. gün → levelDef(2) için (2+20001)%4 = 3 ≠ 0 → sürpriz yok.
@@ -276,10 +289,11 @@ void main() {
 
   testWidgets('twist bölümü açılışta duyurulur: ad + hint toast (RÜZGAR GÜLÜ)', (tester) async {
     final session = await makeSession();
-    // i=15 → 3. stack bölümü; twist şeması ruzgargulu verir (twists_test'te sabit)
-    await tester.pumpWidget(host(session, levelDef(15)));
+    // n=2 → 3. stack bölümü; twist şeması ruzgargulu verir (PB-041 dinamik indeks)
+    final i3rd = nthStackLevel(2);
+    await tester.pumpWidget(host(session, levelDef(i3rd)));
     await tester.pump(const Duration(milliseconds: 120));
-    final t = kTwists[twistFor(15)]!;
+    final t = kTwists[twistFor(i3rd)]!;
     expect(t.type, TwistType.ruzgargulu);
     expect(find.textContaining('RÜZGAR GÜLÜ'), findsOneWidget);
     expect(find.textContaining(t.hint), findsOneWidget);

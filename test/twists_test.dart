@@ -39,6 +39,21 @@ Future<void> _snap(StackGame g, String name, {required int ticks}) async {
   File('$_outDir/$name.png').writeAsBytesSync(bytes!.buffer.asUint8List());
 }
 
+
+/// kindFor sırasına göre n. stack bölümünün indeksi (n 0 tabanlı).
+/// PB-041: antoloji 11 türe büyüdü; stack indeksleri kayar — testler
+/// artık sabit i yerine TÜRETİLMİŞ ordinal kullanır (şema anlamı korunur).
+int nthStackLevel(int n) {
+  var seen = -1;
+  for (var i = 0; i < kLevelCount; i++) {
+    if (kindFor(i) == GameKind.stack) {
+      seen++;
+      if (seen == n) return i;
+    }
+  }
+  return -1;
+}
+
 void main() {
   group('dağıtım yasası (C-017, tür-farkında)', () {
     test('stack olmayan bölüm asla twist almaz (oyuncuya ulaşma garantisi)', () {
@@ -56,11 +71,11 @@ void main() {
       expect(twistFor(3), isNull); // launch
       expect(twistFor(4), isNull); // merge
       expect(twistFor(2), isNull, reason: '1. stack bölümü çekirdeği öğretir');
-      // takip eden 4 stack bölümü: sabit şema
-      expect(twistFor(5), TwistType.altinyagmuru);
-      expect(twistFor(15), TwistType.ruzgargulu);
-      expect(twistFor(25), TwistType.zitakis);
-      expect(twistFor(35), TwistType.kritik);
+      // takip eden 4 stack bölümü: sabit şema (n=1..4 — PB-041 dinamik indeks)
+      expect(twistFor(nthStackLevel(1)), TwistType.altinyagmuru);
+      expect(twistFor(nthStackLevel(2)), TwistType.ruzgargulu);
+      expect(twistFor(nthStackLevel(3)), TwistType.zitakis);
+      expect(twistFor(nthStackLevel(4)), TwistType.kritik);
     });
 
     test('her stack bölümü (n>=1) twistli; 7 türün tamamı atanır; ardışık <=2', () {
@@ -77,8 +92,9 @@ void main() {
           assigned.add(t!);
         }
       }
-      expect(stackLevels, greaterThan(10),
-          reason: '150 bölümde stack sayısı anlamlı olmalı: $stackLevels');
+      expect(stackLevels, greaterThan(8),
+          reason: '150 bölümde stack sayısı anlamlı olmalı: $stackLevels'
+              ' (PB-041+: antoloji 20 türe büyüdü — çift-slotlu stack)');
       expect(assigned.length, stackLevels - 1,
           reason: 'öğretici dışındaki her stack bölümü twistli');
       expect(assigned.toSet().length, TwistType.values.length,
@@ -92,9 +108,9 @@ void main() {
     });
 
     test('havuz rotasyonu: n=5,6,7 sırasıyla dargecit/sicrayan/golgeblok', () {
-      expect(twistFor(45), TwistType.dargecit);
-      expect(twistFor(55), TwistType.sicrayan);
-      expect(twistFor(65), TwistType.golgeblok);
+      expect(twistFor(nthStackLevel(5)), TwistType.dargecit);
+      expect(twistFor(nthStackLevel(6)), TwistType.sicrayan);
+      expect(twistFor(nthStackLevel(7)), TwistType.golgeblok);
     });
 
     test('günlük/serbest negatif indeks: twist yok', () {
@@ -259,10 +275,10 @@ void main() {
   });
 
   group('görsel anlık görüntüler (kanıt: $_evidenceDir)', () {
-    test('RÜZGAR GÜLÜ (i=15): hareketli blok görünür eğimle süzülür', () async {
+    test('RÜZGAR GÜLÜ (n=2): hareketli blok görünür eğimle süzülür', () async {
       final g = StackGame();
       g.resize(540, 1200);
-      g.start(levelDef(15), host: _SnapHost(), shields: 1); // 3. stack bölümü
+      g.start(levelDef(nthStackLevel(2)), host: _SnapHost(), shields: 1); // 3. stack bölümü
       expect(g.engine.twist, TwistType.ruzgargulu);
       await _snap(g, 'ruzgargulu', ticks: 31); // sin(3*31/60)≈1 → maks eğim
       // görsel iddianın motor karşılığı: blok sahnede döndürülerek çizilir
@@ -271,10 +287,10 @@ void main() {
       expect(File('$_outDir/ruzgargulu.png').lengthSync(), greaterThan(2000));
     });
 
-    test('DAR GEÇİT (i=45): sahnede daralan neon duvarlar + motor aralığı', () async {
+    test('DAR GEÇİT (n=5): sahnede daralan neon duvarlar + motor aralığı', () async {
       final g = StackGame();
       g.resize(540, 1200);
-      g.start(levelDef(45), host: _SnapHost(), shields: 1); // 6. stack bölümü
+      g.start(levelDef(nthStackLevel(5)), host: _SnapHost(), shields: 1); // 6. stack bölümü
       expect(g.engine.twist, TwistType.dargecit);
       await _snap(g, 'dargecit', ticks: 45);
       // görsel iddianın motor karşılığı: hareketli blok daralan aralıkta
@@ -287,10 +303,10 @@ void main() {
       expect(File('$_outDir/dargecit.png').lengthSync(), greaterThan(2000));
     });
 
-    test('ALTIN YAĞMURU (i=5): ilk-5 şeması — hareketli blok altın doğar', () async {
+    test('ALTIN YAĞMURU (n=1): ilk-5 şeması — hareketli blok altın doğar', () async {
       final g = StackGame();
       g.resize(540, 1200);
-      g.start(levelDef(5), host: _SnapHost(), shields: 1); // 2. stack bölümü
+      g.start(levelDef(nthStackLevel(1)), host: _SnapHost(), shields: 1); // 2. stack bölümü
       g.engine.goldRoll = () => 0.1; // <0.25 → bu blok altın
       g.onTap(const Offset(270, 600)); // dokunuş → bırak; sonraki spawn altın doğar
       expect(g.engine.goldNowForTest, isTrue);
@@ -298,10 +314,10 @@ void main() {
       expect(File('$_outDir/altinyagmuru.png').lengthSync(), greaterThan(2000));
     });
 
-    test('GÖLGE BLOK (i=65): hayalet ikiz sahnede soluk çizilir', () async {
+    test('GÖLGE BLOK (n=7): hayalet ikiz sahnede soluk çizilir', () async {
       final g = StackGame();
       g.resize(540, 1200);
-      g.start(levelDef(65), host: _SnapHost(), shields: 1); // 8. stack bölümü
+      g.start(levelDef(nthStackLevel(7)), host: _SnapHost(), shields: 1); // 8. stack bölümü
       expect(g.engine.twist, TwistType.golgeblok);
       await _snap(g, 'golgeblok', ticks: 40);
       expect(g.engine.ghost, isNotNull);

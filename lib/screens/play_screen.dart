@@ -13,9 +13,18 @@ import '../game/audio.dart';
 import '../game/game_session.dart';
 import '../game/kinds/balance_game.dart';
 import '../game/kinds/catcher_game.dart';
+import '../game/kinds/color_gate_game.dart';
 import '../game/kinds/defend_game.dart';
+import '../game/kinds/flow_link_game.dart';
+import '../game/kinds/gravity_flip_game.dart';
+import '../game/kinds/katamari_roll_game.dart';
+import '../game/kinds/time_freeze_game.dart';
+import '../game/kinds/dark_hole_game.dart';
+import '../game/kinds/hexa_merge_game.dart';
 import '../game/kinds/launch_game.dart';
 import '../game/kinds/merge_game.dart';
+import '../game/kinds/neon_clean_game.dart';
+import '../game/kinds/pin_route_game.dart';
 import '../game/kinds/path_game.dart';
 import '../game/kinds/sort_game.dart';
 import '../game/kinds/rhythm_game.dart';
@@ -50,6 +59,24 @@ MiniGame createMiniGame(GameKind kind) {
       return DefendGame();
     case GameKind.rhythm:
       return RhythmGame();
+    case GameKind.colorGate:
+      return ColorGateGame();
+    case GameKind.neonClean:
+      return NeonCleanGame();
+    case GameKind.darkHole:
+      return DarkHoleGame();
+    case GameKind.hexaMerge:
+      return HexaMergeGame();
+    case GameKind.pinRoute:
+      return PinRouteGame();
+    case GameKind.flowLink:
+      return FlowLinkGame();
+    case GameKind.timeFreeze:
+      return TimeFreezeGame();
+    case GameKind.gravityFlip:
+      return GravityFlipGame();
+    case GameKind.katamariRoll:
+      return KatamariRollGame();
   }
 }
 
@@ -381,23 +408,31 @@ class PlayScreenState extends State<PlayScreen>
                               _hudButton(
                                   Icons.arrow_back_rounded, 'ÇIK', _exit),
                               const SizedBox(width: 6),
-                              // tür rozeti
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 9, vertical: 5),
-                                decoration: BoxDecoration(
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.pill),
-                                  color: Colors.white.withValues(alpha: .08),
-                                  border: Border.all(
-                                      color: Colors.white
-                                          .withValues(alpha: .18)),
+                              // tür rozeti — uzun adlar küçülerek sığar
+                              // (PB-041 taşma yasası: RENK KAPI/NEON TEMİZLİK)
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 9, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.pill),
+                                      color:
+                                          Colors.white.withValues(alpha: .08),
+                                      border: Border.all(
+                                          color: Colors.white
+                                              .withValues(alpha: .18)),
+                                    ),
+                                    child: Text('${spec.icon} ${spec.name}',
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall),
+                                  ),
                                 ),
-                                child: Text('${spec.icon} ${spec.name}',
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall),
                               ),
                               const SizedBox(width: 10),
                               _buildHudScore(),

@@ -328,7 +328,29 @@ FinaleStyle finaleFor(int i) {
 /* ===================== ANTLOJİ: oyun türleri (ADR-008) ===================== */
 
 /// Bölümün OYUN TÜRÜ — her bölüm farklı bir oyun olabilir (DESIGN-V2 §3.1).
-enum GameKind { stack, catcher, ring, launch, merge, path, sort, balance, defend, rhythm }
+/// PB-041: antoloji 11→13 türe büyüdü (colorGate/neonClean/darkHole) —
+/// dağıtım yasası C-020 korunur.
+enum GameKind {
+  stack,
+  catcher,
+  ring,
+  launch,
+  merge,
+  path,
+  sort,
+  balance,
+  defend,
+  rhythm,
+  colorGate,
+  neonClean,
+  darkHole,
+  hexaMerge, // PB-042: HEXA NEON (2048 düşüş)
+  pinRoute, // PB-042: PİN SIRRI (yönlendirme)
+  flowLink, // PB-042: NEON AKIŞ (flow)
+  timeFreeze, // PB-043: ZAMAN KIRICI (dondurma)
+  gravityFlip, // PB-043: YERÇEKİMİ KAPISI (ters dönme)
+  katamariRoll, // PB-043: KATAMARİ ROLL (büyüme)
+}
 
 class KindSpec {
   final GameKind kind;
@@ -350,6 +372,15 @@ const Map<GameKind, KindSpec> kKindSpecs = {
   GameKind.balance: KindSpec(GameKind.balance, 'DENGE', '⚖', 'Düşmeden önce dengeyi koru.', 95),
   GameKind.defend: KindSpec(GameKind.defend, 'SAVUN', '⛨', 'Dalga geldiğinde kalkanı kaldır.', 220),
   GameKind.rhythm: KindSpec(GameKind.rhythm, 'RİTİM', '♪', 'Vuruşlarda dokun, komboyu bırakma.', 340),
+  GameKind.colorGate: KindSpec(GameKind.colorGate, 'RENK KAPI', '◐', 'Pencere renginle eşleşince zıpla; perde rengini değiştirsin!', 288),
+  GameKind.neonClean: KindSpec(GameKind.neonClean, 'NEON TEMİZLİK', '⧉', 'Parçayı seç, tahtaya koy; tam satır veya sütunu patlat!', 190),
+  GameKind.darkHole: KindSpec(GameKind.darkHole, 'UZUN KARANLIK', '⬤', 'Deliği yönlendir, neon parçaları yut; karanlığa dokunma!', 262),
+  GameKind.hexaMerge: KindSpec(GameKind.hexaMerge, 'HEXA NEON', '⬡', 'Sayılı altıgeni sütuna düşür; aynı sayılar katlansın!', 168),
+  GameKind.pinRoute: KindSpec(GameKind.pinRoute, 'PİN SIRRI', '⌇', 'Pimi çek; altını huniye, karanlığı çukura yönlendir!', 46),
+  GameKind.flowLink: KindSpec(GameKind.flowLink, 'NEON AKIŞ', '≋', 'Uçları seç, komşuya dokuyarak akışı bağla!', 202),
+  GameKind.timeFreeze: KindSpec(GameKind.timeFreeze, 'ZAMAN KIRICI', '❄', 'Basılı tut — zaman donsun, gemiyi mermilerden süz!', 195),
+  GameKind.gravityFlip: KindSpec(GameKind.gravityFlip, 'YERÇEKİMİ KAPISI', '⇅', 'Dokun — yerçekimi ters dönsün, engellerden kaç!', 12),
+  GameKind.katamariRoll: KindSpec(GameKind.katamariRoll, 'KATAMARİ ROLL', '●', 'Yuvarlan, küçükleri yut, büyü; büyüklere dokunma!', 165),
 };
 
 /// İlk 5 bölüm = 5 FARKLI tür (hook — C-020).
@@ -361,17 +392,28 @@ const List<GameKind> kFirstFiveKinds = [
   GameKind.merge, // 5: büyüme tatmini
 ];
 
-/// 10 türün döngü sırası (ilk-5 sonrası).
+/// Antoloji döngüsü (ilk-5 sonrası) — PB-041 dalgası: colorGate/neonClean/darkHole.
 const List<GameKind> kKindCycle = [
   GameKind.stack, GameKind.catcher, GameKind.ring, GameKind.launch, GameKind.merge,
   GameKind.path, GameKind.sort, GameKind.balance, GameKind.defend, GameKind.rhythm,
+  GameKind.colorGate, GameKind.neonClean, GameKind.darkHole,
+  GameKind.hexaMerge, GameKind.pinRoute, GameKind.flowLink, GameKind.timeFreeze,
+  GameKind.gravityFlip, GameKind.katamariRoll,
+  // STACK kimlik oyunudur: 19 tür içinde seyrelmesin diye çift slot (C-003)
+  GameKind.stack,
+];
+
+/// Dünya patronu imza türleri (stage % uzunluk).
+const List<GameKind> kBossKinds = [
+  GameKind.ring, GameKind.defend, GameKind.balance, GameKind.rhythm, GameKind.launch,
+  GameKind.catcher, GameKind.sort, GameKind.path, GameKind.merge, GameKind.stack,
 ];
 
 /// Dağıtım yasası (ADR-008 / C-020):
 /// - i<0 (günlük/serbest) → stack
 /// - i<5 → kFirstFiveKinds[i]
 /// - dünya patronu (idx==14) → o dünyanın imza türü (stage'e göre)
-/// - aksi: 10 tür döngüsü; ardışık aynı tür ≤1
+/// - aksi: antoloji döngüsü; ardışık aynı tür ≤1 (patron sınırı dâhil)
 GameKind kindFor(int i) {
   if (i < 0) return GameKind.stack;
   if (i < kFirstFiveKinds.length) return kFirstFiveKinds[i];
@@ -379,15 +421,17 @@ GameKind kindFor(int i) {
   final idx = indexInStage(i);
   if (idx == kLevelsPerStage - 1) {
     // patron: dünya imza türü (tema atmosferine uygun)
-    return const [
-      GameKind.ring, GameKind.defend, GameKind.balance, GameKind.rhythm, GameKind.launch,
-      GameKind.catcher, GameKind.sort, GameKind.path, GameKind.merge, GameKind.stack,
-    ][stage % 10];
+    return kBossKinds[stage % kBossKinds.length];
   }
-  var k = kKindCycle[(i - kFirstFiveKinds.length) % kKindCycle.length];
-  // ardışık tekrar koruması
-  if (kindFor(i - 1) == k) {
-    k = kKindCycle[(kKindCycle.indexOf(k) + 1) % kKindCycle.length];
+  var n = (i - kFirstFiveKinds.length) % kKindCycle.length;
+  var k = kKindCycle[n];
+  // ardışık tekrar koruması — patronu tak eden bölüm de çakışmasın (PB-041)
+  final bossAhead = idx == kLevelsPerStage - 2
+      ? kBossKinds[stage % kBossKinds.length]
+      : null;
+  while (k == kindFor(i - 1) || (bossAhead != null && k == bossAhead)) {
+    n = (n + 1) % kKindCycle.length;
+    k = kKindCycle[n];
   }
   return k;
 }

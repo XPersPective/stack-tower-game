@@ -876,6 +876,62 @@ class JourneyPainter extends CustomPainter {
       case GameKind.rhythm:
         canvas.drawCircle(c + Offset(-u * 0.4, u * 0.3), u * 0.24, p);
         canvas.drawCircle(c + Offset(u * 0.42, -u * 0.1), u * 0.24, p);
+      case GameKind.colorGate:
+        // ◐ yarım dolu daire — renk geçidi glifi
+        canvas.drawArc(Rect.fromCircle(center: c, radius: u * 0.75), -math.pi / 2,
+            math.pi, true, Paint()..color = p.color);
+        canvas.drawCircle(c, u * 0.75, p);
+      case GameKind.neonClean:
+        // ⧉ 2×2 mini ızgara — temizlik glifi
+        for (final d in [const Offset(-1, -1), const Offset(1, -1),
+          const Offset(-1, 1), const Offset(1, 1)]) {
+          canvas.drawRect(
+              Rect.fromCenter(
+                  center: c + d.scale(u * 0.42, u * 0.42), width: u * 0.6, height: u * 0.6),
+              p);
+        }
+      case GameKind.darkHole:
+        // ⬤ içi boş daire + iç nokta — delik glifi
+        canvas.drawCircle(c, u * 0.8, p);
+        canvas.drawCircle(c, u * 0.22, p);
+      case GameKind.hexaMerge:
+        // ⬡ altıgen glifi
+        final path = Path();
+        for (var i = 0; i < 6; i++) {
+          final a = math.pi / 180 * (60 * i - 30);
+          final px = c.dx + u * 0.8 * math.cos(a);
+          final py = c.dy + u * 0.8 * math.sin(a);
+          i == 0 ? path.moveTo(px, py) : path.lineTo(px, py);
+        }
+        path.close();
+        canvas.drawPath(path, p);
+      case GameKind.pinRoute:
+        // ⌇ inen kanal + iki ayrım noktası
+        canvas.drawLine(c - Offset(0, u * 0.9), c + Offset(0, u * 0.9), p);
+        canvas.drawCircle(c + Offset(-u * 0.55, u * 0.3), u * 0.22, p);
+        canvas.drawCircle(c + Offset(u * 0.55, u * 0.3), u * 0.22, p);
+      case GameKind.flowLink:
+        // ≋ iki bağlı dalga — akış glifi
+        canvas.drawArc(Rect.fromLTWH(c.dx - u, c.dy - u * 0.5, u * 2, u), 0, math.pi, false, p);
+        canvas.drawArc(Rect.fromLTWH(c.dx - u, c.dy + u * 0.1, u * 2, u), math.pi, math.pi, false, p);
+      case GameKind.timeFreeze:
+        // ❄ karaltı: altı ışınlı çizgi
+        for (var i = 0; i < 6; i++) {
+          final a = math.pi / 180 * (60 * i);
+          canvas.drawLine(c, c + Offset(math.cos(a), math.sin(a)) * u * 0.8, p);
+        }
+      case GameKind.gravityFlip:
+        // ⇅ çift yönlü ok
+        canvas.drawLine(c - Offset(0, u * 0.7), c + Offset(0, u * 0.7), p);
+        canvas.drawLine(c - Offset(0, u * 0.7), c + Offset(-u * 0.35, -u * 0.35), p);
+        canvas.drawLine(c - Offset(0, u * 0.7), c + Offset(u * 0.35, -u * 0.35), p);
+        canvas.drawLine(c + Offset(0, u * 0.7), c + Offset(-u * 0.35, u * 0.35), p);
+        canvas.drawLine(c + Offset(0, u * 0.7), c + Offset(u * 0.35, u * 0.35), p);
+      case GameKind.katamariRoll:
+        // ● yuvarlanan top + benekleri
+        canvas.drawCircle(c, u * 0.75, p);
+        canvas.drawCircle(c + Offset(-u * 0.2, -u * 0.15), u * 0.12, p);
+        canvas.drawCircle(c + Offset(u * 0.25, u * 0.2), u * 0.16, p);
     }
   }
 
