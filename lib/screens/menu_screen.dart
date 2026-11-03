@@ -95,36 +95,30 @@ class _MenuScreenState extends State<MenuScreen> {
                                   Positioned(
                                     top: -6,
                                     right: 10,
-                                    child: TweenAnimationBuilder<double>(
-                                      tween: Tween(begin: 0, end: 1),
-                                      duration: const Duration(
-                                          milliseconds: 420),
-                                      curve: Curves.elasticOut,
-                                      builder: (ctx, v, child) =>
-                                          Transform.scale(
-                                              scale: v, child: child),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: NeonPalette.magenta,
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: NeonPalette.magenta
-                                                  .withValues(alpha: .5),
-                                              blurRadius: 10,
-                                            ),
-                                          ],
-                                        ),
-                                        child: Text(
-                                          '${session.state.socialUnread}',
-                                          style: const TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w900,
-                                              color: Colors.white),
-                                        ),
+                                    // PB-039: statik balon — animasyonlu
+                                    // sürüm cihazda sonsuz yeniden kurulum
+                                    // döngüsüne giriyordu (CPU %100 askı)
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: NeonPalette.magenta,
+                                        borderRadius:
+                                            BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: NeonPalette.magenta
+                                                .withValues(alpha: .5),
+                                            blurRadius: 10,
+                                          ),
+                                        ],
+                                      ),
+                                      child: Text(
+                                        '${session.state.socialUnread}',
+                                        style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white),
                                       ),
                                     ),
                                   ),
