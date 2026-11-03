@@ -198,6 +198,9 @@ class PlayScreenState extends State<PlayScreen>
       'start' => GameSound.start,
       'crit' => GameSound.crit,
       'fanfare' => GameSound.fanfare,
+      'merge_pop' => GameSound.mergePop,
+      'sort_flow' => GameSound.sortFlow,
+      'pop' => GameSound.pop,
       'mystery' => GameSound.mystery,
       _ => GameSound.place,
     };

@@ -172,8 +172,6 @@ class JourneyPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // ignore: avoid_print
-    if (math.Random().nextDouble() < 0.02) print('PB036PAINT scroll=$scroll time=$time');
     final w = size.width;
     final currentIdx = _currentIdx();
 
@@ -466,7 +464,7 @@ class JourneyPainter extends CustomPainter {
       );
       final tp = TextPainter(
         text: TextSpan(
-          text: open ? 'DÜNYA ${s + 1} · ${th.name}' : '🔒 DÜNYA ${s + 1} · ${requiredStars(s)} ★',
+          text: open ? 'DÜNYA ${s + 1} · ${th.name}' : 'KİLİTLİ · DÜNYA ${s + 1} · ${requiredStars(s)} ★',
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 15,

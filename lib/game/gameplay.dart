@@ -554,6 +554,15 @@ class GamePlay {
       if (wasCrit) coinBurst(x2 + w2 / 2, y, 10);
       // A8 (PB-035): mükemmel — orta kademe; formül korunur, kritik ek darbesi
       // dahil sonuç 13'te tavanlanır (genlik ayarı, C-002)
+      // PB-035 B8 STACK imza anı: patron bölümde 3. mükemmelde EZME ŞÖVENİ
+      // (yalnız sunum — combo matematiğine dokunmaz)
+      if (def?.modifier == 'patron' && combo == 3) {
+        popupText('PATRON EZİLDİ!', x2 + w2 / 2, y - 48 * scale, 48);
+        burst(x2 + w2 / 2, y, w2 * 1.4, 48, 50);
+        rings.add(Ring(x2 + w2 / 2, y + bh / 2, w2 * 0.5, 0.8, 48, bright: true));
+        setShake(20);
+        onHapticPattern?.call(const [0, 70, 140]);
+      }
       setShake(math.min(13, 4 + combo * 0.8 + (wasCrit ? 6 : 0)));
       // juice (PB-016): hit-stop her mükemmelde — 40ms + kombo başına 4ms (tavan
       // 70ms); yerleştirme matematiğine (C-002) dokunmaz, yalnız his katmanıdır

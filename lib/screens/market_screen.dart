@@ -53,8 +53,9 @@ class _MarketScreenState extends State<MarketScreen> {
     final day = prog.dayOf(DateTime.now());
     final stock = dailyStock(day);
     // PB-036 tur 8: mağaza BÖLGEYE AİT — tezgah, bulunduğun dünyanın temasıyla
-    final stage = session.state.levelsDone.clamp(0, kStageCount - 1) ~/
-        (kLevelCount ~/ kStageCount);
+    final stage = (session.state.levelsDone.clamp(0, kLevelCount) ~/
+            kLevelsPerStage)
+        .clamp(0, kStageCount - 1);
     final th = kThemes[stage];
 
     return Scaffold(

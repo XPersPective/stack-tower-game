@@ -27,6 +27,9 @@ enum GameSound {
   unlock,
   error,
   pop,
+  // PB-035 A6/D8: tür imza sesleri
+  mergePop,
+  sortFlow,
 }
 
 /// PB-017: kombo eşiklerine göre aktif ritim katmanları (0..2).
@@ -110,6 +113,8 @@ class AudioController extends ChangeNotifier {
       GameSound.unlock: 'unlock.wav',
       GameSound.error: 'error.wav',
       GameSound.pop: 'pop.wav',
+      GameSound.mergePop: 'merge_pop.wav',
+      GameSound.sortFlow: 'sort_flow.wav',
     };
     for (final e in names.entries) {
       final p = AudioPlayer();
@@ -238,6 +243,8 @@ class AudioController extends ChangeNotifier {
         GameSound.unlock => 'unlock.wav',
         GameSound.error => 'error.wav',
         GameSound.pop => 'pop.wav',
+        GameSound.mergePop => 'merge_pop.wav',
+        GameSound.sortFlow => 'sort_flow.wav',
       };
 
   void setMuted(bool m) {

@@ -434,4 +434,15 @@ void pb036RankTests() {
     expect(pct, inInclusiveRange(0, 100));
   });
   pb036RankTests();
+  pb036RankTests();
+  test('PB-036: devUnlockAll — bayrak açıkken tüm bölümler açık', () {
+    final s = createSave();
+    expect(isUnlocked(s, 5, levelDef(5)), isFalse);
+    s.devUnlockAll = true;
+    expect(isUnlocked(s, 5, levelDef(5)), isTrue);
+    expect(isUnlocked(s, 149, levelDef(149)), isTrue);
+    s.devUnlockAll = false;
+    expect(isUnlocked(s, 1, levelDef(1)), isTrue);
+    expect(isUnlocked(s, 2, levelDef(2)), isFalse);
+  });
 }

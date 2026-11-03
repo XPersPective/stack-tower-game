@@ -232,7 +232,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                           hslColor(world.glow, 95, 78),
                           hslColor(world.glow, 92, 62),
                         ]).createShader(b),
-                        child: Text(world.open ? world.name : '🔒 ???',
+                        child: Text(world.open ? world.name : '??? · KİLİTLİ',
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineMedium
@@ -373,7 +373,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
     final String visible;
     final String spoken;
     if (next == null) {
-      visible = '🏛 ANIT TAMAM · DİYAR YOLU AÇIK';
+      visible = 'ANIT TAMAM · DİYAR YOLU AÇIK';
       spoken = 'Bu dünyada tüm yapılar tamamlandı; anıt hazır.';
     } else {
       final spec = structureAt(next);

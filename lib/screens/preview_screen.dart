@@ -454,6 +454,10 @@ class _StartButton extends StatelessWidget {
   }
 
   static bool isUnlockedNow(GameSession session, LevelDef def) {
+    // PB-037: geliştirici modu — önizleme kilidi de bayrağa saygılı
+    // (harita düğümü açılıyor ama önizleme KİLİTLİ gösteriyordu —
+    //  kullanıcı raporu: 'çelişkili gösteriyor')
+    if (session.state.devUnlockAll) return true;
     if (def.i <= 0) return true;
     if (session.state.completed[def.i - 1] == null) return false;
     return session.totalStars >= requiredStars(def.stage) ||

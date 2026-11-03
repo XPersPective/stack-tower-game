@@ -23,7 +23,7 @@ avcısı, halka, fırlat, birleştir, tek çizgi, sırala, denge, savun ve ritim
 • Görünür inşaat: bitirdiğin bölüm adada yapı yükseltir, dünya sonunda anıt
 • Pazar yeri: günlük tezgah, gizli sandık, kalkan/çarpan/joker
 • Kombo merdiveni: 3/6/10 eşiklerinde müzik katmanları
-• Tamamen çevrimdışı; analitik yok
+• Çevrimdışı oynanabilir; isteğe bağlı bulut skor tahtası; analitik yok
 
 İsteğe bağlı hesap yalnız skor tahtası içindir. E-posta saklanmaz.
 
