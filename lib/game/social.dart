@@ -179,4 +179,49 @@ class ChatThread {
     }
     return SocialCategory.selam;
   }
+
+  /* ---------------- PB-039: kalıcılık ---------------- */
+
+  /// Kayıttan sohbet kurar (boş kayıt → açılış selamı).
+  ChatThread.fromLogs(this.botName, List<String> logs) {
+    for (final line in logs) {
+      final parts = line.split('|');
+      if (parts.length < 2) continue;
+      final mine = parts[0] == 'M';
+      final isChallenge = parts.length > 2 && parts[2] == '1';
+      messages.add(SocialMessage(mine ? 'SEN' : botName, parts[1],
+          mine: mine, isChallenge: isChallenge));
+    }
+    if (messages.isEmpty) {
+      messages.add(SocialMessage(botName, 'Merhaba! İyi oyunlar!',
+          mine: false));
+    }
+    _turn = messages.where((m) => m.mine).length;
+  }
+
+  /// Sohbeti kayıt satırlarına sıkıştırır (son 40 mesaj).
+  List<String> serialize() => messages
+      .takeLast(40)
+      .map((m) =>
+          '${m.mine ? 'M' : 'B'}|${m.text}${m.isChallenge ? '|1' : ''}')
+      .toList();
+}
+
+extension _TakeLast<T> on List<T> {
+  List<T> takeLast(int n) =>
+      length <= n ? toList() : sublist(length - n);
+}
+
+/// PB-039: günlük bot selamı — gün tohumlu bot + mesaj (bildirim balonu).
+(String bot, String text) dailyBotGreeting(int day) {
+  final bot = kBotPlayers[day % kBotPlayers.length];
+  final r = math.Random(day * 31 + 7);
+  final pool = const [
+    'Bugün 20 blok atacağım, seni bekliyorum!',
+    'Kabus Kulesi bu hafta benim!',
+    'Günlük tahtada görüşürüz!',
+    'Rekorumu gördüm — tekrar oyna da geç beni!',
+    'İyi oyunlar! Meydan okumaya var mısın?',
+  ];
+  return (bot.name, pool[r.nextInt(pool.length)]);
 }

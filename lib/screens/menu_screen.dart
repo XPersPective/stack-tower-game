@@ -72,20 +72,63 @@ class _MenuScreenState extends State<MenuScreen> {
                             ),
                           ),
                           const SizedBox(height: AppSpace.md),
-                          // PB-038: MESAJLAR — sosyal katman (bot sohbeti MVP)
+                          // PB-038: MESAJLAR — sosyal katman (bot sohbeti)
+                          // PB-039: okunmamış bot mesajı → bildirim balonu
                           FadeSlideIn(
                             delay: const Duration(milliseconds: 180),
-                            child: GradientButton(
-                              label: 'MESAJLAR',
-                              icon: Icons.chat_bubble_outline_rounded,
-                              expand: true,
-                              height: 52,
-                              colors: const [
-                                Color(0xFF1F4A5E),
-                                Color(0xFF16404F),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                GradientButton(
+                                  label: 'MESAJLAR',
+                                  icon: Icons.chat_bubble_outline_rounded,
+                                  expand: true,
+                                  height: 52,
+                                  colors: const [
+                                    Color(0xFF1F4A5E),
+                                    Color(0xFF16404F),
+                                  ],
+                                  onTap: () => Navigator.pushNamed(
+                                      context, Routes.social),
+                                ),
+                                if (session.state.socialUnread > 0)
+                                  Positioned(
+                                    top: -6,
+                                    right: 10,
+                                    child: TweenAnimationBuilder<double>(
+                                      tween: Tween(begin: 0, end: 1),
+                                      duration: const Duration(
+                                          milliseconds: 420),
+                                      curve: Curves.elasticOut,
+                                      builder: (ctx, v, child) =>
+                                          Transform.scale(
+                                              scale: v, child: child),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: NeonPalette.magenta,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: NeonPalette.magenta
+                                                  .withValues(alpha: .5),
+                                              blurRadius: 10,
+                                            ),
+                                          ],
+                                        ),
+                                        child: Text(
+                                          '${session.state.socialUnread}',
+                                          style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w900,
+                                              color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                               ],
-                              onTap: () =>
-                                  Navigator.pushNamed(context, Routes.social),
                             ),
                           ),
                           const SizedBox(height: AppSpace.md),

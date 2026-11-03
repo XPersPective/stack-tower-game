@@ -139,6 +139,10 @@ class SaveState {
   int nightmareBest; // tüm zamanlar rekoru (blok)
   bool devUnlockAll; // PB-036: geliştirici modu — tüm bölümler açık (yalnız debug UI)
   int lastLossStreak; // PB-037 X8: ardışık kayıp sayısı (comeback rozeti için)
+  // PB-039: sosyal dalga 2 — sohbet kalıcılığı + okunmamış bildirim
+  Map<String, List<String>> chatLogs; // bot → ["M|metin|1" / "B|metin"]
+  int socialUnread; // okunmamış bot mesajı sayısı (menü balonu)
+  int socialSeedDay; // son günlük bot selamı günü
 
   SaveState({
     this.v = 3,
@@ -174,7 +178,11 @@ class SaveState {
     this.nightmareBest = 0,
     this.devUnlockAll = false,
     this.lastLossStreak = 0,
-  })  : dailyHistory = dailyHistory ?? {},
+    Map<String, List<String>>? chatLogs,
+    this.socialUnread = 0,
+    this.socialSeedDay = -1,
+  })  : chatLogs = chatLogs ?? {},
+        dailyHistory = dailyHistory ?? {},
         marketBought = marketBought ?? {},
         completed = completed ?? {},
         skins = skins ?? ['default'],
@@ -217,6 +225,9 @@ class SaveState {
         'nightmareBest': nightmareBest,
         'devUnlockAll': devUnlockAll,
         'lastLossStreak': lastLossStreak,
+        'chatLogs': chatLogs,
+        'socialUnread': socialUnread,
+        'socialSeedDay': socialSeedDay,
       };
 
   /// JS şemasıyla aynı JSON (anahtar sırası fark etmez, alan adları aynı).
@@ -276,6 +287,10 @@ class SaveState {
       nightmareBest: (j['nightmareBest'] as num?)?.toInt() ?? 0,
       devUnlockAll: j['devUnlockAll'] == true,
       lastLossStreak: (j['lastLossStreak'] as num?)?.toInt() ?? 0,
+      chatLogs: (j['chatLogs'] as Map<String, dynamic>? ?? {}).map((k, v) =>
+          MapEntry(k, (v as List<dynamic>).map((e) => e.toString()).toList())),
+      socialUnread: (j['socialUnread'] as num?)?.toInt() ?? 0,
+      socialSeedDay: (j['socialSeedDay'] as num?)?.toInt() ?? -1,
     );
   }
 }

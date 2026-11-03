@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:stack_tower_game/game/audio.dart';
 import 'package:stack_tower_game/game/game_session.dart';
 import 'package:stack_tower_game/game/social.dart';
+import 'package:stack_tower_game/screens/router.dart' show dayOfNow;
 import 'package:stack_tower_game/screens/social_screen.dart';
 import 'package:stack_tower_game/services/storage.dart';
 
@@ -72,10 +73,15 @@ void main() {
     expect(find.text('NeonKule'), findsOneWidget);
     expect(find.text('BOT'), findsWidgets);
 
-    // sohbete gir
+    // sohbete gir (PB-039: günlük selam varsa o gelir; yoksa açılış selamı)
     await tester.tap(find.text('NeonKule'));
     await tester.pump();
-    expect(find.text('Merhaba! İyi oyunlar!'), findsOneWidget);
+    final daily = dailyBotGreeting(dayOfNow());
+    if (daily.$1 == 'NeonKule') {
+      expect(find.textContaining(daily.$2), findsOneWidget);
+    } else {
+      expect(find.text('Merhaba! İyi oyunlar!'), findsOneWidget);
+    }
 
     // hazırcümle gönder → kullanıcı balonu + bot yanıtı
     // şerit ListView lazy — ilk görünür çip 'Merhaba!' (index 0)
@@ -85,7 +91,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
   });
 
-  testWidgets('meydan okuma: düğme → bot skoru mesajı', (tester) async {
+  testWidgets('meydan okuma: düğme → perde açılır (PB-039)', (tester) async {
     final session = GameSession(MemoryStorage());
     await tester.pumpWidget(
       MultiProvider(
@@ -102,9 +108,9 @@ void main() {
 
     await tester.tap(find.text('SENİ YENDİM — MEYDAN OKU'));
     await tester.pump();
-    // bot skoru paylaşan yanıt balonu gelir
-    expect(find.textContaining('Ben '), findsOneWidget);
-    expect(find.textContaining('blok dizdim'), findsOneWidget);
-    expect(find.text('⚔ MEYDAN OKUMA'), findsOneWidget);
+    // perde: bot + skor + aynı tohum bölümü teklifi
+    expect(find.text('MEYDAN OKUMA'), findsOneWidget);
+    expect(find.text('BOT SKORU'), findsOneWidget);
+    expect(find.text('AYNI BÖLÜMÜ OYNA'), findsOneWidget);
   });
 }

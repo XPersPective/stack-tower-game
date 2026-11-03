@@ -11,6 +11,7 @@ import 'gameplay.dart';
 import 'levels.dart';
 import 'market.dart' as market;
 import 'progress.dart' as prog;
+import 'social.dart' as social;
 import '../map/construction.dart';
 import '../services/leaderboard_service.dart';
 import '../services/storage.dart';
@@ -56,8 +57,48 @@ class GameSession extends ChangeNotifier {
         prog.awardRelic(state, st);
       }
     }
+    // PB-039: günün bot selamı — okunmamış bildirim balonu
+    _maybeDailySocialMessage();
     persist();
   }
+
+  /* ---------------- PB-039: sosyal kalıcılık + bildirim ---------------- */
+
+  /// Gün değiştiyse günlük bot bir mesaj bırakır (menü balonu yanar).
+  void _maybeDailySocialMessage() {
+    final today = prog.dayOf(_clock());
+    if (state.socialSeedDay == today) return;
+    state.socialSeedDay = today;
+    final (bot, text) = social.dailyBotGreeting(today);
+    final log = state.chatLogs.putIfAbsent(bot, () => <String>[]);
+    final marker = 'B|$text';
+    if (!log.contains(marker)) {
+      log.add(marker);
+      if (log.length > 40) log.removeAt(0);
+      state.socialUnread += 1;
+    }
+    persistQuiet();
+  }
+
+  /// Bot sohbetini kayıttan yükler (yoksa açılış selamlı yeni iplik).
+  social.ChatThread loadThread(String botName) =>
+      social.ChatThread.fromLogs(botName, state.chatLogs[botName] ?? const []);
+
+  /// Sohbeti kayda yazar + persist eder.
+  void persistThread(social.ChatThread thread) {
+    state.chatLogs[thread.botName] = thread.serialize();
+    persist();
+  }
+
+  /// Sohbet ekranına girildi: okunmamış balonu söndür.
+  void markSocialRead() {
+    if (state.socialUnread == 0) return;
+    state.socialUnread = 0;
+    persistQuiet();
+  }
+
+  /// Test kanca: günlük sosyal selam kontrolünü elle tetikle.
+  void checkDailySocial() => _maybeDailySocialMessage();
 
   final KeyValueStorage storage;
   final DateTime Function() _clock;
