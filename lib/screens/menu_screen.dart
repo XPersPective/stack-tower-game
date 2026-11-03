@@ -72,6 +72,23 @@ class _MenuScreenState extends State<MenuScreen> {
                             ),
                           ),
                           const SizedBox(height: AppSpace.md),
+                          // PB-038: MESAJLAR — sosyal katman (bot sohbeti MVP)
+                          FadeSlideIn(
+                            delay: const Duration(milliseconds: 180),
+                            child: GradientButton(
+                              label: 'MESAJLAR',
+                              icon: Icons.chat_bubble_outline_rounded,
+                              expand: true,
+                              height: 52,
+                              colors: const [
+                                Color(0xFF1F4A5E),
+                                Color(0xFF16404F),
+                              ],
+                              onTap: () =>
+                                  Navigator.pushNamed(context, Routes.social),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpace.md),
                           FadeSlideIn(
                             delay: const Duration(milliseconds: 200),
                             child: GradientButton(

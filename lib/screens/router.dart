@@ -9,6 +9,7 @@ import '../game/game_session.dart';
 import '../game/levels.dart';
 import 'map_screen.dart';
 import 'rank_screen.dart';
+import 'social_screen.dart';
 import 'market_screen.dart';
 import 'menu_screen.dart';
 import 'play_screen.dart';
@@ -26,6 +27,7 @@ class Routes {
   static const playEndless = '/play-endless';
   static const playNightmare = '/play-nightmare'; // PB-035 B3
   static const rank = '/rank'; // PB-036: kişisel puan & rütbe sayfası
+  static const social = '/social'; // PB-038: mesajlar & sohbet
   static const shop = '/shop';
   static const market = '/market';
   static const missions = '/missions';
@@ -55,6 +57,8 @@ Widget routeFor(RouteSettings settings) {
           def: nightmareDef(weekOf(dayOfNow()))); // günün haftası tohumu
     case Routes.rank:
       return const RankScreen();
+    case Routes.social:
+      return const SocialScreen();
     case Routes.menu:
     default:
       return const MenuScreen();

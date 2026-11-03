@@ -1,0 +1,14 @@
+{
+  "protocol": 1,
+  "next": "Tick proven criteria, verify remaining behavior, then review and accept",
+  "failing": "",
+  "dirty": "lib/game/social.dart, lib/screens/menu_screen.dart, lib/screens/social_screen.dart, test/social_test.dart",
+  "strategy": "check",
+  "attempt": "bdc99145bbcee9cc",
+  "repeats": 0,
+  "contract": "126ed12e107ca6a4",
+  "usage": {
+    "checks": 1,
+    "seconds": 85.156
+  }
+}
