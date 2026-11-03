@@ -350,6 +350,8 @@ enum GameKind {
   timeFreeze, // PB-043: ZAMAN KIRICI (dondurma)
   gravityFlip, // PB-043: YERÇEKİMİ KAPISI (ters dönme)
   katamariRoll, // PB-043: KATAMARİ ROLL (büyüme)
+  crystalCut, // PB-044: KRİSTAL KESİK (kesme)
+  wreckingCrew, // PB-044: YIKIM EKİBİ (yıkım)
 }
 
 class KindSpec {
@@ -381,6 +383,8 @@ const Map<GameKind, KindSpec> kKindSpecs = {
   GameKind.timeFreeze: KindSpec(GameKind.timeFreeze, 'ZAMAN KIRICI', '❄', 'Basılı tut — zaman donsun, gemiyi mermilerden süz!', 195),
   GameKind.gravityFlip: KindSpec(GameKind.gravityFlip, 'YERÇEKİMİ KAPISI', '⇅', 'Dokun — yerçekimi ters dönsün, engellerden kaç!', 12),
   GameKind.katamariRoll: KindSpec(GameKind.katamariRoll, 'KATAMARİ ROLL', '●', 'Yuvarlan, küçükleri yut, büyü; büyüklere dokunma!', 165),
+  GameKind.crystalCut: KindSpec(GameKind.crystalCut, 'KRİSTAL KESİK', '◈', 'Işık kesik hedef dilime gelince dokun — tam merkez MÜKEMMEL!', 288),
+  GameKind.wreckingCrew: KindSpec(GameKind.wreckingCrew, 'YIKIM EKİBİ', '⚒', 'Nişan dönerken dokun — kuleyi baştan aşağı dök!', 20),
 };
 
 /// İlk 5 bölüm = 5 FARKLI tür (hook — C-020).
@@ -399,7 +403,8 @@ const List<GameKind> kKindCycle = [
   GameKind.colorGate, GameKind.neonClean, GameKind.darkHole,
   GameKind.hexaMerge, GameKind.pinRoute, GameKind.flowLink, GameKind.timeFreeze,
   GameKind.gravityFlip, GameKind.katamariRoll,
-  // STACK kimlik oyunudur: 19 tür içinde seyrelmesin diye çift slot (C-003)
+  GameKind.crystalCut, GameKind.wreckingCrew,
+  // STACK kimlik oyunudur: antolojide seyrelmesin diye çift slot (C-003)
   GameKind.stack,
 ];
 

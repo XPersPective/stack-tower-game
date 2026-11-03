@@ -932,6 +932,17 @@ class JourneyPainter extends CustomPainter {
         canvas.drawCircle(c, u * 0.75, p);
         canvas.drawCircle(c + Offset(-u * 0.2, -u * 0.15), u * 0.12, p);
         canvas.drawCircle(c + Offset(u * 0.25, u * 0.2), u * 0.16, p);
+      case GameKind.crystalCut:
+        // ◈ kesik elmas
+        canvas.drawLine(c, c + Offset(0, -u * 0.75), p);
+        canvas.drawLine(c, c + Offset(u * 0.6, u * 0.5), p);
+        canvas.drawLine(c, c + Offset(-u * 0.6, u * 0.5), p);
+        canvas.drawLine(c + Offset(0, -u * 0.75), c + Offset(u * 0.6, u * 0.5), p);
+        canvas.drawLine(c + Offset(0, -u * 0.75), c + Offset(-u * 0.6, u * 0.5), p);
+      case GameKind.wreckingCrew:
+        // ⚒ sarkaç yıkım: direk + gülle
+        canvas.drawLine(c + Offset(0, -u * 0.8), c + Offset(u * 0.45, u * 0.3), p);
+        canvas.drawCircle(c + Offset(u * 0.45, u * 0.45), u * 0.22, p);
     }
   }
 

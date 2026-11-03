@@ -14,11 +14,13 @@ import '../game/game_session.dart';
 import '../game/kinds/balance_game.dart';
 import '../game/kinds/catcher_game.dart';
 import '../game/kinds/color_gate_game.dart';
+import '../game/kinds/crystal_cut_game.dart';
 import '../game/kinds/defend_game.dart';
 import '../game/kinds/flow_link_game.dart';
 import '../game/kinds/gravity_flip_game.dart';
 import '../game/kinds/katamari_roll_game.dart';
 import '../game/kinds/time_freeze_game.dart';
+import '../game/kinds/wrecking_crew_game.dart';
 import '../game/kinds/dark_hole_game.dart';
 import '../game/kinds/hexa_merge_game.dart';
 import '../game/kinds/launch_game.dart';
@@ -77,6 +79,10 @@ MiniGame createMiniGame(GameKind kind) {
       return GravityFlipGame();
     case GameKind.katamariRoll:
       return KatamariRollGame();
+    case GameKind.crystalCut:
+      return CrystalCutGame();
+    case GameKind.wreckingCrew:
+      return WreckingCrewGame();
   }
 }
 
