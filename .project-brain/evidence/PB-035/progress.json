@@ -4,11 +4,11 @@
   "failing": "",
   "dirty": "",
   "strategy": "check",
-  "attempt": "370c4decbbe86943",
+  "attempt": "612d26f42c987d35",
   "repeats": 0,
   "contract": "ae6afa76a421fa2b",
   "usage": {
-    "checks": 1,
-    "seconds": 82.859
+    "checks": 2,
+    "seconds": 132.498
   }
 }
